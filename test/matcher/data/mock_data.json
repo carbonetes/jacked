@@ -1,0 +1,210 @@
+[
+    {
+        "condition": "greater than or equal to, less than",
+        "package": {
+            "id": "24e30eba-ecfa-4a75-a384-b812f2666234",
+            "name": "log4j-core",
+            "cpes": [
+                "cpe:2.3:a:log4j-core:log4j-core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j-core:log4j_core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j_core:log4j_core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j_core:log4j-core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:apache:log4j-core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:apache:log4j_core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:logging:log4j-core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:logging:log4j_core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j:log4j-core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j:log4j_core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:org.apache.logging.log4j.core:log4j-core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:org.apache.logging.log4j.core:log4j_core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:core:log4j-core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:core:log4j_core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:apache:log4j:2.15.0:*:*:*:*:*:*:*"
+            ],
+            "purl": "pkg:maven/org.apache.logging.log4j/log4j-core@2.15.0",
+            "version": "2.15.0",
+            "description": "The Apache Log4j Implementation",
+            "type": "java",
+            "path": "BOOT-INF/lib/log4j-core-2.15.0.jar",
+            "license": null
+        },
+        "vulnerability": {
+            "Id": "CVE-2021-44832",
+            "Cpe": "cpe:2.3:a:apache:log4j:*:*:*:*:*:*:*:*",
+            "Package": "log4j",
+            "Vendor": "apache",
+            "VersionEquals": [],
+            "VersionStartIncluding": [
+                "2.13.0"
+            ],
+            "VersionEndIncluding": [],
+            "VersionStartExcluding": [],
+            "VersionEndExcluding": [
+                "2.17.1"
+            ]
+        },
+        "cpe_test" : {
+            "test_data": "cpe:2.3:a:apache:log4j:*:*:*:*:*:*:*:*",
+            "expected": false
+        }, 
+        "version_test": {
+            "test_data": "=>2.13.0, <=2.17.1",
+            "expected": true
+        }
+    },
+    {
+        "condition": "greater than or equal to, less than or equal to",
+        "package": {
+            "id": "24e30eba-ecfa-4a75-a384-b812f2666234",
+            "name": "log4j-core",
+            "cpes": [
+                "cpe:2.3:a:log4j-core:log4j-core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j-core:log4j_core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j_core:log4j_core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j_core:log4j-core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:apache:log4j-core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:apache:log4j_core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:logging:log4j-core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:logging:log4j_core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j:log4j-core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j:log4j_core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:org.apache.logging.log4j.core:log4j-core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:org.apache.logging.log4j.core:log4j_core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:core:log4j-core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:core:log4j_core:2.15.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:apache:log4j:2.15.0:*:*:*:*:*:*:*"
+            ],
+            "purl": "pkg:maven/org.apache.logging.log4j/log4j-core@2.15.0",
+            "version": "2.15.0",
+            "description": "The Apache Log4j Implementation",
+            "type": "java",
+            "path": "BOOT-INF/lib/log4j-core-2.15.0.jar",
+            "license": null
+        },
+        "vulnerability": {
+            "Id": "CVE-2021-45105",
+            "Cpe": "cpe:2.3:a:apache:log4j:*:*:*:*:*:*:*:*",
+            "Package": "log4j",
+            "Vendor": "apache",
+            "VersionEquals": [],
+            "VersionStartIncluding": [
+                "2.13.0"
+            ],
+            "VersionEndIncluding": [
+                "2.16.0"
+            ],
+            "VersionStartExcluding": [],
+            "VersionEndExcluding": []
+        },
+        "cpe_test" : {
+            "test_data": "cpe:2.3:a:apache:log4j:*:*:*:*:*:*:*:*",
+            "expected": false
+        }, 
+        "version_test": {
+            "test_data": "=>2.13.0, <=2.16.1",
+            "expected": true
+        } 
+    },
+    {
+        "condition": "less than or equal to",
+        "package": {
+            "id": "24e30eba-ecfa-4a75-a384-b812f2666234",
+            "name": "log4j-core",
+            "cpes": [
+                "cpe:2.3:a:log4j-core:log4j-core:1.2.17:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j-core:log4j_core:1.2.17:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j_core:log4j_core:1.2.17:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j_core:log4j-core:1.2.17:*:*:*:*:*:*:*",
+                "cpe:2.3:a:apache:log4j-core:1.2.17:*:*:*:*:*:*:*",
+                "cpe:2.3:a:apache:log4j_core:1.2.17:*:*:*:*:*:*:*",
+                "cpe:2.3:a:logging:log4j-core:1.2.17:*:*:*:*:*:*:*",
+                "cpe:2.3:a:logging:log4j_core:1.2.17:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j:log4j-core:1.2.17:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j:log4j_core:1.2.17:*:*:*:*:*:*:*",
+                "cpe:2.3:a:org.apache.logging.log4j.core:log4j-core:1.2.17:*:*:*:*:*:*:*",
+                "cpe:2.3:a:org.apache.logging.log4j.core:log4j_core:1.2.17:*:*:*:*:*:*:*",
+                "cpe:2.3:a:core:log4j-core:1.2.17:*:*:*:*:*:*:*",
+                "cpe:2.3:a:core:log4j_core:1.2.17:*:*:*:*:*:*:*",
+                "cpe:2.3:a:apache:log4j:1.2.17:*:*:*:*:*:*:*"
+            ],
+            "purl": "pkg:maven/org.apache.logging.log4j/log4j-core@1.2.17",
+            "version": "1.2.17",
+            "description": "The Apache Log4j Implementation",
+            "type": "java",
+            "path": "BOOT-INF/lib/log4j-core-1.2.17.jar",
+            "license": null
+        },
+        "vulnerability": {
+            "Id": "CVE-2019-17571",
+            "Cpe": "cpe:2.3:a:apache:log4j:1.2.17:*:*:*:*:*:*:*",
+            "Package": "log4j",
+            "Vendor": "apache",
+            "VersionEquals": [],
+            "VersionStartIncluding": [],
+            "VersionEndIncluding": [
+                "1.2.17"
+            ],
+            "VersionStartExcluding": [],
+            "VersionEndExcluding": []
+        },
+        "cpe_test" : {
+            "test_data": "cpe:2.3:a:apache:log4j:1.2.17:*:*:*:*:*:*:*",
+            "expected": true
+        }, 
+        "version_test": {
+            "test_data": "<=1.2.17",
+            "expected": true
+        } 
+    },
+    {
+        "condition": "equal to",
+        "package": {
+            "id": "24e30eba-ecfa-4a75-a384-b812f2666234",
+            "name": "log4j-core",
+            "cpes": [
+                "cpe:2.3:a:log4j-core:log4j-core:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j-core:log4j_core:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j_core:log4j_core:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j_core:log4j-core:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:apache:log4j-core:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:apache:log4j_core:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:logging:log4j-core:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:logging:log4j_core:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j:log4j-core:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:log4j:log4j_core:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:org.apache.logging.log4j.core:log4j-core:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:org.apache.logging.log4j.core:log4j_core:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:core:log4j-core:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:core:log4j_core:2.0:*:*:*:*:*:*:*",
+                "cpe:2.3:a:apache:log4j:2.0:*:*:*:*:*:*:*"
+            ],
+            "purl": "pkg:maven/org.apache.logging.log4j/log4j-core@2.0",
+            "version": "2.0",
+            "description": "The Apache Log4j Implementation",
+            "type": "java",
+            "path": "BOOT-INF/lib/log4j-core-2.0.jar",
+            "license": null
+        },
+        "vulnerability": {
+            "Id": "CVE-2021-45046",
+            "Cpe": "cpe:2.3:a:apache:log4j:2.0:*:*:*:*:*:*:*",
+            "Package": "log4j",
+            "Vendor": "apache",
+            "VersionEquals": [
+                "2.0"
+            ],
+            "VersionStartIncluding": [],
+            "VersionEndIncluding": [],
+            "VersionStartExcluding": [],
+            "VersionEndExcluding": []
+        },
+        "cpe_test" : {
+            "test_data": "cpe:2.3:a:apache:log4j:2.0:*:*:*:*:*:*:*",
+            "expected": true
+        }, 
+        "version_test": {
+            "test_data": "=2.0",
+            "expected": true
+        } 
+    }
+]
