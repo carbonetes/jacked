@@ -19,7 +19,7 @@ var (
 func init() {
 	cfg.Load()
 
-	rootCmd.Flags().StringVarP(&outputFormat, "output", "o", cfg.Settings.Output, "Show scan results in \"json\" or \"table\" format")
+	rootCmd.Flags().StringVarP(&outputFormat, "output", "o", cfg.Settings.Output, "Show scan results in \"table\", \"json\", \"cyclonedx-json\", \"cyclonedx-xml\", \"spdx-json\", \"spdx-xml\", \"spdx-tag-value\" format")
 	rootCmd.Flags().BoolVarP(&secret, "secrets", "s", cfg.Settings.Secret, "Enable scanning for secrets")
 	rootCmd.Flags().BoolVarP(&license, "licenses", "l", cfg.Settings.License, "Enable scanning for package licenses")
 	rootCmd.Flags().BoolVarP(&quiet, "quiet", "q", cfg.Settings.Quiet, "Disable all logging statements")

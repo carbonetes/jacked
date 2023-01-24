@@ -1,5 +1,8 @@
 package model
 
+// DebianMetadata debian metadata
+type DebianMetadataParser map[string]interface{}
+
 type DebianMetadata struct {
 	Architecture  string    `json:"Architecture"`
 	Depends       string    `json:"Depends"`

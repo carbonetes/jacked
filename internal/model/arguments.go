@@ -1,7 +1,8 @@
 package model
 
 type Arguments struct {
-	Image  *string
-	Output *string
-	Quiet   *bool
+	Image      *string
+	Output     *string
+	Quiet      *bool
+	OutputFile *string
 }

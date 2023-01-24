@@ -31,3 +31,5 @@ type AlpineDigest struct {
 	Algorithm string `json:"algorithm"`
 	Value     string `json:"value"`
 }
+
+type AlpineManifest map[string]interface{}

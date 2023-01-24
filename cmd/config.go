@@ -20,8 +20,8 @@ var (
 func init() {
 	rootCmd.AddCommand(cfgCmd)
 
-	cfgCmd.Flags().BoolP("display", "d", false, "Displays the content of the configuration file")
-	cfgCmd.Flags().BoolP("help", "h", false, "Help for config")
+	cfgCmd.Flags().BoolP("display", "d", false, "Display the content of the configuration file")
+	cfgCmd.Flags().BoolP("help", "h", false, "Help for configuration")
 	cfgCmd.Flags().BoolP("path", "p", false, "Display the path of the configuration file")
 	cfgCmd.Flags().BoolP("reset", "r", false, "Restore default configuration file")
 }

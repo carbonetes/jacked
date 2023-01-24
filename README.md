@@ -80,6 +80,10 @@ The output format for Jacked is configurable as well using the
 The available `formats` are:
 - `table`: A columnar summary (default).
 - `json`: Use this to get as much information out of Jacked.
+- `cyclonedx-json`: Use this to get cyclonedx-json format results.
+- `cyclonedx-xml`: Use this to get cyclonedx-xml format results.
+- `spdx-json`: Use this to get spdx-json format results.
+- `spdx-xml`: Use this to get spdx-xml format results.
 ## Useful Commands and Flags 🚩
 ```
 jacked [command] [flag]
@@ -92,8 +96,8 @@ jacked config [flag]
 ```
 |     Flag      |               Description                |
 | :------------ | :--------------------------------------- |
-| `-d`,`--display` | Displays the content of the configuration file. |
-| `-h`,`--help` | Help for config.       |
+| `-d`,`--display` | Display the content of the configuration file. |
+| `-h`,`--help` | Help for configuration.       |
 | `-p`,`--path` | Display the path of the configuration file.          |
 | `-r`,`--reset` | Restore default configuration file.   |
 

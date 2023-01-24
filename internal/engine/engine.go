@@ -11,6 +11,7 @@ import (
 	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/carbonetes/jacked/internal/matcher"
 	"github.com/carbonetes/jacked/internal/model"
+	result "github.com/carbonetes/jacked/internal/output"
 	"github.com/carbonetes/jacked/internal/parser"
 	"github.com/carbonetes/jacked/internal/ui/credits"
 	"github.com/carbonetes/jacked/internal/ui/spinner"
@@ -67,7 +68,8 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	spinner.OnVulnAnalysisEnd(nil)
 
 	// Compile the scan results based on the given configurations
-	if *arguments.Output == "json" {
+	switch *arguments.Output {
+	case "json":
 		if cfg.Settings.License && len(licenses) > 0 {
 			output.Licenses = licenses
 		} else {
@@ -84,7 +86,15 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 			log.Print("\nNo vulnerability found!")
 		}
 		fmt.Printf("%v", printJSONResult())
-	} else {
+	case "cyclonedx-xml":
+		result.PrintCycloneDX("xml", results)
+	case "cyclonedx-json":
+		result.PrintCycloneDX("json", results)
+	case "spdx-json":
+		result.PrintSPDX("json", arguments.Image, results)
+	case "spdx-xml":
+		result.PrintSPDX("xml", arguments.Image, results)
+	default:
 		log.Println()
 		if len(results) > 0 {
 			table.DisplayScanResultTable(results)
