@@ -28,6 +28,7 @@ jobs:
     - name: Unit Tests
       run: |
         cd test
+        go clean -testcache
         go test -v ./...
         
     - name: Runtime Test
