@@ -9,13 +9,13 @@ import (
 	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/carbonetes/jacked/internal/model"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
+	_ "modernc.org/sqlite"
 )
 
 const (
-	driver        = "sqlite3"
+	driver        = "sqlite"
 	defaultSchema = "v1"
 	filename      = "jacked"
 	filetype      = "db"
