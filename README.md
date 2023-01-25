@@ -22,13 +22,6 @@ A great way to install a working binary tool on your terminal.
 ```bash
 curl -sSfL https://raw.githubusercontent.com/carbonetes/jacked/main/install.sh | sh -s -- -d /usr/local/bin
 ```
-## Build 🏗
-
-Go Programming Language together with the cloned repository are needed to run the CLI tool.
-```bash
-$ git clone https://github.com/carbonetes/jacked
-$ go install .
-```
 
 ## Installation Support OS 💽
 - Mac
@@ -69,7 +62,7 @@ jacked <image>
 
 <summary>Jacked Running on a terminal:</summary>
 <p align="center">
-<img src="assets/jacked-scan.gif" style="display: block; margin-left: auto; margin-right: auto; width: 50%;">
+<img src="assets/jacked-scan.gif" style="display: block; margin-left: auto; margin-right: auto; width: 100%;">
 </p>
 
 ## Output formats
