@@ -11,7 +11,7 @@ on:
 
 jobs:
 
-  build:
+  Unit-Tests:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -33,6 +33,6 @@ jobs:
         
     - name: Runtime Test
       run: go run .
-      
+
     - name: Build Test
       run: go build .
