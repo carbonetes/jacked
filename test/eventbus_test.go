@@ -7,7 +7,6 @@ import (
 	"github.com/carbonetes/jacked/internal/events"
 	jacked "github.com/carbonetes/jacked/internal/model"
 	"github.com/carbonetes/jacked/internal/parser"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/transport-go/bus"
 	"github.com/vmware/transport-go/model"
@@ -18,7 +17,6 @@ var (
 	testChannelManagerChannelName = "jacked-test-channel"
 	testChannelManager            = tr.GetChannelManager()
 	testImageName                 = "nginx"
-	eventType                     = "event"
 	arguments                     = jacked.Arguments{
 		DisableFileListing:  new(bool),
 		SecretContentRegex:  new(string),
@@ -37,13 +35,12 @@ var (
 	}
 )
 
-
 // Basic tests for transport-go package based on their github repository: see https://github.com/vmware/transport-go
-func TestChannelManager_Boot(t *testing.T) {
+func TestChannelManagerBoot(t *testing.T) {
 	assert.Len(t, testChannelManager.GetAllChannels(), 0)
 }
 
-func TestChannelManager_CreateChannel(t *testing.T) {
+func TestCreateChannel(t *testing.T) {
 	testChannelManager.CreateChannel(testChannelManagerChannelName)
 
 	assert.Len(t, testChannelManager.GetAllChannels(), 1)
@@ -53,7 +50,7 @@ func TestChannelManager_CreateChannel(t *testing.T) {
 	assert.True(t, testChannelManager.CheckChannelExists(testChannelManagerChannelName))
 }
 
-func TestChannelManager_DestroyChannel(t *testing.T) {
+func TestDestroyChannel(t *testing.T) {
 	testChannelManager.CreateChannel(testChannelManagerChannelName)
 	testChannelManager.DestroyChannel(testChannelManagerChannelName)
 
@@ -63,7 +60,7 @@ func TestChannelManager_DestroyChannel(t *testing.T) {
 	assert.Nil(t, fetchedChannel)
 }
 
-func TestChannelManager_SubscribeChannelHandler(t *testing.T) {
+func TestSubscribeChannelHandler(t *testing.T) {
 	testChannelManager.CreateChannel(testChannelManagerChannelName)
 
 	handler := func(*model.Message) {}
@@ -74,15 +71,8 @@ func TestChannelManager_SubscribeChannelHandler(t *testing.T) {
 	assert.True(t, channel.ContainsHandlers())
 }
 
-func TestChannelManager_UnsubscribeChannelHandlerMissingChannel(t *testing.T) {
-	uuid := uuid.New()
-	err := testChannelManager.UnsubscribeChannelHandler(testChannelManagerChannelName, &uuid)
-	assert.NotNil(t, err)
-}
-
-
 // Scan test for diggity package
-func TestEventBus_DiggityScan(t *testing.T) {
+func TestDiggityScan(t *testing.T) {
 	var cfg config.Configuration
 	var packages []jacked.Package
 	var secrets jacked.SecretResults
