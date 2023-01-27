@@ -26,14 +26,14 @@ var rootCmd = &cobra.Command{
 	Run:    run,
 }
 
-func preRun(_ *cobra.Command, args []string) {
+func preRun(c *cobra.Command, args []string) {
 	if len(args) > 0 {
-		arguments.Image = &args[0]
-		arguments.Quiet = &quiet
-		cfg.Output = outputFormat
-		cfg.LicenseFinder = license
-
-		if *arguments.Quiet {
+		Arguments.Image = &args[0]
+		Arguments.Output = &outputFormat
+		Arguments.Quiet = &quiet
+		cfg.Settings.License = license
+		cfg.Settings.Secret = secret
+		if *Arguments.Quiet {
 			logger.SetQuietMode()
 			spinner.Disable()
 		}
@@ -46,23 +46,15 @@ func run(c *cobra.Command, args []string) {
 		log.Infof("%v", version.GetBuild().Version)
 		os.Exit(0)
 	}
-
-	if c.Flags().Changed("secrets") {
-		if secrets {
-			*arguments.DisableSecretSearch = false
-			cfg.SecretConfig.Disabled = false
-		}
-	}
-
-	if len(args) == 0 && len(*arguments.Image) == 0 && len(*arguments.Dir) == 0 && len(*arguments.Tar) == 0 {
+	if len(args) == 0 && Arguments.Image == nil {
 		c.Help()
 		os.Exit(0)
 	}
-	if !strings.Contains(*arguments.Image, tagSeparator) {
+	if !strings.Contains(*Arguments.Image, tagSeparator) {
 		log.Print("Using default tag:", defaultTag)
-		modifiedTag := *arguments.Image + tagSeparator + defaultTag
-		arguments.Image = &modifiedTag
+		modifiedTag := *Arguments.Image + tagSeparator + defaultTag
+		Arguments.Image = &modifiedTag
 	}
 
-	engine.Start(&arguments, &cfg)
+	engine.Start(&Arguments, &cfg)
 }

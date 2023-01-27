@@ -4,12 +4,11 @@ import (
 	diggity "github.com/carbonetes/diggity/pkg/event-bus"
 
 	"github.com/carbonetes/jacked/internal/logger"
-	"github.com/carbonetes/jacked/internal/model"
 	"github.com/carbonetes/jacked/internal/ui/spinner"
 
 	"github.com/google/uuid"
 	"github.com/vmware/transport-go/bus"
-	tm "github.com/vmware/transport-go/model"
+	"github.com/vmware/transport-go/model"
 )
 
 var (
@@ -18,14 +17,14 @@ var (
 )
 
 // Send a request for sbom to diggity through a event bus
-func RequestSBOMAnalysis(newArgs *model.Arguments) []byte {
-	spinner.OnSBOMRequestStart(*newArgs.Image)
+func RequestSBOMAnalysis(image *string) []byte {
+	spinner.OnSBOMRequestStart(*image)
 
 	// Prepare arguments
-	loadArgs(newArgs)
+	loadArgs(image)
 
 	// Construct unique channel
-	channel := *newArgs.Image + "-request-" + uuid.New().String()
+	channel := *image + "-request-" + uuid.New().String()
 
 	// Create the channel in event bus
 	tr.GetChannelManager().CreateChannel(channel)
@@ -43,7 +42,7 @@ func RequestSBOMAnalysis(newArgs *model.Arguments) []byte {
 	// Once the request has been sent to diggity -- this handler will wait for the sbom response
 	sbomchan := make(chan []byte, 1)
 	responseHandler.Handle(
-		func(msg *tm.Message) {
+		func(msg *model.Message) {
 			// Payload type is set by default to string
 			sbom := []byte(msg.Payload.(string))
 			// Destroy the channel after receiving the response

@@ -35,13 +35,13 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	// Check database for any updates
 	db.DBCheck()
 
-	// // Request for sbom through event bus
-	sbom := events.RequestSBOMAnalysis(arguments)
+	// Request for sbom through event bus
+	sbom := events.RequestSBOMAnalysis(arguments.Image)
 
 	// Run all parsers and filters for packages
 	parser.ParseSBOM(&sbom, &packages, &secrets)
 	parser.Filter(&packages, &cfg.Ignore.Package)
-	parser.ParsePackages(&packages, &licenses, cfg)
+	parser.ParsePackages(&packages, &licenses, &cfg.Settings)
 
 	totalPackages = len(packages)
 
@@ -67,13 +67,13 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	spinner.OnVulnAnalysisEnd(nil)
 
 	// Compile the scan results based on the given configurations
-	if cfg.Output == "json" {
-		if cfg.LicenseFinder && len(licenses) > 0 {
+	if *arguments.Output == "json" {
+		if cfg.Settings.License && len(licenses) > 0 {
 			output.Licenses = licenses
 		} else {
 			log.Print("\nNo package license has been found!")
 		}
-		if !cfg.SecretConfig.Disabled && len(secrets.Secrets) > 0 {
+		if cfg.Settings.Secret && len(secrets.Secrets) > 0 {
 			output.Secrets = &secrets
 		} else {
 			log.Print("\nNo secret has been found!")
@@ -92,7 +92,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 			log.Print("\nNo vulnerability found!")
 		}
 
-		if cfg.LicenseFinder {
+		if cfg.Settings.License {
 			if len(licenses) > 0 {
 				table.PrintLicenses(licenses)
 			} else {
@@ -100,7 +100,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 			}
 		}
 
-		if !cfg.SecretConfig.Disabled {
+		if cfg.Settings.Secret {
 			if len(secrets.Secrets) > 0 {
 				table.PrintSecrets(secrets)
 			} else {

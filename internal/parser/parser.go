@@ -20,9 +20,8 @@ func ParseSBOM(sbom *[]byte, pkgs *[]model.Package, secrets *model.SecretResults
 	if err := json.Unmarshal([]byte(sb.Packages), pkgs); err != nil {
 		log.Fatalf("Error unmarshalling packages: %v", err)
 	}
-	if sb.Secrets != nil {
-		if err := json.Unmarshal([]byte(sb.Secrets), secrets); err != nil {
-			log.Fatalf("Error unmarshalling secrets: %v", err)
-		}
+	if err := json.Unmarshal([]byte(sb.Secrets), secrets); err != nil {
+		log.Fatalf("Error unmarshalling secrets: %v", err)
 	}
+
 }
