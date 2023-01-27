@@ -5,21 +5,20 @@ import (
 	"path/filepath"
 
 	"github.com/carbonetes/jacked/internal/logger"
+	"github.com/carbonetes/jacked/internal/model"
 
-	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 )
 
 type Configuration struct {
-	Settings Settings `yaml:"settings"`
-	Ignore   Ignore   `yaml:"ignore"`
-}
-
-type Settings struct {
-	Output  string `yaml:"output"`
-	Quiet   bool   `yaml:"quiet"`
-	License bool   `yaml:"license"`
-	Secret  bool   `yaml:"secret"`
+	Output             string             `yaml:"output"`
+	Quiet              bool               `yaml:"quiet"`
+	Ignore             Ignore             `yaml:"ignore"`
+	EnabledParsers     []string           `yaml:"enabled-parsers"`
+	DisableFileListing bool               `yaml:"disable-file-listing"`
+	SecretConfig       model.SecretConfig `yaml:"secret-config"`
+	LicenseFinder      bool               `yaml:"license-finder"`
+	Registry           Registry           `yaml:"registry"`
 }
 
 type Ignore struct {
@@ -38,6 +37,13 @@ type Package struct {
 	Version []string `yaml:"version"`
 }
 
+type Registry struct {
+	URI      string `yaml:"uri"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	Token    string `yaml:"token"`
+}
+
 var (
 	configType = "yaml"
 	home, _    = os.UserHomeDir()
@@ -48,10 +54,44 @@ var (
 
 // Indicate the default value for each configuration
 func (cfg *Configuration) SetDefault() *Configuration {
-	if len(cfg.Settings.Output) == 0 {
-		cfg.Settings.Output = "table"
+
+	DefaultSecretConfig := model.SecretConfig{
+		Disabled:    true,
+		SecretRegex: "API_KEY|SECRET_KEY|DOCKER_AUTH",
+		Excludes:    &[]string{},
+		MaxFileSize: 10485760,
 	}
+
+	DefaultRegistry := Registry{
+		URI:      "index.docker.io/",
+		Username: "",
+		Password: "",
+		Token:    "",
+	}
+
+	DefaultIgnoreVulnerability := Vulnerability{
+		CVE:      []string{},
+		Severity: []string{},
+	}
+
+	DefaultIgnorePackage := Package{
+		Name:    []string{},
+		Type:    []string{},
+		Version: []string{},
+	}
+
+	DefaultIgnore := Ignore{
+		Vulnerability: DefaultIgnoreVulnerability,
+		Package:       DefaultIgnorePackage,
+	}
+
+	cfg.Output = "table"
+	cfg.Ignore = DefaultIgnore
+	cfg.SecretConfig = DefaultSecretConfig
+	cfg.Registry = DefaultRegistry
+
 	return cfg
+
 }
 
 // Generate the configuration file with default values
@@ -77,12 +117,13 @@ func (cfg *Configuration) Load() *Configuration {
 		cfg.Generate()
 		cfg.Load()
 	} else {
-		viper.SetConfigFile(File)
-		viper.SetConfigType(configType)
-		if err := viper.ReadInConfig(); err != nil {
-			log.Fatalf("Error reading configurations: %v", err)
+		configFile, err := os.ReadFile(File)
+		if err != nil {
+			log.Fatalf("Error reading configuration file: %v", err)
 		}
-		if err := viper.Unmarshal(cfg); err != nil {
+
+		err = yaml.Unmarshal(configFile, cfg)
+		if err != nil {
 			log.Fatalf("Error loading configurations: %v", err)
 		}
 	}

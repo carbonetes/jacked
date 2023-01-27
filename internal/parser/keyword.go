@@ -16,10 +16,10 @@ import (
 var excluded = []string{"cli", "v2", "net", "crypto", "sync"}
 
 // Read each package, collect all licenses and create a list of keywords for each package
-func ParsePackages(pkgs *[]model.Package, licenses *[]model.License, cfg *config.Settings) {
+func ParsePackages(pkgs *[]model.Package, licenses *[]model.License, cfg *config.Configuration) {
 	for index, p := range *pkgs {
 		tmp := *pkgs
-		if cfg.License {
+		if cfg.LicenseFinder {
 			lcn := *licenses
 			lcn = append(lcn, getLicense(&p)...)
 			*licenses = lcn
