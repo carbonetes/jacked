@@ -7,22 +7,12 @@ on:
     branches: [ "main" ]
 
 jobs:
-
-  Lint-Checks:
+  Lint-Check:
     name: Lint Checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-        
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-          check-latest: true
-          cache: false
-          
-      - run: go mod tidy
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
