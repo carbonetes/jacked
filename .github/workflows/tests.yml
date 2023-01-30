@@ -28,6 +28,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
+          working-directory: somedir
           only-new-issues: true
 
   Unit-Tests:
