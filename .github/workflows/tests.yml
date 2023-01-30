@@ -27,6 +27,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
+          working-directory: somedir
           skip-pkg-cache: true
 
   Unit-Tests:
