@@ -8,8 +8,7 @@ on:
     
 permissions:
   contents: read
-  pull-requests: read
-
+  
 jobs:
   Lint-Check:
     name: Lint Checks
@@ -28,7 +27,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          only-new-issues: true
+          skip-pkg-cache: true
 
   Unit-Tests:
     name: Unit Tests
