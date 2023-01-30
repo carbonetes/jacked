@@ -29,7 +29,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          skip-cache: true
+          skip-pkg-cache: true
 
   Unit-Tests:
     name: Unit Tests
