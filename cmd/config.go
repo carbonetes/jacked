@@ -50,7 +50,7 @@ func cfgRun(c *cobra.Command, _ []string) {
 	} else {
 		err := c.Help()
 		if err != nil {
-			log.Error("%v", err.Error())
+			log.Errorln(err.Error())
 		}
 		os.Exit(0)
 	}

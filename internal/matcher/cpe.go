@@ -23,7 +23,7 @@ func MatchCpe(p []string, v string) (bool, error) {
 	for _, p := range p {
 		pcpe, err := wfn.UnbindFmtString(p)
 		if err != nil {
-			log.Error("%v", err.Error())
+			log.Errorln(err.Error())
 		}
 		if match(pcpe, vcpe) {
 			return true, nil
