@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -116,7 +115,7 @@ func getGlobalMetadataList() []Metadata {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(err)
 	}
@@ -189,8 +188,7 @@ func getMetadata(filepath string) Metadata {
 	}
 	defer file.Close()
 
-	content, _ := ioutil.ReadAll(file)
-	json.Unmarshal(content, &metadata)
+	content, _ := io.ReadAll(file)
 
 	return metadata
 }
@@ -212,8 +210,8 @@ func GetLocalMetadata() Metadata {
 		}
 		defer file.Close()
 
-		content, _ := ioutil.ReadAll(file)
-		json.Unmarshal(content, &metadata)
+		content, _ := io.ReadAll(file)
+		err = json.Unmarshal(content, &metadata)
 	} else {
 		log.Errorln("No local metadata found!")
 	}
