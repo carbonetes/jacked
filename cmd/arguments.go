@@ -59,7 +59,7 @@ func init() {
 	arguments.RegistryUsername = &cfg.Registry.Username
 	arguments.RegistryPassword = &cfg.Registry.Password
 
-	rootCmd.Flags().StringVarP(&outputFormat, "output", "o", cfg.Output, "Show scan results in \"json\" or \"table\" format")
+	rootCmd.Flags().StringVarP(&outputFormat, "output", "o", cfg.Output, "Show scan results in \"table\", \"json\", \"cyclonedx-json\", \"cyclonedx-xml\", \"spdx-json\", \"spdx-xml\", \"spdx-tag-value\" format")
 	rootCmd.Flags().BoolVarP(&secrets, "secrets", "s", !cfg.SecretConfig.Disabled, "Enable scanning for secrets")
 	rootCmd.Flags().BoolVarP(&license, "licenses", "l", cfg.LicenseFinder, "Enable scanning for package licenses")
 	rootCmd.Flags().BoolVarP(&quiet, "quiet", "q", cfg.Quiet, "Disable all logging statements")

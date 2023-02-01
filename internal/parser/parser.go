@@ -7,7 +7,10 @@ import (
 	"github.com/carbonetes/jacked/internal/model"
 )
 
-var log = logger.GetLogger()
+var (
+	log    = logger.GetLogger()
+	distro *model.Distro
+)
 
 // Parse sbom and store list of packages and secrets
 func ParseSBOM(sbom *[]byte, pkgs *[]model.Package, secrets *model.SecretResults) {
@@ -25,4 +28,8 @@ func ParseSBOM(sbom *[]byte, pkgs *[]model.Package, secrets *model.SecretResults
 			log.Fatalf("Error unmarshalling secrets: %v", err)
 		}
 	}
+}
+
+func Distro() *model.Distro {
+	return distro
 }

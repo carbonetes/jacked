@@ -7,7 +7,6 @@ require (
 	github.com/gitchander/permutation v0.0.0-20210517125447-a5d73722e1b1
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-version v1.6.0
-	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mutecomm/go-sqlcipher/v4 v4.4.2
 	github.com/package-url/packageurl-go v0.1.0
@@ -23,6 +22,7 @@ require (
 	golang.org/x/exp v0.0.0-20230105202349-8879d0199aa3
 	golang.org/x/text v0.6.0
 	gopkg.in/yaml.v2 v2.4.0
+	modernc.org/sqlite v1.20.0
 )
 
 require (
@@ -50,6 +50,7 @@ require (
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/mattn/go-sqlite3 v1.14.16 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
@@ -81,7 +82,6 @@ require (
 	modernc.org/mathutil v1.5.0 // indirect
 	modernc.org/memory v1.5.0 // indirect
 	modernc.org/opt v0.1.3 // indirect
-	modernc.org/sqlite v1.20.0 // indirect
 	modernc.org/strutil v1.1.3 // indirect
 	modernc.org/token v1.1.0 // indirect
 )

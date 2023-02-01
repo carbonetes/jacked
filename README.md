@@ -120,24 +120,47 @@ Configuration search paths:
 Configuration options (example values are the default):
 
 ```yaml
-settings:
-  # supported output types: (table, json, cyclonedx-xml, cyclonedx-json, spdx-xml, spdx-json, spdx-tag-value) (default "table") 
-  output: table
-  # quiet mode disable all output except vulnerability result
-  quiet: false
-  # show with license result
-  license: false
-  # show with secret result
-  secret: false
-  # Policy that ignores specified vulnerability from the result
+# supported output types: (table, json, cyclonedx-xml, cyclonedx-json, spdx-xml, spdx-json, spdx-tag-value) (default "table") 
+output: table
+# disables all logging except vulnerability result
+quiet: false
+# policies configurations
 ignore:
+  # ignore policy for vulnerabilities to exclude
   vulnerability:
     cve: []
     severity: []
+  # ignore policy for packages to exclude
   package:
     name: []
     type: []
     version: []
+# specify enabled parsers ([apk debian java npm composer python gem rpm dart nuget go]) (default all)
+enabled-parsers: []
+# disables file listing from package metadata
+disable-file-listing: false
+# secret configurations
+secret-config:
+  # enables/disables cataloging of secrets
+  disabled: false
+  #secret content regex are searched within files that match the provided regular expression
+  secret-regex: API_KEY|SECRET_KEY|DOCKER_AUTH
+  #excludes/includes secret searching for each specified filename
+  excludes-filenames: []
+  # set maximum file size to avoid problems with large files
+  max-file-size: 10485760
+# enable scanning of licenses
+license-finder: false
+# registry configurations
+registry:
+# registry uri endpoint
+  uri: ""
+  # username credential for private registry access
+  username: ""
+  # password credential for private registry access
+  password: ""
+  # access token for private registry access
+  token: ""
 ```
 
 ## License
