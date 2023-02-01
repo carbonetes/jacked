@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/carbonetes/jacked/internal/ui/bar"
 	"github.com/carbonetes/jacked/internal/ui/spinner"
@@ -97,7 +98,7 @@ func extractTarGz(target, extractionPath string) {
 			_filepath := path.Join(extractionPath, header.Name)
 			err := os.MkdirAll(filepath.Dir(_filepath), 0700)
 			if err != nil {
-				log.Fatalf("Error creating relative path: %v", err)
+				log.Fatalf("Cannot create directory %v", err.Error())
 			}
 			out, err := os.Create(_filepath)
 			if err != nil {

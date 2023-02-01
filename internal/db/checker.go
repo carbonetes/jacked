@@ -44,11 +44,11 @@ func DBCheck() {
 
 		latestVersion, err := version.NewVersion(latestMetadata.Version)
 		if err != nil {
-			log.Error(err)
+			log.Error("%v", err.Error())
 		}
 		localVersion, err := version.NewVersion(localMetadata.Version)
 		if err != nil {
-			log.Error(err)
+			log.Error("%v", err.Error())
 		}
 		if !latestVersion.Equal(localVersion) {
 			updateLocalDatabase(latestMetadata)
@@ -78,27 +78,27 @@ func updateLocalDatabase(metadata Metadata) {
 				//remove db path
 				err := os.RemoveAll(path.Join(userCache, "jacked"))
 				if err != nil {
-					log.Error(err)
+					log.Error("%v", err.Error())
 				}
 				// recreate db path with new schema
 				err = os.MkdirAll(dbDirectory, os.ModePerm)
 				if err != nil {
-					log.Fatalf("Cannot create database directory %v", err)
+					log.Fatalf("Cannot create directory %v", err.Error())
 				}
 				// insert new db file and metadata
 				err = os.Rename(path.Join(tmpFolder, dbFile), dbFilepath)
 				if err != nil {
-					log.Error(err)
+					log.Error("%v", err.Error())
 				}
 				err = os.Rename(path.Join(tmpFolder, metadataFile), metadataPath)
 				if err != nil {
-					log.Error(err)
+					log.Error("%v", err.Error())
 				}
 			}
 		}
 		err := os.RemoveAll(tmpFolder)
 		if err != nil {
-			log.Error(err)
+			log.Error("%v", err.Error())
 		}
 		defer deleteTempFile(tmpFilepath)
 	}
@@ -111,18 +111,18 @@ func getGlobalMetadataList() []Metadata {
 
 	resp, err := http.Get(root)
 	if err != nil {
-		log.Error(err)
+		log.Error("%v", err.Error())
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Error(err)
+		log.Error("%v", err.Error())
 	}
 
 	err = json.Unmarshal([]byte(body), &metadata)
 	if err != nil {
-		log.Error(err)
+		log.Error("%v", err.Error())
 	}
 	return metadata
 }
@@ -157,13 +157,13 @@ func getLatestMetadata(metadataList []Metadata) Metadata {
 func generateChecksum(file string) string {
 	f, err := os.Open(file)
 	if err != nil {
-		log.Error(err)
+		log.Error("%v", err.Error())
 	}
 	defer f.Close()
 
 	hash := sha256.New()
 	if _, err := io.Copy(hash, f); err != nil {
-		log.Error(err)
+		log.Error("%v", err.Error())
 	}
 
 	return "sha256:" + hex.EncodeToString(hash.Sum(nil))
@@ -184,11 +184,16 @@ func getMetadata(filepath string) Metadata {
 	var metadata Metadata
 	file, err := os.Open(filepath)
 	if err != nil {
-		log.Error(err)
+		log.Error("%v", err.Error())
 	}
 	defer file.Close()
 
 	content, _ := io.ReadAll(file)
+	err = json.Unmarshal(content, &metadata)
+
+	if err != nil {
+		log.Error("%v", err.Error())
+	}
 
 	return metadata
 }
@@ -206,12 +211,17 @@ func GetLocalMetadata() Metadata {
 	if checkFile(metadataPath) {
 		file, err := os.Open(metadataPath)
 		if err != nil {
-			log.Error(err)
+			log.Error("%v", err.Error())
 		}
 		defer file.Close()
 
 		content, _ := io.ReadAll(file)
 		err = json.Unmarshal(content, &metadata)
+
+		if err != nil {
+			log.Error("%v", err.Error())
+		}
+
 	} else {
 		log.Errorln("No local metadata found!")
 	}

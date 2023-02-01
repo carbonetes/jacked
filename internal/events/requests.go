@@ -55,6 +55,9 @@ func RequestSBOMAnalysis(newArgs *model.Arguments) []byte {
 			log.Fatalf("Error handling response: %v", err)
 		})
 	// Start the response handler for receiving the response
-	responseHandler.Fire()
+	err = responseHandler.Fire()
+	if err != nil {
+		log.Fatalf("Cannot start response handler: %v", err)
+	}
 	return <-sbomchan
 }

@@ -48,7 +48,10 @@ func cfgRun(c *cobra.Command, _ []string) {
 		var newCfg config.Configuration
 		newCfg.ResetDefault()
 	} else {
-		c.Help()
+		err := c.Help()
+		if err != nil {
+			log.Error("%v", err.Error())
+		}
 		os.Exit(0)
 	}
 }
