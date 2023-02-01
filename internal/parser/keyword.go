@@ -16,10 +16,10 @@ import (
 var excluded = []string{"cli", "v2", "net", "crypto", "sync"}
 
 // Read each package, collect all licenses and create a list of keywords for each package
-func ParsePackages(pkgs *[]model.Package, licenses *[]model.License, cfg *config.Settings) {
+func ParsePackages(pkgs *[]model.Package, licenses *[]model.License, cfg *config.Configuration) {
 	for index, p := range *pkgs {
 		tmp := *pkgs
-		if cfg.License {
+		if cfg.LicenseFinder {
 			lcn := *licenses
 			lcn = append(lcn, getLicense(&p)...)
 			*licenses = lcn
@@ -147,7 +147,7 @@ func addCPEs(pkg *model.Package) *model.Package {
 		for _, c := range pkg.CPEs {
 			cpe, err := wfn.UnbindFmtString(c)
 			if err != nil {
-				log.Errorf(err.Error())
+				log.Errorln(err.Error())
 			}
 			if cpe.Product != cpe.Vendor {
 				vendors = append(vendors, cpe.Vendor)
@@ -158,7 +158,7 @@ func addCPEs(pkg *model.Package) *model.Package {
 	for _, keyword := range pkg.Keywords {
 		newCpe, err := wfn.UnbindFmtString("cpe:2.3:a:*:*:*:*:*:*:*:*:*:*")
 		if err != nil {
-			log.Errorf(err.Error())
+			log.Errorln(err.Error())
 		}
 		if len(pkg.Vendor) > 0 {
 			newCpe.Vendor = pkg.Vendor

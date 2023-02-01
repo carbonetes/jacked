@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"os"
+	"strings"
 	"time"
 
+	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/carbonetes/jacked/internal/model"
 	spdxutils "github.com/carbonetes/jacked/internal/output/spdx-utils"
 )
 
-var arguments model.Arguments
+var log = logger.GetLogger()
 
 func PrintSPDX(formatType string, image *string, results []model.ScanResult) {
 
@@ -19,11 +20,19 @@ func PrintSPDX(formatType string, image *string, results []model.ScanResult) {
 
 	switch formatType {
 	case "xml":
-		result, _ := xml.MarshalIndent(spdx, "", " ")
+		result, err := xml.MarshalIndent(spdx, "", " ")
+		if err != nil {
+			log.Errorln(err.Error())
+		}
 		fmt.Printf("%+v\n", string(result))
 	case "json":
-		result, _ := json.MarshalIndent(spdx, "", " ")
+		result, err := json.MarshalIndent(spdx, "", " ")
+		if err != nil {
+			log.Errorln(err.Error())
+		}
 		fmt.Printf("%+v\n", string(result))
+	case "tag-value":
+		printSpdxTagValue(image, results)
 	default:
 		fmt.Printf("Format type not found")
 	}
@@ -74,7 +83,7 @@ func spdxPackages(results []model.ScanResult) (spdxPkgs []model.SpdxPackage) {
 }
 
 // GetSpdxTagValues Parse SPDX-TAG_VALUE format
-func GetSpdxTagValues() (spdxTagValues []string) {
+func GetSpdxTagValues(image *string, results []model.ScanResult) (spdxTagValues []string) {
 	spdxTagValues = append(spdxTagValues, fmt.Sprintf(
 		"SPDXVersion: %s\n"+
 			"DataLicense: %s\n"+
@@ -85,31 +94,35 @@ func GetSpdxTagValues() (spdxTagValues []string) {
 			"Creator: %s\n"+
 			"Creator: %s\n"+
 			"Created: %+v",
-		spdxutils.Version,                     // SPDXVersion
-		spdxutils.DataLicense,                 // DataLicense
-		spdxutils.Ref+spdxutils.Doc,           // SPDXID
-		spdxutils.FormatName(arguments.Image), // DocumentName
-		spdxutils.FormatNamespace(spdxutils.FormatName(arguments.Image)), // DocumentNamespace
-		spdxutils.LicenseListVersion,                                     // LicenseListVersion
-		spdxutils.Creator,                                                // Creator: Organization
-		spdxutils.Tool,                                                   // Creator: Tool
-		time.Now().UTC().Format(time.RFC3339),                            // Created
+		spdxutils.Version,                                      // SPDXVersion
+		spdxutils.DataLicense,                                  // DataLicense
+		spdxutils.Ref+spdxutils.Doc,                            // SPDXID
+		spdxutils.FormatName(image),                            // DocumentName
+		spdxutils.FormatNamespace(spdxutils.FormatName(image)), // DocumentNamespace
+		spdxutils.LicenseListVersion,                           // LicenseListVersion
+		spdxutils.Creator,                                      // Creator: Organization
+		spdxutils.Tool,                                         // Creator: Tool
+		time.Now().UTC().Format(time.RFC3339),                  // Created
 	))
-	var results []model.ScanResult
+
 	// Parse Package Information to SPDX-TAG-VALUE Format
 	for _, result := range results {
+		var cves []string
+		for _, v := range result.Vulnerabilities {
+			cves = append(cves, v.CVE)
+		}
+
 		spdxTagValues = append(spdxTagValues, fmt.Sprintf(
-			"\n"+
-				"##### Package: %s\n"+
-				"\n"+
+			"\n##### Package: %s\n\n"+
 				"PackageName: %s\n"+
 				"SPDXID: %s\n"+
 				"PackageVersion: %s\n"+
 				"PackageDownloadLocation: %s\n"+
-				"FilesAnalyzed: %v\n"+
+				"FilesAnalyzed: %t\n"+
 				"PackageLicenseConcluded: %s\n"+
 				"PackageLicenseDeclared: %s\n"+
-				"PackageCopyrightText: %s",
+				"PackageCopyrightText: %s\n"+
+				"Vulnerabilities: %v",
 			result.Package.Name,                         // Package
 			result.Package.Name,                         // PackageName
 			spdxutils.FormatTagID(&result.Package),      // SPDXID
@@ -119,6 +132,7 @@ func GetSpdxTagValues() (spdxTagValues []string) {
 			spdxutils.LicensesDeclared(&result.Package), // PackageLicenseConcluded
 			spdxutils.LicensesDeclared(&result.Package), // PackageLicenseDeclared
 			spdxutils.NoAssertion,                       // PackageCopyrightText
+			formatCVEList(cves),						 // Vulnerabilities
 		))
 
 		for _, ref := range spdxutils.ExternalRefs(&result.Package) {
@@ -135,13 +149,17 @@ func GetSpdxTagValues() (spdxTagValues []string) {
 }
 
 // PrintSpdxTagValue Print Packages in SPDX-TAG_VALUE format
-func printSpdxTagValue() {
-	spdxTagValues := GetSpdxTagValues()
-	if len(*arguments.OutputFile) > 0 {
-		saveResultToFile(stringSliceToString(spdxTagValues))
-	} else {
-		fmt.Printf("%+v", stringSliceToString(spdxTagValues))
+func printSpdxTagValue(image *string, results []model.ScanResult) {
+	spdxTagValues := GetSpdxTagValues(image, results)
+	fmt.Printf("%+v", stringSliceToString(spdxTagValues))
+
+}
+
+func formatCVEList(cves []string) string {
+	if len(cves) == 0 {
+		return spdxutils.None
 	}
+	return strings.Join(cves, ",")
 }
 
 func stringSliceToString(slice []string) string {
@@ -150,9 +168,4 @@ func stringSliceToString(slice []string) string {
 		result += fmt.Sprintln(s)
 	}
 	return result
-}
-
-func saveResultToFile(result string) {
-	file, _ := os.Create(*arguments.OutputFile)
-	os.WriteFile(file.Name(), []byte(result), 0644)
 }

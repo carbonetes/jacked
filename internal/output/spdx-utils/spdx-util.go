@@ -47,7 +47,6 @@ var (
 
 // FormatName helper
 func FormatName(image *string) string {
-	// Check if tar or dir was scanned
 	if strings.Contains(*image, ":") {
 		return strings.Split(*image, ":")[0]
 	}

@@ -3,6 +3,7 @@ package spinner
 import (
 	"time"
 
+	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/theckman/yacspin"
 )
 
@@ -18,15 +19,23 @@ var (
 	}
 	spin    *yacspin.Spinner
 	_switch bool = true
+	log          = logger.GetLogger()
+	err     error
 )
 
 func init() {
-	spin, _ = yacspin.New(cfg)
+	spin, err = yacspin.New(cfg)
+	if err != nil {
+		log.Errorln(err.Error())
+	}
 }
 
 func Start() {
 	if _switch {
-		spin.Start()
+		err = spin.Start()
+		if err != nil {
+			log.Errorln(err.Error())
+		}
 	}
 }
 
@@ -38,13 +47,19 @@ func SetMessage(str string) {
 
 func Stop() {
 	if _switch {
-		spin.Stop()
+		err = spin.Stop()
+		if err != nil {
+			log.Errorln(err.Error())
+		}
 	}
 }
 
 func StopFail() {
 	if _switch {
-		spin.StopFail()
+		err = spin.StopFail()
+		if err != nil {
+			log.Errorln(err.Error())
+		}
 	}
 }
 

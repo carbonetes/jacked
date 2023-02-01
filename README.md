@@ -5,7 +5,7 @@
 
 # Jacked
 
-Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures. Partnered with [Diggity](https://github.com/carbonetes/diggity) for generating a Software Bill of Materials (SBOM) from container images and filesystems.
+Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures. 
 
 # Features
 - 🐞 | Scans image vulnerability; checks if your image is at risk.
@@ -16,19 +16,6 @@ Jacked provides organizations with a more comprehensive look at their applicatio
 
 
 # Installation 📥
-## Recommended
-
-A great way to install a working binary tool on your terminal. 
-```bash
-curl -sSfL https://raw.githubusercontent.com/carbonetes/jacked/main/install.sh | sh -s -- -d /usr/local/bin
-```
-## Build 🏗
-
-Go Programming Language together with the cloned repository are needed to run the CLI tool.
-```bash
-$ git clone https://github.com/carbonetes/jacked
-$ go install .
-```
 
 ## Installation Support OS 💽
 - Mac
@@ -50,13 +37,18 @@ $ go install .
 - Windows
   - windows_amd64.zip
 
+## Recommended
 
-## Choosing another destination path & install previous version 🎲
+A great way to install a working binary tool on your terminal. 
+```bash
+curl -sSfL https://raw.githubusercontent.com/carbonetes/jacked/main/install.sh | sh -s -- -d /usr/local/bin
+```
 You can specify a release version and destination directory for the installation:
 
 ```
 curl -sSfL https://raw.githubusercontent.com/carbonetes/jacked/main/install.sh | sh -s -- -d <DESTINATION_DIR> -v <RELEASE_VERSION>
 ```
+
 
 # Getting Started 🚀  
 
@@ -65,12 +57,14 @@ Once you've successfully installed the Jacked and wanted to scan an image, on yo
 ```
 jacked <image>
 ```
-
-
+<details>
 <summary>Jacked Running on a terminal:</summary>
+
 <p align="center">
-<img src="assets/jacked-scan.gif" style="display: block; margin-left: auto; margin-right: auto; width: 50%;">
+<img src="assets/jacked-scan.gif" style="display: block; margin-left: auto; margin-right: auto; width: 100%;">
 </p>
+
+</details>
 
 ## Output formats
 
@@ -80,10 +74,12 @@ The output format for Jacked is configurable as well using the
 The available `formats` are:
 - `table`: A columnar summary (default).
 - `json`: Use this to get as much information out of Jacked.
-- `cyclonedx-json`: Use this to get cyclonedx-json format results.
-- `cyclonedx-xml`: Use this to get cyclonedx-xml format results.
-- `spdx-json`: Use this to get spdx-json format results.
-- `spdx-xml`: Use this to get spdx-xml format results.
+- `cyclonedx-xml`: An XML report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
+- `cyclonedx-json`: A JSON report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
+- `cyclonedx-xml`: A JSON report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
+- `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
+- `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).format.
+- `spdx-xml`: A XML report conforming to the [SPDX 2.2 XML: Schema](https://github.com/mil-oss/spdx-xsd/blob/master/xml/xsd/spdx-xml-ref.xsd).format.
 ## Useful Commands and Flags 🚩
 ```
 jacked [command] [flag]
@@ -114,7 +110,7 @@ jacked version [flag] [string]
 ```
 |     Flag      |               Description                |
 | :------------ | :--------------------------------------- |
-| `-o` [string], `--output` [string] | format to display results ([text, json]) (default "text") |
+| `-o` [string], `--output` [string] | format to display results (table, json, cyclonedx-xml, cyclonedx-json, spdx-xml, spdx-json, spdx-tag-value) (default "table") |
 
 ## Configuration 🚧
 Improve using the tool based on your preferences.
@@ -125,19 +121,47 @@ Configuration search paths:
 Configuration options (example values are the default):
 
 ```yaml
-settings:
-  output: table
-  quiet: false
-  license: false
-  secret: false
+# supported output types: (table, json, cyclonedx-xml, cyclonedx-json, spdx-xml, spdx-json, spdx-tag-value) (default "table") 
+output: table
+# disables all logging except vulnerability result
+quiet: false
+# policies configurations
 ignore:
+  # ignore policy for vulnerabilities to exclude
   vulnerability:
     cve: []
     severity: []
+  # ignore policy for packages to exclude
   package:
     name: []
     type: []
     version: []
+# specify enabled parsers ([apk debian java npm composer python gem rpm dart nuget go]) (default all)
+enabled-parsers: []
+# disables file listing from package metadata
+disable-file-listing: false
+# secret configurations
+secret-config:
+  # enables/disables cataloging of secrets
+  disabled: false
+  #secret content regex are searched within files that match the provided regular expression
+  secret-regex: API_KEY|SECRET_KEY|DOCKER_AUTH
+  #excludes/includes secret searching for each specified filename
+  excludes-filenames: []
+  # set maximum file size to avoid problems with large files
+  max-file-size: 10485760
+# enable scanning of licenses
+license-finder: false
+# registry configurations
+registry:
+# registry uri endpoint
+  uri: ""
+  # username credential for private registry access
+  username: ""
+  # password credential for private registry access
+  password: ""
+  # access token for private registry access
+  token: ""
 ```
 
 ## License

@@ -8,7 +8,10 @@ func OnCheckDatabaseUpdateStart() {
 }
 
 func OnPause() {
-	spin.Pause()
+	err := spin.Pause()
+	if err != nil {
+		log.Errorln(err.Error())
+	}
 }
 
 func OnCheckDatabaseUpdateEnd(err error) {
@@ -24,7 +27,7 @@ func OnDatabaseUpdateStart() {
 }
 
 func OnDatabaseUpdateEnd(err error) {
-	spin.Start()
+	Start()
 	if err != nil {
 		spin.StopFailMessage(err.Error())
 		StopFail()

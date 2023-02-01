@@ -1,0 +1,147 @@
+project_name: jacked
+release:
+  github:
+    owner: carbonetes
+    name: jacked
+  name_template: '{{.Tag}}'
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - id: linux-builds
+    binary: jacked
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+      - ppc64le
+    env:
+      - CGO_ENABLED=0
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    ldflags:
+      - |
+        -X github.com/carbonetes/jacked/internal/version.version={{.Version}}
+        -X github.com/carbonetes/jacked/internal/version.buildDate={{.Date}}
+        -X github.com/carbonetes/jacked/internal/version.gitCommit={{.Commit}}
+        -X github.com/carbonetes/jacked/internal/version.gitDesc={{.Summary}}
+
+  - id: darwin-builds
+    binary: jacked
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - |
+        -X github.com/carbonetes/jacked/internal/version.version={{.Version}}
+        -X github.com/carbonetes/jacked/internal/version.buildDate={{.Date}}
+        -X github.com/carbonetes/jacked/internal/version.gitCommit={{.Commit}}
+        -X github.com/carbonetes/jacked/internal/version.gitDesc={{.Summary}}
+
+  - id: windows-build
+    binary: jacked
+    goos:
+      - windows
+    goarch:
+      - amd64
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - |
+        -X github.com/carbonetes/jacked/internal/version.version={{.Version}}
+        -X github.com/carbonetes/jacked/internal/version.buildDate={{.Date}}
+        -X github.com/carbonetes/jacked/internal/version.gitCommit={{.Commit}}
+        -X github.com/carbonetes/jacked/internal/version.gitDesc={{.Summary}}
+
+archives:
+  - id: tar-archives
+    builds:
+      - linux-builds
+      - darwin-builds
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    format: tar.gz
+    files:
+      - src: license*
+      - src: LICENSE*
+      - src: readme*
+      - src: README*
+      - src: changelog*
+      - src: CHANGELOG*
+
+  - id: zip-archives
+    builds:
+      - windows-build
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    format: zip
+    files:
+      - src: license*
+      - src: LICENSE*
+      - src: readme*
+      - src: README*
+      - src: changelog*
+      - src: CHANGELOG*
+
+nfpms:
+  - file_name_template: '{{ .PackageName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}'
+    package_name: jacked
+    id: default
+    formats:
+      - rpm
+      - deb
+    homepage: https://github.com/carbonetes/jacked
+    maintainer: Carbonetes
+    description: Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures.
+    license: Apache 2.0
+    bindir: /usr/bin
+
+brews:
+  - 
+    skip_upload: true   # set to true to avoid uploading while under testing
+    tap:
+      owner: carbonetes
+      name: homebrew-jacked
+      branch: main
+    folder: Formula
+    ids:
+      - tar-archives
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    homepage: https://www.carbonetes.com/
+    description: "Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures."
+    license: "Apache License 2.0"
+
+chocolateys:
+  -
+    skip_publish: true   # set to true to avoid uploading while under testing
+    authors: carbonetes
+    description: "Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures."
+    name: jacked
+    ids:
+      - zip-archives
+    project_url: https://www.carbonetes.com/
+    copyright: 2023 Carbonetes
+    license_url: https://github.com/carbonetes/jacked/blob/main/LICENSE
+    require_license_acceptance: false
+    project_source_url: https://github.com/carbonetes/jacked
+    docs_url: https://github.com/carbonetes/jacked/blob/main/README.md
+    release_notes: "https://github.com/carbonetes/jacked/releases/tag/v{{ .Version }}"
+    source_repo: "https://push.chocolatey.org/"
+
+checksum:
+  name_template: '{{.ProjectName}}_{{.Version}}_checksums.txt'
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'

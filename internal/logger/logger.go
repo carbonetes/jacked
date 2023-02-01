@@ -4,8 +4,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/carbonetes/jacked/internal/ui/spinner"
-
 	"github.com/sirupsen/logrus"
 	easy "github.com/t-tomalak/logrus-easy-formatter"
 )
@@ -27,7 +25,6 @@ func SetSimpleMode() {
 	log = &logrus.Logger{
 		Out: os.Stderr,
 		ExitFunc: func(i int) {
-			spinner.StopFail()
 			os.Exit(i)
 		},
 		Level: logrus.DebugLevel,

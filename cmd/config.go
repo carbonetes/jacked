@@ -34,6 +34,7 @@ func cfgRun(c *cobra.Command, _ []string) {
 	}
 
 	if c.Flags().Changed("display") {
+		log.Info(config.File)
 		log.Infof("%v", string(yamlcfg))
 		os.Exit(0)
 	}
@@ -47,7 +48,10 @@ func cfgRun(c *cobra.Command, _ []string) {
 		var newCfg config.Configuration
 		newCfg.ResetDefault()
 	} else {
-		c.Help()
+		err := c.Help()
+		if err != nil {
+			log.Errorln(err.Error())
+		}
 		os.Exit(0)
 	}
 }

@@ -36,13 +36,13 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	// Check database for any updates
 	db.DBCheck()
 
-	// Request for sbom through event bus
-	sbom := events.RequestSBOMAnalysis(arguments.Image)
+	// // Request for sbom through event bus
+	sbom := events.RequestSBOMAnalysis(arguments)
 
 	// Run all parsers and filters for packages
 	parser.ParseSBOM(&sbom, &packages, &secrets)
 	parser.Filter(&packages, &cfg.Ignore.Package)
-	parser.ParsePackages(&packages, &licenses, &cfg.Settings)
+	parser.ParsePackages(&packages, &licenses, cfg)
 
 	totalPackages = len(packages)
 
@@ -68,14 +68,14 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	spinner.OnVulnAnalysisEnd(nil)
 
 	// Compile the scan results based on the given configurations
-	switch *arguments.Output {
+	switch cfg.Output {
 	case "json":
-		if cfg.Settings.License && len(licenses) > 0 {
+		if cfg.LicenseFinder && len(licenses) > 0 {
 			output.Licenses = licenses
 		} else {
 			log.Print("\nNo package license has been found!")
 		}
-		if cfg.Settings.Secret && len(secrets.Secrets) > 0 {
+		if !cfg.SecretConfig.Disabled && len(secrets.Secrets) > 0 {
 			output.Secrets = &secrets
 		} else {
 			log.Print("\nNo secret has been found!")
@@ -94,6 +94,8 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		result.PrintSPDX("json", arguments.Image, results)
 	case "spdx-xml":
 		result.PrintSPDX("xml", arguments.Image, results)
+	case "spdx-tag-value":
+		result.PrintSPDX("tag-value", arguments.Image, results)
 	default:
 		log.Println()
 		if len(results) > 0 {
@@ -102,7 +104,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 			log.Print("\nNo vulnerability found!")
 		}
 
-		if cfg.Settings.License {
+		if cfg.LicenseFinder {
 			if len(licenses) > 0 {
 				table.PrintLicenses(licenses)
 			} else {
@@ -110,7 +112,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 			}
 		}
 
-		if cfg.Settings.Secret {
+		if !cfg.SecretConfig.Disabled {
 			if len(secrets.Secrets) > 0 {
 				table.PrintSecrets(secrets)
 			} else {

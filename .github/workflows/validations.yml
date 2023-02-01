@@ -1,0 +1,52 @@
+name: Validations
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+
+  Unit-Tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+        check-latest: true
+        cache: true
+
+    - name: Unit Tests
+      run: |
+        go mod tidy
+        cd test
+        go clean -testcache
+        go test -v ./...
+    
+  Lint-Check:
+      name: Lint Check
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v2
+        
+        - name: Set up Go
+          uses: actions/setup-go@v3
+          with:
+            go-version: 1.19
+            check-latest: true
+            cache: true
+        
+        - run: go mod tidy
+            
+        - uses: golangci/golangci-lint-action@v3
+          with:
+            version: latest
+            skip-pkg-cache: true
