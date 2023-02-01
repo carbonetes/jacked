@@ -11,7 +11,10 @@ import (
 // Parse package metadata and create keywords
 func parseAlpineMetadata(p *model.Package, keywords []string) []string {
 	var metadata metadata.AlpineMetadata
-	mapstructure.Decode(p.Metadata, &metadata)
+	err := mapstructure.Decode(p.Metadata, &metadata)
+	if err != nil {
+		log.Errorln(err.Error())
+	}
 	// Create keywords from specified package name and origin on the metadata if they exist
 	if len(metadata.PackageName) > 0 {
 		if !slices.Contains(keywords, metadata.PackageName) {

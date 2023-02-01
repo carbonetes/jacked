@@ -11,7 +11,10 @@ import (
 // Parse package metadata and create keywords
 func parseDebianMetadata(p *model.Package, keywords []string) []string {
 	var metadata metadata.DebianMetadata
-	mapstructure.Decode(p.Metadata, &metadata)
+	err := mapstructure.Decode(p.Metadata, &metadata)
+	if err != nil {
+		log.Errorln(err.Error())
+	}
 	// Create keyword based on the value of source in package metadata if it exist
 	if len(metadata.Source) > 0 {
 		if !slices.Contains(keywords, metadata.Source) {
