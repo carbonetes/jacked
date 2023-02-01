@@ -84,6 +84,10 @@ func extractTarGz(target, extractionPath string) {
 			log.Fatalf("Error reading tar header: %v", err)
 		}
 
+		if strings.Contains(header.Name, "..") {
+			continue
+		}
+
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if err := os.Mkdir(header.Name, 0755); err != nil {
