@@ -11,7 +11,10 @@ import (
 // Parse package metadata and create keywords
 func parseRpmMetadata(p *model.Package, keywords []string) []string {
 	var metadata metadata.RpmMetadata
-	mapstructure.Decode(p.Metadata, &metadata)
+	err := mapstructure.Decode(p.Metadata, &metadata)
+	if err != nil {
+		log.Errorln(err.Error())
+	}
 
 	/* For keywords, we can only get the specified package name on metadata for rpm packages.
 	 * But we can expand the accurary by adding more key values as keywords for each package

@@ -13,7 +13,10 @@ import (
 // Parse package metadata and create keywords and possible indicates the exact vendor for the package
 func parseJavaMetadata(p *model.Package) *model.Package {
 	var metadata metadata.JavaMetadata
-	mapstructure.Decode(p.Metadata, &metadata)
+	err := mapstructure.Decode(p.Metadata, &metadata)
+	if err != nil {
+		log.Errorln(err.Error())
+	}
 
 	// Corrections for selected packages
 	var groupId string

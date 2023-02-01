@@ -147,7 +147,7 @@ func addCPEs(pkg *model.Package) *model.Package {
 		for _, c := range pkg.CPEs {
 			cpe, err := wfn.UnbindFmtString(c)
 			if err != nil {
-				log.Errorf(err.Error())
+				log.Errorln(err.Error())
 			}
 			if cpe.Product != cpe.Vendor {
 				vendors = append(vendors, cpe.Vendor)
@@ -158,7 +158,7 @@ func addCPEs(pkg *model.Package) *model.Package {
 	for _, keyword := range pkg.Keywords {
 		newCpe, err := wfn.UnbindFmtString("cpe:2.3:a:*:*:*:*:*:*:*:*:*:*")
 		if err != nil {
-			log.Errorf(err.Error())
+			log.Errorln(err.Error())
 		}
 		if len(pkg.Vendor) > 0 {
 			newCpe.Vendor = pkg.Vendor

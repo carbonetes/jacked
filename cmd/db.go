@@ -37,7 +37,10 @@ func dbRun(c *cobra.Command, _ []string) {
 		log.Infof("%v", string(metadata))
 		os.Exit(0)
 	} else {
-		c.Help()
+		err := c.Help()
+		if err != nil {
+			log.Errorln(err.Error())
+		}
 		os.Exit(0)
 
 	}

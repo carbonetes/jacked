@@ -3,10 +3,11 @@ package table
 import (
 	"fmt"
 	"sort"
-	"strings"
 	"unicode"
 
 	"github.com/carbonetes/jacked/internal/model"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	"github.com/alexeyco/simpletable"
 )
@@ -56,9 +57,9 @@ func createTableRows(results []model.ScanResult) {
 		return results[i].Package.Name < results[j].Package.Name
 	})
 	var index int = 1
+	caser := cases.Title(language.English)
 	for _, _package := range results {
 		for _, v := range _package.Vulnerabilities {
-			s := v.CVSS.Severity
 			r := []*simpletable.Cell{
 				{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v", index)},
 				{Text: elliptical(_package.Package.Name, 33)},
@@ -66,7 +67,7 @@ func createTableRows(results []model.ScanResult) {
 				{Text: _package.Package.Type},
 				{Text: v.CVE},
 				{Text: fmt.Sprintf("%.1f", v.CVSS.BaseScore)},
-				{Text: strings.Title(strings.ToLower(s))},
+				{Text: caser.String(v.CVSS.Severity)},
 				{Text: v.VersionRange},
 			}
 			index++

@@ -97,7 +97,10 @@ func (cfg *Configuration) SetDefault() *Configuration {
 // Generate the configuration file with default values
 func (cfg *Configuration) Generate() {
 	cfg.SetDefault()
-	os.MkdirAll(filepath.Dir(File), 0700)
+	err := os.MkdirAll(filepath.Dir(File), 0700)
+	if err != nil {
+		log.Fatalf("Cannot create directory %v", err.Error())
+	}
 	out, err := os.OpenFile(File, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Fatalf("error encoding: %v", err)

@@ -34,7 +34,7 @@ func Matcher(_package *model.Package, result *[]model.Result, vulnerabilities *[
 		// Check if package cpes and vulnerability cpes are considered as matched
 		cpeMatched, err := MatchCpe(_package.CPEs, v.Cpe)
 		if err != nil {
-			log.Errorf(err.Error())
+			log.Errorln(err.Error())
 		}
 
 		/* If the correct vendor is not present in cpes, it will check vendor value if exist
