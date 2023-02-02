@@ -3,7 +3,6 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -157,7 +156,7 @@ func IsArgImageJSON(input string) bool {
 			return false
 		}
 		defer file.Close()
-		byteValue, _ := ioutil.ReadAll(file)
+		byteValue, _ := os.ReadFile(input)
 		sbom = byteValue
 		return true
 
