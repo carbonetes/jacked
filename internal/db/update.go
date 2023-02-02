@@ -31,18 +31,18 @@ func download(url string) string {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Error("Error downloading database: %v", err)
+		log.Error("Error downloading database: ", err)
 	}
 
 	bar.OnDownloading(resp.ContentLength)
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		log.Error("Error downloading database: %v", resp.Status)
+		log.Error("Error downloading database: ", resp.Status)
 	}
 
 	_, err = io.Copy(io.MultiWriter(out, bar.GetBar()), resp.Body)
 	if err != nil {
-		log.Error("Error copying downloaded data into output tar file: %v", err)
+		log.Error("Error copying downloaded data into output tar file: ", err)
 	}
 	defer out.Close()
 
