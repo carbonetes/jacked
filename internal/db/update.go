@@ -25,7 +25,7 @@ func download(url string) string {
 
 	out, err := os.OpenFile(tempFile, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Error("Error creating temporary file: %v", err)
+		log.Error("Error creating temporary file: ", err)
 	}
 	defer out.Close()
 
