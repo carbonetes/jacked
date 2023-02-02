@@ -55,7 +55,7 @@ curl -sSfL https://raw.githubusercontent.com/carbonetes/jacked/main/install.sh |
 ## Run the CLI tool 🏁
 Once you've successfully installed the Jacked and wanted to scan an image, on your terminal:
 ```
-jacked <image>
+jacked [image]
 ```
 <details>
 <summary>Jacked Running on a terminal:</summary>
@@ -65,6 +65,11 @@ jacked <image>
 </p>
 
 </details>
+
+## SBOMs can be used to speed up vulnerability scanning in Jacked.
+```
+jacked [sbom.json]
+```
 
 ## Output formats
 
@@ -79,37 +84,60 @@ The available `formats` are:
 - `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).format.
 - `spdx-xml`: A XML report conforming to the [SPDX 2.2 XML: Schema](https://github.com/mil-oss/spdx-xsd/blob/master/xml/xsd/spdx-xml-ref.xsd).format.
+
 ## Useful Commands and Flags 🚩
 ```
-jacked [command] [flag]
+jacked [flags]
+```
+|     Flag      |               Description                |
+| :------------ | :--------------------------------------- | 
+| `-d`,` --dir string` | Read directly from a path on disk (any directory) (e.g. 'jacked path/to/dir)'. |
+| `--disable-file-listing` | Disables file listing from package metadata (default false). |
+| `--enabled-parsers stringArray` | Specify enabled parsers ([apk debian java npm composer python gem rpm dart nuget go]) (default all). |
+| `-l`,` --licenses` | Enable scanning for package licenses. |
+| `-o`,` --output string` | Show scan results in "table", "json", "cyclonedx-json", "cyclonedx-xml", "spdx-json", "spdx-xml", "spdx-tag-value" format. |
+| `-q`,` --quiet` | Restore default configuration file. |
+| `--registry-password string` | Password credential for private registry access. |
+| `--registry-token string` | Access token for private registry access. |
+| `--registry-uri string` | Registry uri endpoint. |
+| `--registry-username string` | Username credential for private registry access. |
+| `--secret-exclude-filenames stringArray ` | Exclude secret searching for each specified filenames. |
+| `--secret-max-file-size int` | Maximum file size that the secret will search -- each file. |
+| `-s`,` --secrets` | Enable scanning for secrets (default true). |
+| `-t`,` --tar string` | Read a tarball from a path on disk for archives created from docker save (e.g. 'jacked path/to/image.tar)'. |
+| `-v`, ` --version` | Print application version. |
+
+
+```
+jacked [command] [flags]
 ```
 ### Available Commands and their flags with description:
 
 
 ```
-jacked config [flag]
+jacked config [flags]
 ```
 |     Flag      |               Description                |
 | :------------ | :--------------------------------------- |
-| `-d`,`--display` | Display the content of the configuration file. |
-| `-h`,`--help` | Help for configuration.       |
-| `-p`,`--path` | Display the path of the configuration file.          |
-| `-r`,`--reset` | Restore default configuration file.   |
+| `-d`,` --display` | Display the content of the configuration file. |
+| `-h`,` --help` | Help for configuration.       |
+| `-p`,` --path` | Display the path of the configuration file.          |
+| `-r`,` --reset` | Restore default configuration file.   |
 
 ```
-jacked db [flag]
+jacked db [flags]
 ```
 |       Flag        |               Description                |
 | :---------------- | :--------------------------------------- |
-| `-i`, `--info`    | Print database metadata information.     |
-| `-v`, `--version` | Print database current version.          |
+| `-i`, ` --info`    | Print database metadata information.     |
+| `-v`, ` --version` | Print database current version.          |
 
 ```
-jacked version [flag] [string]
+jacked version [flags] [string]
 ```
 |     Flag      |               Description                |
 | :------------ | :--------------------------------------- |
-| `-o` [string], `--output` [string] | format to display results (table, json, cyclonedx-xml, cyclonedx-json, spdx-xml, spdx-json, spdx-tag-value) (default "table") |
+| `-o` [string], ` --output` [string] | format to display results (table, json, cyclonedx-xml, cyclonedx-json, spdx-xml, spdx-json, spdx-tag-value) (default "table") |
 
 ## Configuration 🚧
 Improve using the tool based on your preferences.

@@ -3,6 +3,8 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/carbonetes/jacked/internal/config"
@@ -27,6 +29,7 @@ var (
 	secrets         model.SecretResults
 	totalPackages   int
 	log             = logger.GetLogger()
+	sbom            []byte
 )
 
 // Start the scan engine with the given arguments and configurations
@@ -36,8 +39,13 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	// Check database for any updates
 	db.DBCheck()
 
-	// // Request for sbom through event bus
-	sbom := events.RequestSBOMAnalysis(arguments)
+	// Check if args image is JSON File
+	var isJSON bool
+	isJSON = IsArgImageJSON(*arguments.Image)
+	if !isJSON {
+		sbom = events.RequestSBOMAnalysis(arguments)
+	}
+	// Request for sbom through event bus
 
 	// Run all parsers and filters for packages
 	parser.ParseSBOM(&sbom, &packages, &secrets)
@@ -133,4 +141,26 @@ func printJSONResult() string {
 	}
 
 	return string(jsonraw)
+}
+
+func IsArgImageJSON(input string) bool {
+
+	_, error := os.Stat(input)
+
+	if os.IsNotExist(error) {
+		return false
+	} else {
+
+		file, err := os.Open(input)
+		if err != nil {
+			// Not a File
+			return false
+		}
+		defer file.Close()
+		byteValue, _ := ioutil.ReadAll(file)
+		sbom = byteValue
+		return true
+
+	}
+
 }

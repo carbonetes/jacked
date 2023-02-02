@@ -63,8 +63,11 @@ func run(c *cobra.Command, args []string) {
 	}
 	if !strings.Contains(*arguments.Image, tagSeparator) {
 		log.Print("Using default tag:", defaultTag)
-		modifiedTag := *arguments.Image + tagSeparator + defaultTag
-		arguments.Image = &modifiedTag
+
+		if !engine.IsArgImageJSON(*arguments.Image) {
+			modifiedTag := *arguments.Image + tagSeparator + defaultTag
+			arguments.Image = &modifiedTag
+		}
 	}
 
 	engine.Start(&arguments, &cfg)
