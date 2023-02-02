@@ -39,9 +39,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	db.DBCheck()
 
 	// Check if args image is JSON File
-	var isJSON bool
-	isJSON = IsArgImageJSON(*arguments.Image)
-	if !isJSON {
+	if !IsArgImageJSON(*arguments.Image) {
 		sbom = events.RequestSBOMAnalysis(arguments)
 	}
 	// Request for sbom through event bus
