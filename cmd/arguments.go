@@ -25,6 +25,7 @@ var (
 		RegistryUsername:    new(string),
 		RegistryPassword:    new(string),
 		RegistryToken:       new(string),
+		SbomJSONFile:        new(string),
 	}
 	cfg          config.Configuration
 	outputFormat string

@@ -54,7 +54,7 @@ func run(c *cobra.Command, args []string) {
 		}
 	}
 
-	if len(args) == 0 && len(*arguments.Image) == 0 && len(*arguments.Dir) == 0 && len(*arguments.Tar) == 0 {
+	if len(args) == 0 && len(*arguments.Image) == 0 && len(*arguments.Dir) == 0 && len(*arguments.Tar) == 0 && len(*arguments.SbomJSONFile) == 0 {
 		err := c.Help()
 		if err != nil {
 			log.Errorln(err.Error())
@@ -62,9 +62,9 @@ func run(c *cobra.Command, args []string) {
 		os.Exit(0)
 	}
 	if !strings.Contains(*arguments.Image, tagSeparator) {
-		log.Print("Using default tag:", defaultTag)
 
-		if !engine.IsArgImageJSON(*arguments.Image) {
+		if !engine.IsJSON(*arguments.SbomJSONFile) {
+			log.Print("Using default tag:", defaultTag)
 			modifiedTag := *arguments.Image + tagSeparator + defaultTag
 			arguments.Image = &modifiedTag
 		}

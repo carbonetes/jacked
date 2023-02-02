@@ -68,7 +68,7 @@ jacked [image]
 
 ## SBOMs can be used to speed up vulnerability scanning in Jacked.
 ```
-jacked [sbom.json]
+jacked sbom [diggity.json]
 ```
 
 ## Output formats
@@ -91,28 +91,35 @@ jacked [flags]
 ```
 |     Flag      |               Description                |
 | :------------ | :--------------------------------------- | 
-| `-d`,` --dir string` | Read directly from a path on disk (any directory) (e.g. 'jacked path/to/dir)'. |
+| `-d`,` --dir [string]` | Read directly from a path on disk (any directory) (e.g. 'jacked path/to/dir)'. |
 | `--disable-file-listing` | Disables file listing from package metadata (default false). |
-| `--enabled-parsers stringArray` | Specify enabled parsers ([apk debian java npm composer python gem rpm dart nuget go]) (default all). |
+| `--enabled-parsers [stringArray]` | Specify enabled parsers ([apk debian java npm composer python gem rpm dart nuget go]) (default all). |
 | `-l`,` --licenses` | Enable scanning for package licenses. |
-| `-o`,` --output string` | Show scan results in "table", "json", "cyclonedx-json", "cyclonedx-xml", "spdx-json", "spdx-xml", "spdx-tag-value" format. |
+| `-o`,` --output [string]` | Show scan results in "table", "json", "cyclonedx-json", "cyclonedx-xml", "spdx-json", "spdx-xml", "spdx-tag-value" format. |
 | `-q`,` --quiet` | Restore default configuration file. |
-| `--registry-password string` | Password credential for private registry access. |
-| `--registry-token string` | Access token for private registry access. |
-| `--registry-uri string` | Registry uri endpoint. |
-| `--registry-username string` | Username credential for private registry access. |
-| `--secret-exclude-filenames stringArray ` | Exclude secret searching for each specified filenames. |
-| `--secret-max-file-size int` | Maximum file size that the secret will search -- each file. |
+| `--registry-password [string]` | Password credential for private registry access. |
+| `--registry-token [string]` | Access token for private registry access. |
+| `--registry-uri [string]` | Registry uri endpoint. |
+| `--registry-username [string]` | Username credential for private registry access. |
+| `--secret-exclude-filenames [stringArray] ` | Exclude secret searching for each specified filenames. |
+| `--secret-max-file-size [int]` | Maximum file size that the secret will search -- each file. |
 | `-s`,` --secrets` | Enable scanning for secrets (default true). |
-| `-t`,` --tar string` | Read a tarball from a path on disk for archives created from docker save (e.g. 'jacked path/to/image.tar)'. |
+| `-t`,` --tar [string]` | Read a tarball from a path on disk for archives created from docker save (e.g. 'jacked path/to/image.tar)'. |
 | `-v`, ` --version` | Print application version. |
 
 
 ```
 jacked [command] [flags]
 ```
-### Available Commands and their flags with description:
+## Available Commands and their flags with description:
 
+
+```
+jacked sbom [jsonfile] [flags]
+```
+|     Flag      |               Description                |
+| :------------ | :--------------------------------------- |
+| `-o [string]` , ` --output [string]` | Show scan results in "table", "json", "cyclonedx-json", "cyclonedx-xml", "spdx-json", "spdx-xml", "spdx-tag-value" format. |
 
 ```
 jacked config [flags]
@@ -137,7 +144,7 @@ jacked version [flags] [string]
 ```
 |     Flag      |               Description                |
 | :------------ | :--------------------------------------- |
-| `-o` [string], ` --output` [string] | format to display results (table, json, cyclonedx-xml, cyclonedx-json, spdx-xml, spdx-json, spdx-tag-value) (default "table") |
+| `-f [string]`, ` --format [string]` | format to display results (text, json) (default "text") |
 
 ## Configuration 🚧
 Improve using the tool based on your preferences.
