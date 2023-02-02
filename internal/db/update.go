@@ -25,24 +25,24 @@ func download(url string) string {
 
 	out, err := os.OpenFile(tempFile, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Error("Error creating temporary file: %v", err)
+		log.Errorf("Error creating temporary file: %v", err.Error())
 	}
 	defer out.Close()
 
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Error("Error downloading database: %v", err)
+		log.Errorf("Error downloading database: %v", err)
 	}
 
 	bar.OnDownloading(resp.ContentLength)
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		log.Error("Error downloading database: %v", resp.Status)
+		log.Errorf("Error downloading database: %v", resp.Status)
 	}
 
 	_, err = io.Copy(io.MultiWriter(out, bar.GetBar()), resp.Body)
 	if err != nil {
-		log.Error("Error copying downloaded data into output tar file: %v", err)
+		log.Errorf("Error copying downloaded data into output tar file: %v", err)
 	}
 	defer out.Close()
 
@@ -55,21 +55,21 @@ func extractTarGz(target, extractionPath string) {
 	reader, err := os.Open(target)
 
 	if err != nil {
-		log.Fatalf("Error opening tar file: %v", err)
+		log.Errorf("Error opening tar file: %v", err)
 	}
 	defer reader.Close()
 
 	fileStat, err := reader.Stat()
 
 	if err != nil {
-		log.Fatalf("Error reading file stat: %v", err)
+		log.Errorf("Error reading file stat: %v", err)
 	}
 
 	bar.OnExtracting(fileStat.Size())
 	gzipReader, err := gzip.NewReader(reader)
 
 	if err != nil {
-		log.Fatalf("Error creating gzip reader: %v", err)
+		log.Errorf("Error creating gzip reader: %v", err)
 	}
 	defer gzipReader.Close()
 
@@ -82,7 +82,7 @@ func extractTarGz(target, extractionPath string) {
 		}
 
 		if err != nil {
-			log.Fatalf("Error reading tar header: %v", err)
+			log.Errorf("Error reading tar header: %v", err)
 		}
 
 		if strings.Contains(header.Name, "..") {
@@ -92,24 +92,24 @@ func extractTarGz(target, extractionPath string) {
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if err := os.Mkdir(header.Name, 0755); err != nil {
-				log.Fatalf("Error creating directory: %v", err)
+				log.Errorf("Error creating directory: %v", err)
 			}
 		case tar.TypeReg:
 			_filepath := path.Join(extractionPath, header.Name)
 			err := os.MkdirAll(filepath.Dir(_filepath), 0700)
 			if err != nil {
-				log.Fatalf("Cannot create directory %v", err.Error())
+				log.Errorf("Cannot create directory %v", err.Error())
 			}
 			out, err := os.Create(_filepath)
 			if err != nil {
-				log.Fatalf("Error creating output file: %v", err)
+				log.Errorf("Error creating output file: %v", err)
 			}
 			if _, err := io.Copy(io.MultiWriter(out, bar.GetBar()), tarReader); err != nil {
-				log.Fatalf("Error copying uncompressed data into output file: %v", err)
+				log.Errorf("Error copying uncompressed data into output file: %v", err)
 			}
 			defer out.Close()
 		default:
-			log.Fatalf("Unknown tar header type flag")
+			log.Errorf("Unknown tar header type flag")
 		}
 	}
 
@@ -119,7 +119,7 @@ func extractTarGz(target, extractionPath string) {
 func deleteTempFile(target string) {
 	err := os.Remove(target)
 	if err != nil {
-		log.Fatalf("Error deleting temp file: %v", err)
+		log.Errorf("Error deleting temp file: %v", err)
 	}
 
 }
