@@ -79,7 +79,7 @@ func checkDelimeters(keywords []string) []string {
 			k = strings.ReplaceAll(k, "_", "-")
 			parts := strings.Split(k, "-")
 			keywords = shuffleKeywordParts(parts, keywords, "-")
-			if len(parts) > 1 {
+			if len(parts) > 2 {
 				parts = parts[:len(parts)-1]
 				keyword = strings.Join(parts, "-")
 				if !slices.Contains(keywords, keyword) {
@@ -96,7 +96,7 @@ func checkDelimeters(keywords []string) []string {
 			k = strings.ReplaceAll(k, "-", "_")
 			parts := strings.Split(k, "_")
 			// keywords = shuffleKeywordParts(parts, keywords, "_")
-			if len(parts) > 1 {
+			if len(parts) > 2 {
 				parts = parts[:len(parts)-1]
 				keyword = strings.Join(parts, "_")
 				if !slices.Contains(keywords, keyword) {
