@@ -1,14 +1,10 @@
 FROM golang:alpine as build
 
-RUN apk update
-
 WORKDIR /jacked
 
 COPY / /jacked
 
 RUN go build .
-
-CMD [ "/bin/sh" ]
 
 FROM scratch
 
