@@ -3,7 +3,6 @@ package output
 import (
 	"encoding/json"
 	"encoding/xml"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -44,18 +43,35 @@ const (
 	XMLN = "http://cyclonedx.org/schema/bom/1.4"
 )
 
+var (
+	cdxOutputBOM *cdx.BOM
+)
+
 func PrintCycloneDX(formatType string, results []model.ScanResult) {
-	cyclonedxOuput := convertPackage(results)
 
 	switch formatType {
+
+	// CycloneDX SBOM Vuln
 	case "xml":
-		result, _ := xml.MarshalIndent(cyclonedxOuput, "", " ")
-		fmt.Printf("%+v\n", string(result))
+		cdxOutputBOM = convertPackage(results)
+		result, _ := xml.MarshalIndent(cdxOutputBOM, "", " ")
+		log.Printf("%+v\n", string(result))
 	case "json":
-		result, _ := json.MarshalIndent(cyclonedxOuput, "", " ")
-		fmt.Printf("%+v\n", string(result))
+		cdxOutputBOM = convertPackage(results)
+		result, _ := json.MarshalIndent(cdxOutputBOM, "", " ")
+		log.Printf("%+v\n", string(result))
+
+	// CycloneDX VEX
+	case "vex-json":
+		cdxOutputBOM = convertPackageVex(results)
+		result, _ := json.MarshalIndent(cdxOutputBOM, "", " ")
+		log.Printf("%+v\n", string(result))
+	case "vex-xml":
+		cdxOutputBOM = convertPackageVex(results)
+		result, _ := xml.MarshalIndent(cdxOutputBOM, "", " ")
+		log.Printf("%+v\n", string(result))
 	default:
-		fmt.Printf("Format type not found")
+		log.Error("Format type not found")
 	}
 }
 
@@ -70,6 +86,7 @@ func convertPackage(results []model.ScanResult) *cdx.BOM {
 	components = append(components, addDistroComponent(parser.Distro()))
 
 	return &cdx.BOM{
+		BomFormat:    "CycloneDX",
 		XMLNS:        XMLN,
 		SerialNumber: uuid.NewString(),
 		Metadata:     getFromSource(),
@@ -221,4 +238,51 @@ func convertLicense(p *model.Package) *[]cdx.Licensecdx {
 		return &licenses
 	}
 	return nil
+}
+
+// Vex Functionality
+
+func convertToComponentVex(p *model.Package, vulns *[]model.Result) cdx.Component {
+	return cdx.Component{
+		Type:               library,
+		Name:               p.Name,
+		Version:            p.Version,
+		PackageURL:         string(p.PURL),
+		VulnerabilitiesVEX: parseVex(vulns),
+	}
+}
+
+func parseVex(vulns *[]model.Result) []cdx.VulnerabilityVEX {
+	vexs := make([]cdx.VulnerabilityVEX, 0)
+	for _, vuln := range *vulns {
+		vexs = append(vexs, cdx.VulnerabilityVEX{
+			VulnerabilityID: vuln.CVE,
+			Description:     vuln.Description,
+			BaseScore:       vuln.CVSS.BaseScore,
+			Severity:        vuln.CVSS.Severity,
+			References:      nil,
+			Source: cdx.SourceVEX{
+				Name: "NVD",
+				Url:  "https://nvd.nist.gov/vuln/detail/" + vuln.CVE,
+			},
+		})
+	}
+	return vexs
+}
+
+func convertPackageVex(results []model.ScanResult) *cdx.BOM {
+
+	// Create BOM component
+	components := make([]cdx.Component, len(results))
+	for i, result := range results {
+		components[i] = convertToComponentVex(&result.Package, &result.Vulnerabilities)
+	}
+
+	return &cdx.BOM{
+		BomFormat:    "CycloneDX",
+		XMLNS:        XMLN,
+		SerialNumber: uuid.NewString(),
+		Metadata:     getFromSource(),
+		Components:   &components,
+	}
 }

@@ -20,6 +20,7 @@ const (
 //CycloneFormat - CycloneDX Output Model
 type BOM struct {
 	// XML specific fields
+	BomFormat    string       `json:"bomFormat" xml:"bomFormat"`
 	XMLName      xml.Name     `json:"-" xml:"bom"`
 	XMLNS        string       `json:"-" xml:"xmlns,attr"`
 	SerialNumber string       `json:"serialNumber,omitempty" xml:"serialNumber,attr,omitempty"`
@@ -69,6 +70,8 @@ type Component struct {
 	Properties         *[]Property          `json:"properties,omitempty" xml:"properties>property,omitempty"`
 	Components         *[]Component         `json:"components,omitempty" xml:"components>component,omitempty"`
 	Vulnerabilities    *[]Result            `json:"vulnerabilities,omitempty" xml:"vulnerabilities>vulnerability,omitempty"`
+	// VEX
+	VulnerabilitiesVEX []VulnerabilityVEX `json:"vulnerability-exposure,omitempty" xml:"vulnerability-exposure>vulnerability,omitempty"`
 }
 
 // License - Component Licenses
@@ -93,3 +96,19 @@ type ExternalReference struct {
 
 //ExternalReferenceType - External Reference Type
 type ExternalReferenceType string
+
+// https://www.cisa.gov/sites/default/files/publications/VEX_Use_Cases_Aprill2022.pdf
+// Vulnerability details must include: Identifier of the Vulnerability (CVE or otheridentifier) and vulnerability description (e.g. CVE description).
+type VulnerabilityVEX struct {
+	VulnerabilityID string    `json:"id" xml:"id"`
+	Source          SourceVEX `json:"source" xml:"source"`
+	Description     string    `json:"description,omitempty" xml:"description,omitempty"`
+	BaseScore       float64   `json:baseScore,omitempty xml:"baseScore,omitempty"`
+	Severity        string    `json:"severity" xml:"severity"`
+	References      []string  `json:"reference" xml:"reference"`
+}
+
+type SourceVEX struct {
+	Name string `json:"name" xml:"name"`
+	Url  string `json:"url" xml:"url"`
+}

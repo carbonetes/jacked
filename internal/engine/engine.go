@@ -86,10 +86,18 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 			log.Print("\nNo vulnerability found!")
 		}
 		fmt.Printf("%v", printJSONResult())
+
+	// CycloneDX Output Formats
 	case "cyclonedx-xml":
 		result.PrintCycloneDX("xml", results)
 	case "cyclonedx-json":
 		result.PrintCycloneDX("json", results)
+	case "cyclonedx-vex-xml":
+		result.PrintCycloneDX("vex-xml", results)
+	case "cyclonedx-vex-json":
+		result.PrintCycloneDX("vex-json", results)
+
+	// SPDX Output Formats
 	case "spdx-json":
 		result.PrintSPDX("json", arguments.Image, results)
 	case "spdx-xml":
