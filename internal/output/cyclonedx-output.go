@@ -258,6 +258,7 @@ func convertToComponentVex(p *model.Package, vulns *[]model.Result) cdx.Componen
 			Response:      response,
 			Detail:        "",
 		},
+		Affects: parseAffectsVEX(vulns),
 	}
 }
 
@@ -273,7 +274,6 @@ func parseVex(vulns *[]model.Result) []cdx.VulnerabilityVEX {
 			Description: vuln.Description,
 			BaseScore:   vuln.CVSS.BaseScore,
 			Severity:    vuln.CVSS.Severity,
-			References:  nil,
 			RatingsVEX:  parseRatingsVEX(vulns),
 		})
 	}
@@ -310,4 +310,14 @@ func parseRatingsVEX(vulns *[]model.Result) []cdx.RatingVEX {
 		})
 	}
 	return ratingsVEX
+}
+
+func parseAffectsVEX(vulns *[]model.Result) []cdx.Affect {
+	affectsVEX := make([]cdx.Affect, 0)
+	for _, vuln := range *vulns {
+		affectsVEX = append(affectsVEX, cdx.Affect{
+			Ref: "urn:cdx:2c385cf7-e1ee-46e9-a51c-13de1ecb380a/1#acme-product-1" + vuln.Package,
+		})
+	}
+	return affectsVEX
 }

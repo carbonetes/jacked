@@ -130,7 +130,7 @@ type ComponentVEX struct {
 	// VEX
 	VulnerabilitiesVEX []VulnerabilityVEX `json:"vulnerability-exposure,omitempty" xml:"vulnerability-exposure>vulnerability,omitempty"`
 	AnalysisVEX        AnalysisVEX        `json:"analysis" xml:"analysis"`
-	Affects            []Affect
+	Affects            []Affect           `json:"affects" xml:"affects"`
 }
 
 // https://www.cisa.gov/sites/default/files/publications/VEX_Use_Cases_Aprill2022.pdf
@@ -168,5 +168,5 @@ type AnalysisVEX struct {
 }
 
 type Affect struct {
-	Ref []string `json:"ref" xml:"ref"`
+	Ref string `json:"ref" xml:"ref"`
 }
