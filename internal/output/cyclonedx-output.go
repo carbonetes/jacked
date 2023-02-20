@@ -313,12 +313,12 @@ func parseRatingsVEX(vuln model.Result, metadata model.PackageMetadata) model.Ra
 }
 
 func cvssMethod(version string) string {
-	value, err := strconv.ParseFloat(version, 64)
+
+	cvssValue, err := strconv.ParseFloat(version, 64)
 	if err != nil {
 		return ""
 	}
-
-	switch value {
+	switch cvssValue {
 	case 2:
 		return CVSSv2Method
 	case 3:
