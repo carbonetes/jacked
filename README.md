@@ -109,7 +109,7 @@ jacked version [flag] [string]
 ```
 |     Flag      |               Description                |
 | :------------ | :--------------------------------------- |
-| `-o` [string], `--output` [string] | format to display results (table, json, cyclonedx-xml, cyclonedx-json, spdx-xml, spdx-json, spdx-tag-value) (default "table") |
+| `-o` [string], `--output` [string] | format to display results (table, json, cyclonedx-json, cyclonedx-xml, cyclonedx-vex-json, cyclonedx-vex-xml, spdx-xml, spdx-json, spdx-tag-value) (default "table") |
 
 ## Configuration 🚧
 Improve using the tool based on your preferences.
@@ -120,7 +120,7 @@ Configuration search paths:
 Configuration options (example values are the default):
 
 ```yaml
-# supported output types: (table, json, cyclonedx-xml, cyclonedx-json, spdx-xml, spdx-json, spdx-tag-value) (default "table") 
+# supported output types: (table, json, cyclonedx-json, cyclonedx-xml, cyclonedx-vex-json, cyclonedx-vex-xml, spdx-xml, spdx-json, spdx-tag-value) (default "table") 
 output: table
 # disables all logging except vulnerability result
 quiet: false
