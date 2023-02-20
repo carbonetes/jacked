@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	// SBOM
 	vendor                                      = "carbonetes"
 	name                                        = "jacked"
 	jackedPrefix                                = "jacked"
@@ -45,6 +46,8 @@ const (
 	CVSSv2Method  string = "CVSSv2"
 	CVSSv3Method  string = "CVSSv3"
 	CVSSv31Method string = "CVSSv31"
+	// VEX BOM Version
+	vexBOMVersion string = "1"
 )
 
 var (
@@ -269,8 +272,8 @@ func parseVexBOM(results []model.ScanResult) []model.VexBOM {
 
 		for _, vuln := range result.Vulnerabilities {
 			vexsBOM = append(vexsBOM, model.VexBOM{
-				// BOM Reference use UUID with URN NameSpaceDNS
-				BomRef: uuid.NameSpaceDNS.URN(),
+				// BOM Reference Format: urn:cdx:serialNumber/version#bom-ref
+				BomRef: uuid.NameSpaceDNS.URN() + "/" + vexBOMVersion,
 				ID:     vuln.CVE,
 				SourceVEX: model.SourceVEX{
 					Name: vuln.Package,
