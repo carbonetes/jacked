@@ -256,6 +256,7 @@ func convertLicense(p *model.Package) *[]model.Licensecdx {
 	if len(licenses) > 0 {
 		return &licenses
 	}
+
 	return nil
 }
 
@@ -268,7 +269,11 @@ func parseVexBOM(results []model.ScanResult) []model.VexBOM {
 
 	vexsBOM := make([]model.VexBOM, 0)
 	for _, result := range results {
+
 		p := result.Package
+
+		// Retrieve Package Metadata for Source and Description
+		metadata := parsePackageMetada(p.Metadata)
 
 		for _, vuln := range result.Vulnerabilities {
 			vexsBOM = append(vexsBOM, model.VexBOM{
@@ -276,29 +281,30 @@ func parseVexBOM(results []model.ScanResult) []model.VexBOM {
 				BomRef: uuid.NameSpaceDNS.URN() + "/" + vexBOMVersion,
 				ID:     vuln.CVE,
 				SourceVEX: model.SourceVEX{
-					Name: vuln.Package,
+					Name: metadata.PackageOrigin,
 					Url:  "",
 				},
-				RatingVEX: parseRatingsVEX(vuln),
+				RatingVEX: parseRatingsVEX(vuln, metadata),
 				Affects: []model.Affect{
 					{
-						Ref: string(p.PURL),
+						Ref: uuid.NameSpaceDNS.URN() + "/" + vexBOMVersion + "#" + string(p.PURL),
 					},
 				},
 			})
 		}
 	}
+
 	return vexsBOM
 }
 
-func parseRatingsVEX(vuln model.Result) model.RatingVEX {
+func parseRatingsVEX(vuln model.Result, metadata model.PackageMetadata) model.RatingVEX {
 
 	return model.RatingVEX{
 		SourceVEX: model.SourceVEX{
 			Name: vuln.Package,
 			Url:  "",
 		},
-		Description: vuln.Description,
+		Description: metadata.PackageDescription,
 		BaseScore:   vuln.CVSS.BaseScore,
 		Severity:    vuln.CVSS.Severity,
 		Method:      cvssMethod(vuln.CVSS.Version),
@@ -322,4 +328,16 @@ func cvssMethod(version string) string {
 	default:
 		return OtherMethod
 	}
+}
+
+func parsePackageMetada(pMetadata interface{}) model.PackageMetadata {
+
+	var packageMetadata model.PackageMetadata
+	jsonData, _ := json.Marshal(pMetadata)
+	err := json.Unmarshal(jsonData, &packageMetadata)
+	if err != nil {
+		log.Errorf("Error decoding package metada: %v", err)
+	}
+
+	return packageMetadata
 }
