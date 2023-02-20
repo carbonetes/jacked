@@ -9,36 +9,34 @@ import (
 	"github.com/carbonetes/jacked/internal/model"
 	"github.com/carbonetes/jacked/internal/version"
 
-	cdx "github.com/carbonetes/jacked/internal/model"
-
 	parser "github.com/carbonetes/jacked/internal/parser"
 
 	"github.com/google/uuid"
 )
 
 const (
-	vendor                                    = "carbonetes"
-	name                                      = "jacked"
-	jackedPrefix                              = "jacked"
-	packagePrefix                             = "package"
-	distroPrefix                              = "distro"
-	colonPrefix                               = ":"
-	cpePrefix                                 = "cpe23"
-	locationPrefix                            = "location"
-	library              cdx.ComponentLibrary = "library"
-	operatingSystem                           = "operating-system"
-	issueTracker                              = "issue-tracker"
-	referenceWebsite                          = "website"
-	referenceOther                            = "other"
-	id                                        = ":id"
-	prettyName                                = ":prettyName"
-	distributionCodename                      = ":distributionCodename"
-	versionID                                 = "versionID"
-	support                                   = "support"
-	privacyPolicy                             = "privacyPolicy"
-	layerHash                                 = "layerHash"
-	path                                      = "path"
-	packageIdPrefix                           = "?package-id="
+	vendor                                      = "carbonetes"
+	name                                        = "jacked"
+	jackedPrefix                                = "jacked"
+	packagePrefix                               = "package"
+	distroPrefix                                = "distro"
+	colonPrefix                                 = ":"
+	cpePrefix                                   = "cpe23"
+	locationPrefix                              = "location"
+	library              model.ComponentLibrary = "library"
+	operatingSystem                             = "operating-system"
+	issueTracker                                = "issue-tracker"
+	referenceWebsite                            = "website"
+	referenceOther                              = "other"
+	id                                          = ":id"
+	prettyName                                  = ":prettyName"
+	distributionCodename                        = ":distributionCodename"
+	versionID                                   = "versionID"
+	support                                     = "support"
+	privacyPolicy                               = "privacyPolicy"
+	layerHash                                   = "layerHash"
+	path                                        = "path"
+	packageIdPrefix                             = "?package-id="
 	// XMLN cyclonedx
 	XMLN = "http://cyclonedx.org/schema/bom/1.4"
 	// CVSS Method
@@ -49,7 +47,8 @@ const (
 )
 
 var (
-	cdxOutputBOM *cdx.BOM
+	cdxOutputBOM *model.BOM
+	showVex      bool = false
 )
 
 func PrintCycloneDX(formatType string, results []model.ScanResult) {
@@ -68,22 +67,25 @@ func PrintCycloneDX(formatType string, results []model.ScanResult) {
 
 	// CycloneDX VEX
 	case "vex-json":
+		showVex = true
 		cdxOutputBOM = convertPackage(results)
 		result, _ := json.MarshalIndent(cdxOutputBOM, "", " ")
 		log.Printf("%+v\n", string(result))
 	case "vex-xml":
+		showVex = true
 		cdxOutputBOM = convertPackage(results)
 		result, _ := xml.MarshalIndent(cdxOutputBOM, "", " ")
 		log.Printf("%+v\n", string(result))
 	default:
 		log.Error("Format type not found")
 	}
+
 }
 
-func convertPackage(results []model.ScanResult) *cdx.BOM {
+func convertPackage(results []model.ScanResult) *model.BOM {
 
 	// Create BOM component
-	components := make([]cdx.Component, len(results))
+	components := make([]model.Component, len(results))
 	for i, result := range results {
 		components[i] = convertToComponent(&result.Package, &result.Vulnerabilities)
 
@@ -91,7 +93,7 @@ func convertPackage(results []model.ScanResult) *cdx.BOM {
 
 	components = append(components, addDistroComponent(parser.Distro()))
 
-	return &cdx.BOM{
+	return &model.BOM{
 		BomFormat:    "CycloneDX",
 		XMLNS:        XMLN,
 		SerialNumber: uuid.NewString(),
@@ -101,33 +103,33 @@ func convertPackage(results []model.ScanResult) *cdx.BOM {
 	}
 }
 
-func addDistroComponent(distro *model.Distro) cdx.Component {
+func addDistroComponent(distro *model.Distro) model.Component {
 
 	if distro == nil {
-		return cdx.Component{}
+		return model.Component{}
 	}
-	externalReferences := &[]cdx.ExternalReference{}
+	externalReferences := &[]model.ExternalReference{}
 	if distro.BugReportURL != "" {
-		*externalReferences = append(*externalReferences, cdx.ExternalReference{
+		*externalReferences = append(*externalReferences, model.ExternalReference{
 			URL:  distro.BugReportURL,
 			Type: issueTracker,
 		})
 	}
 	if distro.HomeURL != "" {
-		*externalReferences = append(*externalReferences, cdx.ExternalReference{
+		*externalReferences = append(*externalReferences, model.ExternalReference{
 			URL:  distro.HomeURL,
 			Type: referenceWebsite,
 		})
 	}
 	if distro.SupportURL != "" {
-		*externalReferences = append(*externalReferences, cdx.ExternalReference{
+		*externalReferences = append(*externalReferences, model.ExternalReference{
 			URL:     distro.SupportURL,
 			Type:    referenceOther,
 			Comment: support,
 		})
 	}
 	if distro.PrivacyPolicyURL != "" {
-		*externalReferences = append(*externalReferences, cdx.ExternalReference{
+		*externalReferences = append(*externalReferences, model.ExternalReference{
 			URL:     distro.PrivacyPolicyURL,
 			Type:    referenceOther,
 			Comment: privacyPolicy,
@@ -136,27 +138,27 @@ func addDistroComponent(distro *model.Distro) cdx.Component {
 	if len(*externalReferences) == 0 {
 		externalReferences = nil
 	}
-	properties := make([]cdx.Property, 0)
+	properties := make([]model.Property, 0)
 
 	// Assign ID
-	properties = append(properties, cdx.Property{
+	properties = append(properties, model.Property{
 		Name:  jackedPrefix + colonPrefix + distroPrefix + id,
 		Value: distro.ID,
 	})
-	properties = append(properties, cdx.Property{
+	properties = append(properties, model.Property{
 		Name:  jackedPrefix + colonPrefix + distroPrefix + prettyName,
 		Value: distro.PrettyName,
 	})
-	properties = append(properties, cdx.Property{
+	properties = append(properties, model.Property{
 		Name:  jackedPrefix + colonPrefix + distroPrefix + distributionCodename,
 		Value: distro.DistribCodename,
 	})
-	properties = append(properties, cdx.Property{
+	properties = append(properties, model.Property{
 		Name:  jackedPrefix + colonPrefix + distroPrefix + versionID,
 		Value: distro.VersionID,
 	})
 
-	return cdx.Component{
+	return model.Component{
 		Type:               operatingSystem,
 		Name:               distro.ID,
 		Description:        distro.PrettyName,
@@ -165,12 +167,12 @@ func addDistroComponent(distro *model.Distro) cdx.Component {
 	}
 }
 
-func getFromSource() *cdx.Metadata {
+func getFromSource() *model.Metadata {
 	//temp data-- data should come from final bom model
 	versionInfo := version.GetBuild()
-	return &cdx.Metadata{
+	return &model.Metadata{
 		Timestamp: time.Now().Format(time.RFC3339),
-		Tools: &[]cdx.Tool{
+		Tools: &[]model.Tool{
 			{
 				Vendor:  vendor,
 				Name:    name,
@@ -180,8 +182,14 @@ func getFromSource() *cdx.Metadata {
 	}
 }
 
-func convertToComponent(p *model.Package, vulns *[]model.Result) cdx.Component {
-	return cdx.Component{
+func convertToComponent(p *model.Package, vulns *[]model.Result) model.Component {
+
+	// Removing Vulnerabilities included inside SBOM Packages
+	if showVex {
+		vulns = nil
+	}
+
+	return model.Component{
 		BOMRef:          addID(p),
 		Type:            library,
 		Name:            p.Name,
@@ -193,18 +201,18 @@ func convertToComponent(p *model.Package, vulns *[]model.Result) cdx.Component {
 	}
 }
 
-func initProperties(p *model.Package) *[]cdx.Property {
-	properties := make([]cdx.Property, 0)
+func initProperties(p *model.Package) *[]model.Property {
+	properties := make([]model.Property, 0)
 
 	// Assign Type
-	properties = append(properties, cdx.Property{
+	properties = append(properties, model.Property{
 		Name:  jackedPrefix + colonPrefix + cpePrefix,
 		Value: p.Type,
 	})
 
 	// Assign CPEs
 	for _, cpe := range p.CPEs {
-		properties = append(properties, cdx.Property{
+		properties = append(properties, model.Property{
 			Name:  jackedPrefix + colonPrefix + cpePrefix,
 			Value: cpe,
 		})
@@ -215,13 +223,13 @@ func initProperties(p *model.Package) *[]cdx.Property {
 		index := strconv.Itoa(i)
 
 		// Add Hash
-		properties = append(properties, cdx.Property{
+		properties = append(properties, model.Property{
 			Name:  jackedPrefix + colonPrefix + locationPrefix + colonPrefix + index + colonPrefix + layerHash,
 			Value: location.LayerHash,
 		})
 
 		//Add Path
-		properties = append(properties, cdx.Property{
+		properties = append(properties, model.Property{
 			Name:  jackedPrefix + colonPrefix + locationPrefix + colonPrefix + index + colonPrefix + path,
 			Value: location.Path,
 		})
@@ -233,11 +241,11 @@ func addID(p *model.Package) string {
 	return string(p.PURL) + packageIdPrefix + p.ID
 }
 
-func convertLicense(p *model.Package) *[]cdx.Licensecdx {
+func convertLicense(p *model.Package) *[]model.Licensecdx {
 
-	licenses := make([]cdx.Licensecdx, 0)
+	licenses := make([]model.Licensecdx, 0)
 	for _, licenseName := range p.Licenses {
-		licenses = append(licenses, cdx.Licensecdx{
+		licenses = append(licenses, model.Licensecdx{
 			ID: licenseName,
 		})
 	}
@@ -248,21 +256,26 @@ func convertLicense(p *model.Package) *[]cdx.Licensecdx {
 }
 
 // Vex Functionality
-func parseVexBOM(results []model.ScanResult) []cdx.VexBOM {
-	vexsBOM := make([]cdx.VexBOM, 0)
+func parseVexBOM(results []model.ScanResult) []model.VexBOM {
+	log.Print(showVex)
+	if !showVex {
+		return nil
+	}
+
+	vexsBOM := make([]model.VexBOM, 0)
 	for _, result := range results {
 		p := result.Package
 
 		for _, vuln := range result.Vulnerabilities {
-			vexsBOM = append(vexsBOM, cdx.VexBOM{
-				BomRef: uuid.NewString(),
+			vexsBOM = append(vexsBOM, model.VexBOM{
+				BomRef: uuid.NameSpaceDNS.URN(),
 				ID:     vuln.CVE,
-				SourceVEX: cdx.SourceVEX{
+				SourceVEX: model.SourceVEX{
 					Name: vuln.Package,
 					Url:  "",
 				},
 				RatingVEX: parseRatingsVEX(vuln),
-				Affects: []cdx.Affect{
+				Affects: []model.Affect{
 					{
 						Ref: string(p.PURL),
 					},
@@ -273,29 +286,10 @@ func parseVexBOM(results []model.ScanResult) []cdx.VexBOM {
 	return vexsBOM
 }
 
-func convertPackageVex(results []model.ScanResult) *cdx.BOM {
+func parseRatingsVEX(vuln model.Result) model.RatingVEX {
 
-	// Create SBOM component and VEX
-	components := make([]cdx.Component, len(results))
-	for i, result := range results {
-		components[i] = convertToComponent(&result.Package, nil)
-	}
-
-	components = append(components, addDistroComponent(parser.Distro()))
-
-	return &cdx.BOM{
-		BomFormat:    "CycloneDX",
-		XMLNS:        XMLN,
-		SerialNumber: uuid.NewString(),
-		Metadata:     getFromSource(),
-		Components:   &components,
-	}
-}
-
-func parseRatingsVEX(vuln cdx.Result) cdx.RatingVEX {
-
-	return cdx.RatingVEX{
-		SourceVEX: cdx.SourceVEX{
+	return model.RatingVEX{
+		SourceVEX: model.SourceVEX{
 			Name: vuln.Package,
 			Url:  "",
 		},
