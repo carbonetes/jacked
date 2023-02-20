@@ -3,6 +3,7 @@ package output
 import (
 	"encoding/json"
 	"encoding/xml"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -278,12 +279,9 @@ func parseVexBOM(results []model.ScanResult) []model.VexBOM {
 		for _, vuln := range result.Vulnerabilities {
 			vexsBOM = append(vexsBOM, model.VexBOM{
 				// BOM Reference Format: urn:cdx:serialNumber/version#bom-ref
-				BomRef: uuid.NameSpaceDNS.URN() + "/" + vexBOMVersion,
-				ID:     vuln.CVE,
-				SourceVEX: model.SourceVEX{
-					Name: metadata.PackageOrigin,
-					Url:  "",
-				},
+				BomRef:    uuid.NameSpaceDNS.URN() + "/" + vexBOMVersion,
+				ID:        vuln.CVE,
+				SourceVEX: generateSourceVex(vuln.CVE),
 				RatingVEX: parseRatingsVEX(vuln, metadata),
 				Affects: []model.Affect{
 					{
@@ -340,4 +338,18 @@ func parsePackageMetada(pMetadata interface{}) model.PackageMetadata {
 	}
 
 	return packageMetadata
+}
+
+func generateSourceVex(cveId string) model.SourceVEX {
+
+	// NVD as generated source name and url
+	re := regexp.MustCompile(`CVE`)
+	if re.MatchString(cveId) {
+		return model.SourceVEX{
+			Name: "NVD",
+			Url:  "https://nvd.nist.gov/vuln/detail/" + cveId,
+		}
+	}
+	return model.SourceVEX{}
+
 }
