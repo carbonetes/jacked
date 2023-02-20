@@ -37,6 +37,7 @@ const (
 	layerHash                                   = "layerHash"
 	path                                        = "path"
 	packageIdPrefix                             = "?package-id="
+	cyclonedx                                   = "CycloneDX"
 	// XMLN cyclonedx
 	XMLN = "http://cyclonedx.org/schema/bom/1.4"
 	// CVSS Method
@@ -94,7 +95,7 @@ func convertPackage(results []model.ScanResult) *model.BOM {
 	components = append(components, addDistroComponent(parser.Distro()))
 
 	return &model.BOM{
-		BomFormat:    "CycloneDX",
+		BomFormat:    cyclonedx,
 		XMLNS:        XMLN,
 		SerialNumber: uuid.NewString(),
 		Metadata:     getFromSource(),
@@ -257,7 +258,7 @@ func convertLicense(p *model.Package) *[]model.Licensecdx {
 
 // Vex Functionality
 func parseVexBOM(results []model.ScanResult) []model.VexBOM {
-	log.Print(showVex)
+
 	if !showVex {
 		return nil
 	}
@@ -268,6 +269,7 @@ func parseVexBOM(results []model.ScanResult) []model.VexBOM {
 
 		for _, vuln := range result.Vulnerabilities {
 			vexsBOM = append(vexsBOM, model.VexBOM{
+				// BOM Reference use UUID with URN NameSpaceDNS
 				BomRef: uuid.NameSpaceDNS.URN(),
 				ID:     vuln.CVE,
 				SourceVEX: model.SourceVEX{
