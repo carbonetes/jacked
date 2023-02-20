@@ -19,13 +19,14 @@ const (
 
 //CycloneFormat - CycloneDX Output Model
 type BOM struct {
-	// XML specific fields
+	// SBOM
 	BomFormat    string       `json:"bomFormat" xml:"bomFormat"`
 	XMLName      xml.Name     `json:"-" xml:"bom"`
 	XMLNS        string       `json:"-" xml:"xmlns,attr"`
 	SerialNumber string       `json:"serialNumber,omitempty" xml:"serialNumber,attr,omitempty"`
 	Metadata     *Metadata    `json:"metadata,omitempty" xml:"metadata,omitempty"`
 	Components   *[]Component `json:"components,omitempty" xml:"components>component,omitempty"`
+	VEX          []VexBOM     `json:"vex,omitempty" xml:"vexs>vex,omitempty"` // VEX
 }
 
 // Metadata - cyclone format metadata
@@ -95,51 +96,21 @@ type ExternalReference struct {
 //ExternalReferenceType - External Reference Type
 type ExternalReferenceType string
 
-// VEX model
-
-type BOMVEX struct {
-	// XML specific fields
-	BomFormat    string          `json:"bomFormat" xml:"bomFormat"`
-	XMLName      xml.Name        `json:"-" xml:"bom"`
-	XMLNS        string          `json:"-" xml:"xmlns,attr"`
-	SerialNumber string          `json:"serialNumber,omitempty" xml:"serialNumber,attr,omitempty"`
-	Metadata     *Metadata       `json:"metadata,omitempty" xml:"metadata,omitempty"`
-	Components   *[]ComponentVEX `json:"components,omitempty" xml:"components>component,omitempty"`
-}
-
-// Component - CycloneFormat component
-type ComponentVEX struct {
-	BOMRef             string               `json:"bom-ref,omitempty" xml:"bom-ref,attr,omitempty"`
-	MIMEType           string               `json:"mime-type,omitempty" xml:"mime-type,attr,omitempty"`
-	Type               ComponentLibrary     `json:"type" xml:"type,attr"`
-	Author             string               `json:"author,omitempty" xml:"author,omitempty"`
-	Publisher          string               `json:"publisher,omitempty" xml:"publisher,omitempty"`
-	Group              string               `json:"group,omitempty" xml:"group,omitempty"`
-	Name               string               `json:"name" xml:"name"`
-	Version            string               `json:"version,omitempty" xml:"version,omitempty"`
-	Description        string               `json:"description,omitempty" xml:"description,omitempty"`
-	Licenses           *[]Licensecdx        `json:"licenses,omitempty" xml:"licenses>license,omitempty"`
-	Copyright          string               `json:"copyright,omitempty" xml:"copyright,omitempty"`
-	CPE                string               `json:"cpe,omitempty" xml:"cpe,omitempty"`
-	PackageURL         string               `json:"purl,omitempty" xml:"purl,omitempty"`
-	ExternalReferences *[]ExternalReference `json:"externalReferences,omitempty" xml:"externalReferences>reference,omitempty"`
-	Modified           *bool                `json:"modified,omitempty" xml:"modified,omitempty"`
-	Properties         *[]Property          `json:"properties,omitempty" xml:"properties>property,omitempty"`
-	Components         *[]Component         `json:"components,omitempty" xml:"components>component,omitempty"`
-	Vulnerabilities    *[]Result            `json:"vulnerabilities,omitempty" xml:"vulnerabilities>vulnerability,omitempty"`
-	// VEX
+// VEX Model
+type VexBOM struct {
+	BomRef             string             `json:"bom-ref" xml:"bom-ref"`
+	ID                 string             `json:"id" xml:"id"`
+	SourceVEX          SourceVEX          `json:"source" xml:"source"`
+	RatingVEX          RatingVEX          `json:"ratings" xml:"ratings"`
 	VulnerabilitiesVEX []VulnerabilityVEX `json:"vulnerability-exposure,omitempty" xml:"vulnerability-exposure>vulnerability,omitempty"`
-	AnalysisVEX        AnalysisVEX        `json:"analysis" xml:"analysis"`
 	Affects            []Affect           `json:"affects" xml:"affects"`
 }
 
-// https://www.cisa.gov/sites/default/files/publications/VEX_Use_Cases_Aprill2022.pdf
-// Vulnerability details must include: Identifier of the Vulnerability (CVE or otheridentifier) and vulnerability description (e.g. CVE description).
 type VulnerabilityVEX struct {
 	VulnerabilityID string      `json:"id" xml:"id"`
 	Source          SourceVEX   `json:"source" xml:"source"`
 	Description     string      `json:"description,omitempty" xml:"description,omitempty"`
-	BaseScore       float64     `json:baseScore,omitempty xml:"baseScore,omitempty"`
+	BaseScore       float64     `json:"base_score,omitempty" xml:"base_score,omitempty"`
 	Severity        string      `json:"severity" xml:"severity"`
 	References      []string    `json:"reference" xml:"reference"`
 	RatingsVEX      []RatingVEX `json:"ratings" xml:"ratings"`
@@ -152,12 +123,11 @@ type SourceVEX struct {
 
 type RatingVEX struct {
 	SourceVEX   SourceVEX `json:"source" xml:"source"`
-	Description string    `json:"description,omitempty" xml:"description,omitempty"`
-	BaseScore   float64   `json:baseScore,omitempty xml:"baseScore,omitempty"`
+	Description string    `json:"description" xml:"description"`
+	BaseScore   float64   `json:"base_score,omitempty" xml:"base_score,omitempty"`
 	Severity    string    `json:"severity" xml:"severity"`
 	Method      string    `json:"method" xml:"method"` // e.g. CVSSv31,
 	Vector      string    `json:"vector" xml:"vector"` // AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A
-
 }
 
 type AnalysisVEX struct {

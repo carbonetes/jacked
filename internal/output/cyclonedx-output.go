@@ -41,11 +41,15 @@ const (
 	packageIdPrefix                           = "?package-id="
 	// XMLN cyclonedx
 	XMLN = "http://cyclonedx.org/schema/bom/1.4"
+	// CVSS Method
+	OtherMethod   string = "other"
+	CVSSv2Method  string = "CVSSv2"
+	CVSSv3Method  string = "CVSSv3"
+	CVSSv31Method string = "CVSSv31"
 )
 
 var (
-	cdxOutputBOM    *cdx.BOM
-	cdxOutputBOMVEX *cdx.BOMVEX
+	cdxOutputBOM *cdx.BOM
 )
 
 func PrintCycloneDX(formatType string, results []model.ScanResult) {
@@ -64,12 +68,12 @@ func PrintCycloneDX(formatType string, results []model.ScanResult) {
 
 	// CycloneDX VEX
 	case "vex-json":
-		cdxOutputBOMVEX = convertPackageVex(results)
-		result, _ := json.MarshalIndent(cdxOutputBOMVEX, "", " ")
+		cdxOutputBOM = convertPackage(results)
+		result, _ := json.MarshalIndent(cdxOutputBOM, "", " ")
 		log.Printf("%+v\n", string(result))
 	case "vex-xml":
-		cdxOutputBOMVEX = convertPackageVex(results)
-		result, _ := xml.MarshalIndent(cdxOutputBOMVEX, "", " ")
+		cdxOutputBOM = convertPackage(results)
+		result, _ := xml.MarshalIndent(cdxOutputBOM, "", " ")
 		log.Printf("%+v\n", string(result))
 	default:
 		log.Error("Format type not found")
@@ -82,6 +86,7 @@ func convertPackage(results []model.ScanResult) *cdx.BOM {
 	components := make([]cdx.Component, len(results))
 	for i, result := range results {
 		components[i] = convertToComponent(&result.Package, &result.Vulnerabilities)
+
 	}
 
 	components = append(components, addDistroComponent(parser.Distro()))
@@ -92,6 +97,7 @@ func convertPackage(results []model.ScanResult) *cdx.BOM {
 		SerialNumber: uuid.NewString(),
 		Metadata:     getFromSource(),
 		Components:   &components,
+		VEX:          parseVexBOM(results),
 	}
 }
 
@@ -242,53 +248,42 @@ func convertLicense(p *model.Package) *[]cdx.Licensecdx {
 }
 
 // Vex Functionality
+func parseVexBOM(results []model.ScanResult) []cdx.VexBOM {
+	vexsBOM := make([]cdx.VexBOM, 0)
+	for _, result := range results {
+		p := result.Package
 
-func convertToComponentVex(p *model.Package, vulns *[]model.Result) cdx.ComponentVEX {
-
-	response := []string{"will_not_fix", "update"}
-	return cdx.ComponentVEX{
-		Type:               library,
-		Name:               p.Name,
-		Version:            p.Version,
-		PackageURL:         string(p.PURL),
-		VulnerabilitiesVEX: parseVex(vulns),
-		AnalysisVEX: cdx.AnalysisVEX{
-			State:         "",
-			Justification: "",
-			Response:      response,
-			Detail:        "",
-		},
-		Affects: parseAffectsVEX(vulns),
+		for _, vuln := range result.Vulnerabilities {
+			vexsBOM = append(vexsBOM, cdx.VexBOM{
+				BomRef: uuid.NewString(),
+				ID:     vuln.CVE,
+				SourceVEX: cdx.SourceVEX{
+					Name: vuln.Package,
+					Url:  "",
+				},
+				RatingVEX: parseRatingsVEX(vuln),
+				Affects: []cdx.Affect{
+					{
+						Ref: string(p.PURL),
+					},
+				},
+			})
+		}
 	}
+	return vexsBOM
 }
 
-func parseVex(vulns *[]model.Result) []cdx.VulnerabilityVEX {
-	vexs := make([]cdx.VulnerabilityVEX, 0)
-	for _, vuln := range *vulns {
-		vexs = append(vexs, cdx.VulnerabilityVEX{
-			VulnerabilityID: vuln.CVE,
-			Source: cdx.SourceVEX{
-				Name: "NVD",
-				Url:  "https://nvd.nist.gov/vuln/detail/" + vuln.CVE,
-			},
-			Description: vuln.Description,
-			BaseScore:   vuln.CVSS.BaseScore,
-			Severity:    vuln.CVSS.Severity,
-			RatingsVEX:  parseRatingsVEX(vulns),
-		})
-	}
-	return vexs
-}
+func convertPackageVex(results []model.ScanResult) *cdx.BOM {
 
-func convertPackageVex(results []model.ScanResult) *cdx.BOMVEX {
-
-	// Create BOM component
-	components := make([]cdx.ComponentVEX, len(results))
+	// Create SBOM component and VEX
+	components := make([]cdx.Component, len(results))
 	for i, result := range results {
-		components[i] = convertToComponentVex(&result.Package, &result.Vulnerabilities)
+		components[i] = convertToComponent(&result.Package, nil)
 	}
 
-	return &cdx.BOMVEX{
+	components = append(components, addDistroComponent(parser.Distro()))
+
+	return &cdx.BOM{
 		BomFormat:    "CycloneDX",
 		XMLNS:        XMLN,
 		SerialNumber: uuid.NewString(),
@@ -297,27 +292,35 @@ func convertPackageVex(results []model.ScanResult) *cdx.BOMVEX {
 	}
 }
 
-func parseRatingsVEX(vulns *[]model.Result) []cdx.RatingVEX {
-	ratingsVEX := make([]cdx.RatingVEX, 0)
-	for _, vuln := range *vulns {
-		ratingsVEX = append(ratingsVEX, cdx.RatingVEX{
-			SourceVEX: cdx.SourceVEX{
-				Name: "NVD",
-				Url:  "https://nvd.nist.gov/vuln-metrics/cvss/v3-calculator?vector=AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N&version=3.1",
-			},
-			BaseScore: vuln.CVSS.BaseScore,
-			Severity:  vuln.CVSS.Severity,
-		})
+func parseRatingsVEX(vuln cdx.Result) cdx.RatingVEX {
+
+	return cdx.RatingVEX{
+		SourceVEX: cdx.SourceVEX{
+			Name: vuln.Package,
+			Url:  "",
+		},
+		Description: vuln.Description,
+		BaseScore:   vuln.CVSS.BaseScore,
+		Severity:    vuln.CVSS.Severity,
+		Method:      cvssMethod(vuln.CVSS.Version),
+		Vector:      "",
 	}
-	return ratingsVEX
 }
 
-func parseAffectsVEX(vulns *[]model.Result) []cdx.Affect {
-	affectsVEX := make([]cdx.Affect, 0)
-	for _, vuln := range *vulns {
-		affectsVEX = append(affectsVEX, cdx.Affect{
-			Ref: "urn:cdx:2c385cf7-e1ee-46e9-a51c-13de1ecb380a/1#acme-product-1" + vuln.Package,
-		})
+func cvssMethod(version string) string {
+	value, err := strconv.ParseFloat(version, 64)
+	if err != nil {
+		return ""
 	}
-	return affectsVEX
+
+	switch value {
+	case 2:
+		return CVSSv2Method
+	case 3:
+		return CVSSv3Method
+	case 3.1:
+		return CVSSv31Method
+	default:
+		return OtherMethod
+	}
 }
