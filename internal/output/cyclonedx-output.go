@@ -287,7 +287,7 @@ func parseVexBOM(results []model.ScanResult) []model.VexBOM {
 				Description:    parseDescription(metadata.PackageDescription),
 				Detail:         nil,
 				Recommendation: nil,
-				Advisories:     nil,
+				Advisories:     generateAdvisoryVex(vuln.CVE),
 				CreatedVEX:     "",
 				PublishedVEX:   "",
 				UpdatedVEX:     "",
@@ -370,5 +370,30 @@ func generateSourceVex(cveId string) model.SourceVEX {
 		}
 	}
 	return model.SourceVEX{}
+
+}
+
+func generateAdvisoryVex(cveId string) *[]model.AdvisoryVEX {
+
+	// Advisory Sources
+	cveAdvisories := []model.AdvisoryVEX{
+		{Title: "NVD", Url: "https://nvd.nist.gov/vuln/detail/"},
+		{Title: "MITRE", Url: "https://cve.mitre.org/cgi-bin/cvename.cgi?name="},
+		{Title: "Debian", Url: "https://security-tracker.debian.org/tracker/"},
+		{Title: "RedHat", Url: "https://access.redhat.com/security/cve/"},
+	}
+
+	//  Generated advisory title and url
+	advisories := make([]model.AdvisoryVEX, 0)
+	re := regexp.MustCompile(`CVE`)
+	if re.MatchString(cveId) {
+		for _, cveAdvisory := range cveAdvisories {
+			cveAdvisory.Url = cveAdvisory.Url + cveId
+			advisories = append(advisories, cveAdvisory)
+		}
+
+		return &advisories
+	}
+	return nil
 
 }

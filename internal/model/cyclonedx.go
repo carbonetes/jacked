@@ -106,7 +106,7 @@ type VexBOM struct {
 	Description        *string            `json:"description,omitempty" xml:"description,omitempty"`
 	Detail             *string            `json:"detail,omitempty" xml:"detail,omitempty"`
 	Recommendation     *string            `json:"recommendation,omitempty" xml:"recommendation,omitempty"`
-	Advisories         *[]AdvisoryVEX     `json:"advisory,omitempty" xml:"advisory,omitempty"`
+	Advisories         *[]AdvisoryVEX     `json:"advisories,omitempty" xml:"advisories>advisory,omitempty"`
 	VulnerabilitiesVEX []VulnerabilityVEX `json:"vulnerability-exposure,omitempty" xml:"vulnerability-exposure>vulnerability,omitempty"`
 	AnalysisVEX        *AnalysisVEX       `json:"analysis,omitempty" xml:"analysis,omitempty"`
 	AffectsVEX         []AffectVEX        `json:"affects" xml:"affects"`
@@ -170,5 +170,5 @@ type OrganizationalEntityVEX struct {
 
 type AdvisoryVEX struct {
 	Title string `json:"title,omitempty" xml:"title,omitempty"`
-	URL   string `json:"url" xml:"url"`
+	Url   string `json:"url" xml:"url"`
 }
