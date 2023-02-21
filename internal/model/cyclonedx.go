@@ -101,9 +101,20 @@ type VexBOM struct {
 	BomRef             string             `json:"bom-ref" xml:"bom-ref"`
 	ID                 string             `json:"id" xml:"id"`
 	SourceVEX          SourceVEX          `json:"source" xml:"source"`
-	RatingVEX          RatingVEX          `json:"ratings" xml:"ratings"`
+	RatingsVEX         RatingVEX          `json:"ratings" xml:"ratings"`
+	CWEs               *[]int             `json:"cwes,omitempty" xml:"cwes>cwe,omitempty"`
+	Description        *string            `json:"description,omitempty" xml:"description,omitempty"`
+	Detail             *string            `json:"detail,omitempty" xml:"detail,omitempty"`
+	Recommendation     *string            `json:"recommendation,omitempty" xml:"recommendation,omitempty"`
+	Advisories         *[]AdvisoryVEX     `json:"advisory,omitempty" xml:"advisory,omitempty"`
 	VulnerabilitiesVEX []VulnerabilityVEX `json:"vulnerability-exposure,omitempty" xml:"vulnerability-exposure>vulnerability,omitempty"`
-	Affects            []Affect           `json:"affects" xml:"affects"`
+	AnalysisVEX        *AnalysisVEX       `json:"analysis,omitempty" xml:"analysis,omitempty"`
+	AffectsVEX         []AffectVEX        `json:"affects" xml:"affects"`
+	CreatedVEX         string             `json:"created,omitempty" xml:"created,omitempty"`
+	PublishedVEX       string             `json:"published,omitempty" xml:"published,omitempty"`
+	UpdatedVEX         string             `json:"updated,omitempty" xml:"updated,omitempty"`
+	CreditsVEX         *CreditsVEX        `json:"credits,omitempty" xml:"credits,omitempty"`
+	ToolsVEX           *[]Tool            `json:"tools,omitempty" xml:"tools>tool,omitempty"`
 }
 
 type VulnerabilityVEX struct {
@@ -123,20 +134,41 @@ type SourceVEX struct {
 
 type RatingVEX struct {
 	SourceVEX   SourceVEX `json:"source" xml:"source"`
-	Description string    `json:"description" xml:"description"`
+	Description *string   `json:"description,omitempty" xml:"description,omitempty"` // Package Description
 	BaseScore   float64   `json:"base_score,omitempty" xml:"base_score,omitempty"`
 	Severity    string    `json:"severity" xml:"severity"`
-	Method      string    `json:"method" xml:"method"` // e.g. CVSSv31,
-	Vector      string    `json:"vector" xml:"vector"` // AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A
+	Method      string    `json:"method" xml:"method"`                     // e.g. CVSSv31,
+	Vector      string    `json:"vector,omitempty" xml:"vector,omitempty"` // AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A
 }
 
 type AnalysisVEX struct {
-	State         string   `json:"state" xml:"state"` // affected, not_affected
-	Justification string   `json:"justification" xml:"justification"`
-	Response      []string `json:"response" xml:"response"` // ["will_not_fix", "update"]
-	Detail        string   `json:"detail" xml:"detail"`
+	State         string   `json:"state,omitempty" xml:"state,omitempty"` // affected, not_affected
+	Justification string   `json:"justification,omitempty" xml:"justification,omitempty"`
+	Response      []string `json:"response,omitempty" xml:"response,omitempty"` // ["will_not_fix", "update"]
+	Detail        string   `json:"detail,omitempty" xml:"detail,omitempty"`     // Vulnerability Detail
 }
 
-type Affect struct {
+type AffectVEX struct {
 	Ref string `json:"ref" xml:"ref"`
+}
+
+type CreditsVEX struct {
+	Organizations *[]OrganizationalEntityVEX `json:"organizations,omitempty" xml:"organizations>organization,omitempty"`
+	Individuals   *[]IndividualContactVEX    `json:"individuals,omitempty" xml:"individuals>individual,omitempty"`
+}
+type IndividualContactVEX struct {
+	Name  string `json:"name,omitempty" xml:"name,omitempty"`
+	Email string `json:"email,omitempty" xml:"email,omitempty"`
+	Phone string `json:"phone,omitempty" xml:"phone,omitempty"`
+}
+
+type OrganizationalEntityVEX struct {
+	Name    string                  `json:"name" xml:"name"`
+	URL     *[]string               `json:"url,omitempty" xml:"url,omitempty"`
+	Contact *[]IndividualContactVEX `json:"contact,omitempty" xml:"contact,omitempty"`
+}
+
+type AdvisoryVEX struct {
+	Title string `json:"title,omitempty" xml:"title,omitempty"`
+	URL   string `json:"url" xml:"url"`
 }

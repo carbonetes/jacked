@@ -279,11 +279,22 @@ func parseVexBOM(results []model.ScanResult) []model.VexBOM {
 		for _, vuln := range result.Vulnerabilities {
 			vexsBOM = append(vexsBOM, model.VexBOM{
 				// BOM Reference Format: urn:cdx:serialNumber/version#bom-ref
-				BomRef:    uuid.NameSpaceDNS.URN() + "/" + vexBOMVersion,
-				ID:        vuln.CVE,
-				SourceVEX: generateSourceVex(vuln.CVE),
-				RatingVEX: parseRatingsVEX(vuln, metadata),
-				Affects: []model.Affect{
+				BomRef:         uuid.NameSpaceDNS.URN() + "/" + vexBOMVersion,
+				ID:             vuln.CVE,
+				SourceVEX:      generateSourceVex(vuln.CVE),
+				RatingsVEX:     parseRatingsVEX(vuln, metadata),
+				CWEs:           nil,
+				Description:    parseDescription(metadata.PackageDescription),
+				Detail:         nil,
+				Recommendation: nil,
+				Advisories:     nil,
+				CreatedVEX:     "",
+				PublishedVEX:   "",
+				UpdatedVEX:     "",
+				CreditsVEX:     nil,
+				ToolsVEX:       nil,
+				AnalysisVEX:    nil,
+				AffectsVEX: []model.AffectVEX{
 					{
 						Ref: uuid.NameSpaceDNS.URN() + "/" + vexBOMVersion + "#" + string(p.PURL),
 					},
@@ -299,15 +310,23 @@ func parseRatingsVEX(vuln model.Result, metadata model.PackageMetadata) model.Ra
 
 	return model.RatingVEX{
 		SourceVEX: model.SourceVEX{
-			Name: vuln.Package,
+			Name: "",
 			Url:  "",
 		},
-		Description: metadata.PackageDescription,
+		Description: parseDescription(vuln.Description),
 		BaseScore:   vuln.CVSS.BaseScore,
 		Severity:    vuln.CVSS.Severity,
 		Method:      cvssMethod(vuln.CVSS.Version),
 		Vector:      "",
 	}
+}
+
+func parseDescription(description string) *string {
+	// Returns nil on empty string
+	if description != "" {
+		return &description
+	}
+	return nil
 }
 
 func cvssMethod(version string) string {
