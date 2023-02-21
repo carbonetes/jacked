@@ -17,7 +17,7 @@ Jacked provides organizations with a more comprehensive look at their applicatio
 
 # Installation 📥
 
-## Installation Support OS 💽
+## Installation Support OS 💽 :
 - Mac
   - darwin_amd64.tar.gz
   - darwin_arm64.tar.gz
