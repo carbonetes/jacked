@@ -377,10 +377,7 @@ func generateAdvisoryVex(cveId string) *[]model.AdvisoryVEX {
 
 	// Advisory Sources
 	cveAdvisories := []model.AdvisoryVEX{
-		{Title: "NVD", Url: "https://nvd.nist.gov/vuln/detail/"},
 		{Title: "MITRE", Url: "https://cve.mitre.org/cgi-bin/cvename.cgi?name="},
-		{Title: "Debian", Url: "https://security-tracker.debian.org/tracker/"},
-		{Title: "RedHat", Url: "https://access.redhat.com/security/cve/"},
 	}
 
 	//  Generated advisory title and url
