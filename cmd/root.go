@@ -61,11 +61,14 @@ func run(c *cobra.Command, args []string) {
 		}
 		os.Exit(0)
 	}
-	if !strings.Contains(*arguments.Image, tagSeparator) {
+	if len(*arguments.Image) != 0 && !strings.Contains(*arguments.Image, tagSeparator) {
 		log.Print("Using default tag:", defaultTag)
 		modifiedTag := *arguments.Image + tagSeparator + defaultTag
 		arguments.Image = &modifiedTag
 	}
-
+	if len(*arguments.Tar) != 0 {
+		log.Printf("Scanning Tar File: %v", *arguments.Tar)
+		arguments.Image = nil
+	}
 	engine.Start(&arguments, &cfg)
 }

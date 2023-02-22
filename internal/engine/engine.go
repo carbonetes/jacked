@@ -27,6 +27,7 @@ var (
 	secrets         model.SecretResults
 	totalPackages   int
 	log             = logger.GetLogger()
+	file            *string
 )
 
 // Start the scan engine with the given arguments and configurations
@@ -67,6 +68,11 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	matcher.WG.Wait()
 	spinner.OnVulnAnalysisEnd(nil)
 
+	if arguments.Image == nil {
+		file = arguments.Image
+	} else {
+		file = arguments.Tar
+	}
 	// Compile the scan results based on the given configurations
 	switch cfg.Output {
 	case "json":
@@ -91,11 +97,11 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	case "cyclonedx-json":
 		result.PrintCycloneDX("json", results)
 	case "spdx-json":
-		result.PrintSPDX("json", arguments.Image, results)
+		result.PrintSPDX("json", file, results)
 	case "spdx-xml":
-		result.PrintSPDX("xml", arguments.Image, results)
+		result.PrintSPDX("xml", file, results)
 	case "spdx-tag-value":
-		result.PrintSPDX("tag-value", arguments.Image, results)
+		result.PrintSPDX("tag-value", file, results)
 	default:
 		log.Println()
 		if len(results) > 0 {
