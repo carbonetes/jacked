@@ -31,6 +31,11 @@ func RequestSBOMAnalysis(newArgs *model.Arguments) []byte {
 		file = *newArgs.Tar
 		channelName = *newArgs.Tar
 	}
+	if len(*newArgs.Dir) > 0 {
+
+		file = *newArgs.Dir
+		channelName = *newArgs.Dir
+	}
 	spinner.OnSBOMRequestStart(file)
 
 	// Prepare arguments

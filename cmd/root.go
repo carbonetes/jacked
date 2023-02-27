@@ -70,5 +70,9 @@ func run(c *cobra.Command, args []string) {
 		log.Printf("Scanning Tar File: %v", *arguments.Tar)
 		arguments.Image = nil
 	}
+	if len(*arguments.Dir) != 0 {
+		log.Printf("Scanning Directory: %v", *arguments.Dir)
+		arguments.Image = nil
+	}
 	engine.Start(&arguments, &cfg)
 }
