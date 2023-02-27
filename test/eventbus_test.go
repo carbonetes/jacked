@@ -17,7 +17,6 @@ var (
 	testChannelManagerChannelName = "jacked-test-channel"
 	testChannelManager            = tr.GetChannelManager()
 	testImageName                 = "nginx"
-	testTarFile                   = "nginx.tar"
 	arguments                     = jacked.Arguments{
 		DisableFileListing:  new(bool),
 		SecretContentRegex:  new(string),
@@ -81,7 +80,6 @@ func TestDiggityScan(t *testing.T) {
 	cfg.SetDefault()
 
 	arguments.Image = &testImageName
-	arguments.Tar = &testTarFile
 	arguments.DisableSecretSearch = &cfg.SecretConfig.Disabled
 	arguments.SecretContentRegex = &cfg.SecretConfig.SecretRegex
 	arguments.SecretMaxFileSize = cfg.SecretConfig.MaxFileSize
