@@ -79,8 +79,10 @@ The output format for Jacked is configurable as well using the
 The available `formats` are:
 - `table`: A columnar summary (default).
 - `json`: Use this to get as much information out of Jacked.
-- `cyclonedx-xml`: An XML report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
 - `cyclonedx-json`: A JSON report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
+- `cyclonedx-xml`: An XML report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
+- `cyclonedx-vex-json`: A JSON report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
+- `cyclonedx-vex-xml`: An XML report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
 - `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).format.
 - `spdx-xml`: A XML report conforming to the [SPDX 2.2 XML: Schema](https://github.com/mil-oss/spdx-xsd/blob/master/xml/xsd/spdx-xml-ref.xsd).format.
@@ -137,9 +139,9 @@ jacked db [flag]
 ```
 jacked version [flag] [string]
 ```
-|            Version Flags            |                                  Descriptions                                      |
-| :--------------------------------- | :---------------------------------------------------------------------------------- |
-| `-f` [string], `--format` [string] | Print application version format (json, text) (default "text")                      |
+|     Flag      |               Description                |
+| :------------ | :--------------------------------------- |
+| `-o` [string], `--output` [string] | format to display results (table, json, cyclonedx-json, cyclonedx-xml, cyclonedx-vex-json, cyclonedx-vex-xml, spdx-xml, spdx-json, spdx-tag-value) (default "table") |
 
 ## Configuration 🚧
 Improve using the tool based on your preferences.
@@ -150,7 +152,7 @@ Configuration search paths:
 Configuration options (example values are the default):
 
 ```yaml
-# supported output types: (table, json, cyclonedx-xml, cyclonedx-json, spdx-xml, spdx-json, spdx-tag-value) (default "table") 
+# supported output types: (table, json, cyclonedx-json, cyclonedx-xml, cyclonedx-vex-json, cyclonedx-vex-xml, spdx-xml, spdx-json, spdx-tag-value) (default "table") 
 output: table
 # disables all logging except vulnerability result
 quiet: false

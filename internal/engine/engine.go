@@ -3,8 +3,6 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"os"
 	"time"
 
 	"github.com/carbonetes/jacked/internal/config"
@@ -27,7 +25,6 @@ var (
 	packages        []model.Package
 	licenses        []model.License
 	secrets         model.SecretResults
-	sbom            []byte
 	totalPackages   int
 	log             = logger.GetLogger()
 )
@@ -39,19 +36,8 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	// Check database for any updates
 	db.DBCheck()
 
-	if len(*arguments.SbomFile) > 0 {
-		file, err := os.Open(*arguments.SbomFile)
-		if err != nil {
-			log.Fatalln(err.Error())
-		}
-		sbom, err = io.ReadAll(file)
-		if err != nil {
-			log.Fatalln(err.Error())
-		}
-	} else {
-		// Request for sbom through event bus
-		sbom = events.RequestSBOMAnalysis(arguments)
-	}
+	// // Request for sbom through event bus
+	sbom := events.RequestSBOMAnalysis(arguments)
 
 	// Run all parsers and filters for packages
 	parser.ParseSBOM(&sbom, &packages, &secrets)
@@ -82,7 +68,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	spinner.OnVulnAnalysisEnd(nil)
 
 	// Compile the scan results based on the given configurations
-	switch *arguments.Output {
+	switch cfg.Output {
 	case "json":
 		if cfg.LicenseFinder && len(licenses) > 0 {
 			output.Licenses = licenses
@@ -100,10 +86,18 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 			log.Print("\nNo vulnerability found!")
 		}
 		fmt.Printf("%v", printJSONResult())
+
+	// CycloneDX Output Formats
 	case "cyclonedx-xml":
 		result.PrintCycloneDX("xml", results)
 	case "cyclonedx-json":
 		result.PrintCycloneDX("json", results)
+	case "cyclonedx-vex-xml":
+		result.PrintCycloneDX("vex-xml", results)
+	case "cyclonedx-vex-json":
+		result.PrintCycloneDX("vex-json", results)
+
+	// SPDX Output Formats
 	case "spdx-json":
 		result.PrintSPDX("json", arguments.Image, results)
 	case "spdx-xml":
