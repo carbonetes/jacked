@@ -86,11 +86,11 @@ func updateLocalDatabase(metadata Metadata) {
 					log.Fatalf("Cannot create directory %v", err.Error())
 				}
 				// insert new db file and metadata
-				err = moveFile(path.Join(tmpFolder, dbFile), dbFilepath)
+				err = os.Rename(path.Join(tmpFolder, dbFile), dbFilepath)
 				if err != nil {
 					log.Errorln(err.Error())
 				}
-				err = moveFile(path.Join(tmpFolder, metadataFile), metadataPath)
+				err = os.Rename(path.Join(tmpFolder, metadataFile), metadataPath)
 				if err != nil {
 					log.Errorln(err.Error())
 				}
@@ -226,34 +226,4 @@ func GetLocalMetadata() Metadata {
 		log.Errorln("No local metadata found!")
 	}
 	return metadata
-}
-
-func moveFile(source, destination string) error {
-	src, err := os.Open(source)
-	if err != nil {
-		return err
-	}
-	dst, err := os.Create(destination)
-	if err != nil {
-		src.Close()
-		return err
-	}
-	_, err = io.Copy(dst, src)
-	src.Close()
-	dst.Close()
-	if err != nil {
-		return err
-	}
-	fi, err := os.Stat(source)
-	if err != nil {
-		os.Remove(destination)
-		return err
-	}
-	err = os.Chmod(destination, fi.Mode())
-	if err != nil {
-		os.Remove(destination)
-		return err
-	}
-	os.Remove(source)
-	return nil
 }

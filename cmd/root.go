@@ -54,43 +54,18 @@ func run(c *cobra.Command, args []string) {
 		}
 	}
 
-	if len(args) == 0 && len(*arguments.Image) == 0 && len(*arguments.Dir) == 0 && len(*arguments.Tar) == 0 {
+	if len(args) == 0 && len(*arguments.Image) == 0 && len(*arguments.Dir) == 0 && len(*arguments.Tar) == 0 && len(*arguments.SbomFile) == 0 {
 		err := c.Help()
 		if err != nil {
 			log.Errorln(err.Error())
 		}
 		os.Exit(0)
 	}
-
-	if !compareOutputToOutputTypes(*arguments.Output) && *arguments.Output != "" {
-		log.Errorf("[warning]: Invalid output type: %+v\nSupported output types: %v", *arguments.Output, OutputTypes)
-		os.Exit(0)
-	}
-
-	if len(*arguments.Image) != 0 && !strings.Contains(*arguments.Image, tagSeparator) {
+	if !strings.Contains(*arguments.Image, tagSeparator) {
 		log.Print("Using default tag:", defaultTag)
 		modifiedTag := *arguments.Image + tagSeparator + defaultTag
 		arguments.Image = &modifiedTag
 	}
-	if len(*arguments.Tar) != 0 {
-		log.Printf("Scanning Tar File: %v", *arguments.Tar)
-		arguments.Image = nil
-	}
-	if len(*arguments.Dir) != 0 {
-		log.Printf("Scanning Directory: %v", *arguments.Dir)
-		arguments.Image = nil
-	}
+
 	engine.Start(&arguments, &cfg)
-}
-
-// Validate Output Type
-func compareOutputToOutputTypes(output string) bool {
-
-	output = output + ","
-	for _, outputType := range OutputTypes {
-		if strings.EqualFold(output, outputType) {
-			return true
-		}
-	}
-	return false
 }

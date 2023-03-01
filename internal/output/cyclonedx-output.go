@@ -67,9 +67,7 @@ func convertPackage(results []model.ScanResult) *cdx.BOM {
 		components[i] = convertToComponent(&result.Package, &result.Vulnerabilities)
 	}
 
-	if parser.Distro() != nil {
-		components = append(components, addDistroComponent(parser.Distro()))
-	}
+	components = append(components, addDistroComponent(parser.Distro()))
 
 	return &cdx.BOM{
 		XMLNS:        XMLN,

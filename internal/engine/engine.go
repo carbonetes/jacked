@@ -3,6 +3,8 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"time"
 
 	"github.com/carbonetes/jacked/internal/config"
@@ -16,7 +18,6 @@ import (
 	"github.com/carbonetes/jacked/internal/ui/credits"
 	"github.com/carbonetes/jacked/internal/ui/spinner"
 	"github.com/carbonetes/jacked/internal/ui/table"
-	"github.com/carbonetes/jacked/internal/ui/update"
 )
 
 var (
@@ -26,9 +27,9 @@ var (
 	packages        []model.Package
 	licenses        []model.License
 	secrets         model.SecretResults
+	sbom            []byte
 	totalPackages   int
 	log             = logger.GetLogger()
-	file            *string
 )
 
 // Start the scan engine with the given arguments and configurations
@@ -38,8 +39,19 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	// Check database for any updates
 	db.DBCheck()
 
-	// // Request for sbom through event bus
-	sbom := events.RequestSBOMAnalysis(arguments)
+	if len(*arguments.SbomFile) > 0 {
+		file, err := os.Open(*arguments.SbomFile)
+		if err != nil {
+			log.Fatalln(err.Error())
+		}
+		sbom, err = io.ReadAll(file)
+		if err != nil {
+			log.Fatalln(err.Error())
+		}
+	} else {
+		// Request for sbom through event bus
+		sbom = events.RequestSBOMAnalysis(arguments)
+	}
 
 	// Run all parsers and filters for packages
 	parser.ParseSBOM(&sbom, &packages, &secrets)
@@ -69,22 +81,17 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	matcher.WG.Wait()
 	spinner.OnVulnAnalysisEnd(nil)
 
-	if arguments.Image == nil {
-		file = arguments.Image
-	} else {
-		file = arguments.Tar
-	}
 	// Compile the scan results based on the given configurations
 	switch *arguments.Output {
 	case "json":
 		if cfg.LicenseFinder && len(licenses) > 0 {
 			output.Licenses = licenses
-		} else if cfg.LicenseFinder && len(licenses) == 0 {
+		} else {
 			log.Print("\nNo package license has been found!")
 		}
 		if !cfg.SecretConfig.Disabled && len(secrets.Secrets) > 0 {
 			output.Secrets = &secrets
-		} else if !cfg.SecretConfig.Disabled && len(secrets.Secrets) == 0 {
+		} else {
 			log.Print("\nNo secret has been found!")
 		}
 		if len(results) > 0 {
@@ -98,11 +105,11 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	case "cyclonedx-json":
 		result.PrintCycloneDX("json", results)
 	case "spdx-json":
-		result.PrintSPDX("json", file, results)
+		result.PrintSPDX("json", arguments.Image, results)
 	case "spdx-xml":
-		result.PrintSPDX("xml", file, results)
+		result.PrintSPDX("xml", arguments.Image, results)
 	case "spdx-tag-value":
-		result.PrintSPDX("tag-value", file, results)
+		result.PrintSPDX("tag-value", arguments.Image, results)
 	default:
 		log.Println()
 		if len(results) > 0 {
@@ -129,10 +136,6 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	}
 
 	log.Printf("\nAnalysis finished in %.2fs", time.Since(start).Seconds())
-	err := update.ShowLatestVersion()
-	if err != nil {
-		log.Printf("Error on show latest version: %v", err)
-	}
 	credits.Show()
 }
 

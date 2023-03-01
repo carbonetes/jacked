@@ -13,36 +13,19 @@ import (
 )
 
 var (
-	tr          = bus.GetBus()
-	log         = logger.GetLogger()
-	channelName string
-	file        string
+	tr  = bus.GetBus()
+	log = logger.GetLogger()
 )
 
 // Send a request for sbom to diggity through a event bus
 func RequestSBOMAnalysis(newArgs *model.Arguments) []byte {
-
-	if newArgs.Image != nil {
-		file = *newArgs.Image
-		channelName = *newArgs.Image
-	}
-	if len(*newArgs.Tar) > 0 {
-
-		file = *newArgs.Tar
-		channelName = *newArgs.Tar
-	}
-	if len(*newArgs.Dir) > 0 {
-
-		file = *newArgs.Dir
-		channelName = *newArgs.Dir
-	}
-	spinner.OnSBOMRequestStart(file)
+	spinner.OnSBOMRequestStart(*newArgs.Image)
 
 	// Prepare arguments
 	loadArgs(newArgs)
 
 	// Construct unique channel
-	channel := channelName + "-request-" + uuid.New().String()
+	channel := *newArgs.Image + "-request-" + uuid.New().String()
 
 	// Create the channel in event bus
 	tr.GetChannelManager().CreateChannel(channel)
