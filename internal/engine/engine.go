@@ -125,12 +125,12 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 		case "json":
 			if cfg.LicenseFinder && len(licenses) > 0 {
 				output.Licenses = licenses
-			} else {
+			} else if cfg.LicenseFinder && len(licenses) == 0 {
 				log.Print("\nNo package license has been found!")
 			}
 			if !cfg.SecretConfig.Disabled && len(secrets.Secrets) > 0 {
 				output.Secrets = &secrets
-			} else {
+			} else if !cfg.SecretConfig.Disabled && len(secrets.Secrets) == 0 {
 				log.Print("\nNo secret has been found!")
 			}
 			if len(results) > 0 {
