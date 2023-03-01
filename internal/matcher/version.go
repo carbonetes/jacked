@@ -2,6 +2,7 @@ package matcher
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 
 	"github.com/carbonetes/jacked/internal/model"
@@ -207,17 +208,17 @@ func MatchVersion(pv string, fv *model.Vulnerability) (bool, error) {
 
 // Attempt to rapair invalid version
 func repair(v string) string {
-	if strings.Contains(v, "v") {
-		v = strings.ReplaceAll(v, "v", "")
-	}
-	if strings.Contains(v, ".Final") {
-		v = strings.ReplaceAll(v, ".Final", "-Final")
-	}
-	if strings.Contains(v, ".RELEASE") {
-		v = strings.ReplaceAll(v, ".RELEASE", "-RELEASE")
-	}
 	if strings.Contains(v, "_") {
 		v = strings.ReplaceAll(v, "_", "-")
+	}
+	if strings.Contains(v, "+") {
+		v = strings.ReplaceAll(v, "+", "-")
+	}
+	if strings.Contains(v, "~") {
+		v = strings.ReplaceAll(v, "~", "-")
+	}
+	if strings.Contains(v, "dfsg") {
+		v = strings.ReplaceAll(v, "dfsg.", "")
 	}
 	if strings.Contains(v, ":") {
 		tmp := strings.Split(v, ":")
@@ -225,6 +226,13 @@ func repair(v string) string {
 			v = tmp[1]
 		}
 	}
+
+	pattern := regexp.MustCompile(`^(\d+:)?([0-9]+\.[0-9]+\.[0-9]+)(\..*)?$`)
+	match := pattern.FindStringSubmatch(v)
+	if len(match) > 2 {
+		v = match[2]
+	}
+
 	return v
 }
 
