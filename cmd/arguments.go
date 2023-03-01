@@ -58,10 +58,13 @@ var (
 )
 
 func init() {
+
+	// Configuration set Flags Arguments
 	cfg.Load()
 
 	arguments.DisableSecretSearch = &cfg.SecretConfig.Disabled
 	arguments.SecretContentRegex = &cfg.SecretConfig.SecretRegex
+	arguments.ExcludedFilenames = cfg.SecretConfig.Excludes
 	arguments.SecretMaxFileSize = cfg.SecretConfig.MaxFileSize
 	arguments.EnabledParsers = &cfg.EnabledParsers
 	arguments.DisableFileListing = &cfg.DisableFileListing
@@ -71,8 +74,8 @@ func init() {
 	arguments.RegistryPassword = &cfg.Registry.Password
 	arguments.Output = &cfg.Output
 
-	rootCmd.Flags().StringVarP(arguments.Output, "output", "o", cfg.Output, "Show scan results in \"table\", \"json\", \"cyclonedx-json\", \"cyclonedx-xml\", \"cyclonedx-vex-json\", \"cyclonedx-vex-xml\", \"spdx-json\", \"spdx-xml\", \"spdx-tag-value\" format")
 	rootCmd.Flags().StringVar(arguments.SbomFile, "sbom", "", "Input sbom file from diggity to scan (Only read from json file)")
+	rootCmd.Flags().StringVarP(arguments.Output, "output", "o", cfg.Output, "Show scan results in \"table\", \"json\", \"cyclonedx-json\", \"cyclonedx-xml\", \"spdx-json\", \"spdx-xml\", \"spdx-tag-value\" format")
 	rootCmd.Flags().BoolVarP(&secrets, "secrets", "s", !cfg.SecretConfig.Disabled, "Enable scanning for secrets")
 	rootCmd.Flags().BoolVarP(&license, "licenses", "l", cfg.LicenseFinder, "Enable scanning for package licenses")
 	rootCmd.Flags().BoolVarP(&quiet, "quiet", "q", cfg.Quiet, "Disable all logging statements")
@@ -82,8 +85,9 @@ func init() {
 	rootCmd.Flags().StringVarP(arguments.Tar, "tar", "t", "", "Read a tarball from a path on disk for archives created from docker save (e.g. 'jacked path/to/image.tar)'")
 	rootCmd.Flags().BoolVar(arguments.DisableFileListing, "disable-file-listing", cfg.DisableFileListing, "Disables file listing from package metadata (default false)")
 	rootCmd.Flags().Int64VarP(&arguments.SecretMaxFileSize, "secret-max-file-size", "", cfg.SecretConfig.MaxFileSize, "Maximum file size that the secret will search -- each file")
-	rootCmd.Flags().StringArrayVarP(arguments.ExcludedFilenames, "secret-exclude-filenames", "", []string{}, "Exclude secret searching for each specified filenames")
-	rootCmd.Flags().StringArrayVarP(arguments.EnabledParsers, "enabled-parsers", "", []string{}, fmt.Sprintf("Specify enabled parsers (%+v) (default all)", parserNames))
+
+	rootCmd.Flags().StringArrayVarP(arguments.ExcludedFilenames, "secret-exclude-filenames", "", *cfg.SecretConfig.Excludes, "Exclude secret searching for each specified filenames")
+	rootCmd.Flags().StringArrayVarP(arguments.EnabledParsers, "enabled-parsers", "", cfg.EnabledParsers, fmt.Sprintf("Specify enabled parsers (%+v) (default all)", parserNames))
 
 	rootCmd.Flags().StringVarP(arguments.RegistryURI, "registry-uri", "", cfg.Registry.URI, "Registry uri endpoint")
 	rootCmd.Flags().StringVarP(arguments.RegistryUsername, "registry-username", "", cfg.Registry.Username, "Username credential for private registry access")

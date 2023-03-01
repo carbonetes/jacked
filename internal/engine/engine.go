@@ -2,7 +2,8 @@ package engine
 
 import (
 	"encoding/json"
-	"fmt"
+	"io"
+	"os"
 	"time"
 
 	"github.com/carbonetes/jacked/internal/config"
@@ -27,6 +28,7 @@ var (
 	secrets         model.SecretResults
 	totalPackages   int
 	log             = logger.GetLogger()
+	sbom            []byte
 )
 
 // Start the scan engine with the given arguments and configurations
@@ -35,9 +37,19 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 
 	// Check database for any updates
 	db.DBCheck()
-
-	// // Request for sbom through event bus
-	sbom := events.RequestSBOMAnalysis(arguments)
+	if len(*arguments.SbomFile) > 0 {
+		file, err := os.Open(*arguments.SbomFile)
+		if err != nil {
+			log.Fatalln(err.Error())
+		}
+		sbom, err = io.ReadAll(file)
+		if err != nil {
+			log.Fatalln(err.Error())
+		} else {
+			// Request for sbom through event bus
+			sbom = events.RequestSBOMAnalysis(arguments)
+		}
+	}
 
 	// Run all parsers and filters for packages
 	parser.ParseSBOM(&sbom, &packages, &secrets)
@@ -85,9 +97,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		} else {
 			log.Print("\nNo vulnerability found!")
 		}
-		fmt.Printf("%v", printJSONResult())
-
-	// CycloneDX Output Formats
+		log.Printf("%v", printJSONResult())
 	case "cyclonedx-xml":
 		result.PrintCycloneDX("xml", results)
 	case "cyclonedx-json":

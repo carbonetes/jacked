@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/carbonetes/jacked/internal/model"
 	"github.com/carbonetes/jacked/internal/version"
 
@@ -44,15 +45,23 @@ const (
 	XMLN = "http://cyclonedx.org/schema/bom/1.4"
 )
 
+var log = logger.GetLogger()
+
 func PrintCycloneDX(formatType string, results []model.ScanResult) {
 	cyclonedxOuput := convertPackage(results)
 
 	switch formatType {
 	case "xml":
-		result, _ := xml.MarshalIndent(cyclonedxOuput, "", " ")
+		result, err := xml.MarshalIndent(cyclonedxOuput, "", " ")
+		if err != nil {
+			log.Errorln(err.Error())
+		}
 		fmt.Printf("%+v\n", string(result))
 	case "json":
-		result, _ := json.MarshalIndent(cyclonedxOuput, "", " ")
+		result, err := json.MarshalIndent(cyclonedxOuput, "", " ")
+		if err != nil {
+			log.Errorln(err.Error())
+		}
 		fmt.Printf("%+v\n", string(result))
 	default:
 		fmt.Printf("Format type not found")
