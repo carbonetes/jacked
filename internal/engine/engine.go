@@ -47,10 +47,10 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		sbom, err = io.ReadAll(file)
 		if err != nil {
 			log.Fatalln(err.Error())
-		} else {
-			// Request for sbom through event bus
-			sbom = events.RequestSBOMAnalysis(arguments)
 		}
+	} else {
+		// Request for sbom through event bus
+		sbom = events.RequestSBOMAnalysis(arguments)
 	}
 
 	// Run all parsers and filters for packages
