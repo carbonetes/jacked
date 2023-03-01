@@ -30,7 +30,7 @@ func preRun(_ *cobra.Command, args []string) {
 	if len(args) > 0 {
 		arguments.Image = &args[0]
 		arguments.Quiet = &quiet
-		cfg.Output = outputFormat
+		cfg.Output = *arguments.Output
 		cfg.LicenseFinder = license
 
 		if *arguments.Quiet {
