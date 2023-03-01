@@ -26,9 +26,9 @@ var (
 	packages        []model.Package
 	licenses        []model.License
 	secrets         model.SecretResults
-	sbom            []byte
 	totalPackages   int
 	log             = logger.GetLogger()
+	sbom            []byte
 )
 
 // Start the scan engine with the given arguments and configurations
@@ -37,7 +37,6 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 
 	// Check database for any updates
 	db.DBCheck()
-
 	if len(*arguments.SbomFile) > 0 {
 		file, err := os.Open(*arguments.SbomFile)
 		if err != nil {
@@ -46,10 +45,10 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		sbom, err = io.ReadAll(file)
 		if err != nil {
 			log.Fatalln(err.Error())
+		} else {
+			// Request for sbom through event bus
+			sbom = events.RequestSBOMAnalysis(arguments)
 		}
-	} else {
-		// Request for sbom through event bus
-		sbom = events.RequestSBOMAnalysis(arguments)
 	}
 
 	// Run all parsers and filters for packages
@@ -103,6 +102,12 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		result.PrintCycloneDX("xml", results)
 	case "cyclonedx-json":
 		result.PrintCycloneDX("json", results)
+	case "cyclonedx-vex-xml":
+		result.PrintCycloneDX("vex-xml", results)
+	case "cyclonedx-vex-json":
+		result.PrintCycloneDX("vex-json", results)
+
+	// SPDX Output Formats
 	case "spdx-json":
 		result.PrintSPDX("json", arguments.Image, results)
 	case "spdx-xml":
