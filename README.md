@@ -80,6 +80,8 @@ The available `formats` are:
 - `json`: Use this to get as much information out of Jacked.
 - `cyclonedx-xml`: An XML report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
 - `cyclonedx-json`: A JSON report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
+- `cyclonedx-vex-xml`: An XML report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
+- `cyclonedx-vex-json`: A JSON report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
 - `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).format.
 - `spdx-xml`: A XML report conforming to the [SPDX 2.2 XML: Schema](https://github.com/mil-oss/spdx-xsd/blob/master/xml/xsd/spdx-xml-ref.xsd).format.
@@ -106,7 +108,7 @@ jacked [flag]
 | `--disable-file-listing`                 | Disables file listing from package metadata (default false)                                                                |
 | `--enabled-parsers stringArray`          | Specify enabled parsers ([apk debian java npm composer python gem rpm dart nuget go]) (default all)                        |
 | `-l`, `--licenses`                       | Enable scanning for package licenses                                                                                       |
-| `-o`, `--output string`                  | Show scan results in "table", "json", "cyclonedx-json", "cyclonedx-xml", "spdx-json", "spdx-xml", "spdx-tag-value" format (default "table") |
+| `-o`, `--output string`                  | Show scan results in "table", "json", "cyclonedx-json", "cyclonedx-xml", cyclonedx-vex-json, cyclonedx-vex-xml, "spdx-json", "spdx-xml", "spdx-tag-value" format (default "table") |
 | `--registry-uri string`                  | Registry uri endpoint (default "index.docker.io/")                                                                         |
 | `--registry-token string`                | Access token for private registry access                                                                                   |
 | `--registry-username string`             | Username credential for private registry access                                                                            |
@@ -149,7 +151,7 @@ Configuration search paths:
 Configuration options (example values are the default):
 
 ```yaml
-# supported output types: (table, json, cyclonedx-xml, cyclonedx-json, spdx-xml, spdx-json, spdx-tag-value) (default "table") 
+# supported output types: (table, json, cyclonedx-xml, cyclonedx-json, cyclonedx-vex-xml, cyclonedx-vex-json, spdx-xml, spdx-json, spdx-tag-value) (default "table") 
 output: table
 # disables all logging except vulnerability result
 quiet: false
