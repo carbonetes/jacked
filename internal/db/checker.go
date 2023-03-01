@@ -137,12 +137,12 @@ func getLatestMetadata(metadataList []Metadata) Metadata {
 	for _, metadata := range metadataList {
 		mv, err := version.NewVersion(metadata.Version)
 		if err != nil {
-			log.Error("Error parsing metadata version: %v", err)
+			log.Errorf("Error parsing metadata version: %v", err)
 		}
 		for _, v := range versionList {
 			vv, err := version.NewVersion(v)
 			if err != nil {
-				log.Error("Error parsing version from list %v", err)
+				log.Errorf("Error parsing version from list %v", err)
 			}
 			if mv.GreaterThan(vv) {
 				continue
