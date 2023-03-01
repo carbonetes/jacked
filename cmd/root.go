@@ -30,7 +30,7 @@ func preRun(_ *cobra.Command, args []string) {
 	if len(args) > 0 {
 		arguments.Image = &args[0]
 		arguments.Quiet = &quiet
-		cfg.Output = outputFormat
+		cfg.Output = *arguments.Output
 		cfg.LicenseFinder = license
 
 		if *arguments.Quiet {
@@ -54,7 +54,7 @@ func run(c *cobra.Command, args []string) {
 		}
 	}
 
-	if len(args) == 0 && len(*arguments.Image) == 0 && len(*arguments.Dir) == 0 && len(*arguments.Tar) == 0 {
+	if len(args) == 0 && len(*arguments.Image) == 0 && len(*arguments.Dir) == 0 && len(*arguments.Tar) == 0 && len(*arguments.SbomFile) == 0 {
 		err := c.Help()
 		if err != nil {
 			log.Errorln(err.Error())
