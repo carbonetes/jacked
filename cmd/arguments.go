@@ -75,7 +75,7 @@ func init() {
 	arguments.Output = &cfg.Output
 
 	rootCmd.Flags().StringVar(arguments.SbomFile, "sbom", "", "Input sbom file from diggity to scan (Only read from json file)")
-	rootCmd.Flags().StringVarP(arguments.Output, "output", "o", cfg.Output, "Show scan results in \"table\", \"json\", \"cyclonedx-json\", \"cyclonedx-xml\", \"spdx-json\", \"spdx-xml\", \"spdx-tag-value\" format")
+	rootCmd.Flags().StringVarP(arguments.Output, "output", "o", cfg.Output, "Show scan results in \"table\", \"json\", \"cyclonedx-json\", \"cyclonedx-xml\", \"cyclonedx-vex-json\", \"cyclonedx-vex-xml\", \"spdx-json\", \"spdx-xml\", \"spdx-tag-value\" format")
 	rootCmd.Flags().BoolVarP(&secrets, "secrets", "s", !cfg.SecretConfig.Disabled, "Enable scanning for secrets")
 	rootCmd.Flags().BoolVarP(&license, "licenses", "l", cfg.LicenseFinder, "Enable scanning for package licenses")
 	rootCmd.Flags().BoolVarP(&quiet, "quiet", "q", cfg.Quiet, "Disable all logging statements")

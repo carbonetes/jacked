@@ -124,10 +124,16 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 				log.Print("\nNo vulnerability found!")
 			}
 			fmt.Printf("%v", printJSONResult())
+		// CycloneDX Output Types
 		case "cyclonedx-xml":
 			result.PrintCycloneDX("xml", results)
 		case "cyclonedx-json":
 			result.PrintCycloneDX("json", results)
+		case "cyclonedx-vex-xml":
+			result.PrintCycloneDX("vex-xml", results)
+		case "cyclonedx-vex-json":
+			result.PrintCycloneDX("vex-json", results)
+		// SPDX Output Types
 		case "spdx-json":
 			result.PrintSPDX("json", arguments.Image, results)
 		case "spdx-xml":
