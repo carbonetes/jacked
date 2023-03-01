@@ -2,6 +2,7 @@ package model
 
 type Arguments struct {
 	Image               *string
+	SbomFile            *string
 	Output              *string
 	Quiet               *bool
 	OutputFile          *string

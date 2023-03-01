@@ -54,7 +54,7 @@ func run(c *cobra.Command, args []string) {
 		}
 	}
 
-	if len(args) == 0 && len(*arguments.Image) == 0 && len(*arguments.Dir) == 0 && len(*arguments.Tar) == 0 {
+	if len(args) == 0 && len(*arguments.Image) == 0 && len(*arguments.Dir) == 0 && len(*arguments.Tar) == 0 && len(*arguments.SbomFile) == 0 {
 		err := c.Help()
 		if err != nil {
 			log.Errorln(err.Error())

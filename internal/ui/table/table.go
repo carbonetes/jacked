@@ -94,7 +94,7 @@ func createTableFooter(count int) {
 func generateTable() {
 	// Set Table Style
 	table.SetStyle(simpletable.StyleCompactLite)
-	fmt.Println(table.String())
+	log.Println(table.String())
 }
 
 // Handles long text from the table data to generate ellipsis that helps UI table to generated properly.
