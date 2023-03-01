@@ -26,12 +26,11 @@ var (
 		RegistryPassword:    new(string),
 		RegistryToken:       new(string),
 	}
-	cfg          config.Configuration
-	outputFormat string
-	quiet        bool
-	license      bool
-	secrets      bool
-	parserNames  = []string{
+	cfg         config.Configuration
+	quiet       bool
+	license     bool
+	secrets     bool
+	parserNames = []string{
 		"apk",
 		"debian",
 		"java",
@@ -43,6 +42,17 @@ var (
 		"dart",
 		"nuget",
 		"go",
+	}
+	OutputTypes = []string{
+		"table,",
+		"json,",
+		"cyclonedx-json,",
+		"cyclonedx-xml,",
+		"cyclonedx-vex-json,",
+		"cyclonedx-vex-xml,",
+		"spdx-json,",
+		"spdx-xml,",
+		"spdx-tag-value,",
 	}
 )
 
@@ -58,8 +68,9 @@ func init() {
 	arguments.RegistryToken = &cfg.Registry.Token
 	arguments.RegistryUsername = &cfg.Registry.Username
 	arguments.RegistryPassword = &cfg.Registry.Password
+	arguments.Output = &cfg.Output
 
-	rootCmd.Flags().StringVarP(&outputFormat, "output", "o", cfg.Output, "Show scan results in \"table\", \"json\", \"cyclonedx-json\", \"cyclonedx-xml\", \"cyclonedx-vex-json\", \"cyclonedx-vex-xml\", \"spdx-json\", \"spdx-xml\", \"spdx-tag-value\" format")
+	rootCmd.Flags().StringVarP(arguments.Output, "output", "o", cfg.Output, "Show scan results in \"table\", \"json\", \"cyclonedx-json\", \"cyclonedx-xml\", \"cyclonedx-vex-json\", \"cyclonedx-vex-xml\", \"spdx-json\", \"spdx-xml\", \"spdx-tag-value\" format")
 	rootCmd.Flags().BoolVarP(&secrets, "secrets", "s", !cfg.SecretConfig.Disabled, "Enable scanning for secrets")
 	rootCmd.Flags().BoolVarP(&license, "licenses", "l", cfg.LicenseFinder, "Enable scanning for package licenses")
 	rootCmd.Flags().BoolVarP(&quiet, "quiet", "q", cfg.Quiet, "Disable all logging statements")
