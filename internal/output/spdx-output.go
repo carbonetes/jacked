@@ -24,17 +24,17 @@ func PrintSPDX(formatType string, image *string, results []model.ScanResult) {
 		if err != nil {
 			log.Errorln(err.Error())
 		}
-		fmt.Printf("%+v\n", string(result))
+		log.Printf("%+v\n", string(result))
 	case "json":
 		result, err := json.MarshalIndent(spdx, "", " ")
 		if err != nil {
 			log.Errorln(err.Error())
 		}
-		fmt.Printf("%+v\n", string(result))
+		log.Printf("%+v\n", string(result))
 	case "tag-value":
 		printSpdxTagValue(image, results)
 	default:
-		fmt.Printf("Format type not found")
+		log.Printf("Format type not found")
 	}
 }
 
@@ -132,7 +132,7 @@ func GetSpdxTagValues(image *string, results []model.ScanResult) (spdxTagValues 
 			spdxutils.LicensesDeclared(&result.Package), // PackageLicenseConcluded
 			spdxutils.LicensesDeclared(&result.Package), // PackageLicenseDeclared
 			spdxutils.NoAssertion,                       // PackageCopyrightText
-			formatCVEList(cves),						 // Vulnerabilities
+			formatCVEList(cves),                         // Vulnerabilities
 		))
 
 		for _, ref := range spdxutils.ExternalRefs(&result.Package) {

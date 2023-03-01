@@ -17,6 +17,9 @@ func getOSVendor(p *model.Package) *model.Package {
 	if p.Type == "rpm" {
 		p.Vendor = "gnu"
 	}
+	if p.Type == "gem" {
+		p.Vendor = "rubyonrails"
+	}
 
 	return p
 }

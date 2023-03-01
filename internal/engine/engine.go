@@ -19,6 +19,7 @@ import (
 	"github.com/carbonetes/jacked/internal/ui/credits"
 	"github.com/carbonetes/jacked/internal/ui/spinner"
 	"github.com/carbonetes/jacked/internal/ui/table"
+	"github.com/carbonetes/jacked/internal/ui/update"
 )
 
 var (
@@ -31,6 +32,7 @@ var (
 	totalPackages   int
 	log             = logger.GetLogger()
 	sbom            []byte
+	file            *string
 )
 
 // Start the scan engine with the given arguments and configurations
@@ -47,10 +49,10 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		sbom, err = io.ReadAll(file)
 		if err != nil {
 			log.Fatalln(err.Error())
-		} else {
-			// Request for sbom through event bus
-			sbom = events.RequestSBOMAnalysis(arguments)
 		}
+	} else {
+		// Request for sbom through event bus
+		sbom = events.RequestSBOMAnalysis(arguments)
 	}
 
 	// Run all parsers and filters for packages
@@ -81,10 +83,28 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	matcher.WG.Wait()
 	spinner.OnVulnAnalysisEnd(nil)
 
+	// Get scan type value
+	if arguments.Image != nil {
+		file = arguments.Image
+	}
+	if arguments.Tar != nil {
+		file = arguments.Tar
+	}
+	if arguments.Dir != nil {
+		file = arguments.Dir
+	}
+	if arguments.SbomFile != nil {
+		file = arguments.SbomFile
+	}
+
 	// Compile the scan results based on the given configurations
 	selectOutputType(*arguments.Output, cfg, arguments)
 
 	log.Printf("\nAnalysis finished in %.2fs", time.Since(start).Seconds())
+	err := update.ShowLatestVersion()
+	if err != nil {
+		log.Printf("Error on show latest version: %v", err)
+	}
 	credits.Show()
 }
 
@@ -105,12 +125,12 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 		case "json":
 			if cfg.LicenseFinder && len(licenses) > 0 {
 				output.Licenses = licenses
-			} else {
+			} else if cfg.LicenseFinder && len(licenses) == 0 {
 				log.Print("\nNo package license has been found!")
 			}
 			if !cfg.SecretConfig.Disabled && len(secrets.Secrets) > 0 {
 				output.Secrets = &secrets
-			} else {
+			} else if !cfg.SecretConfig.Disabled && len(secrets.Secrets) == 0 {
 				log.Print("\nNo secret has been found!")
 			}
 			if len(results) > 0 {
@@ -119,16 +139,22 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 				log.Print("\nNo vulnerability found!")
 			}
 			fmt.Printf("%v", printJSONResult())
+		// CycloneDX Output Types
 		case "cyclonedx-xml":
 			result.PrintCycloneDX("xml", results)
 		case "cyclonedx-json":
 			result.PrintCycloneDX("json", results)
+		case "cyclonedx-vex-xml":
+			result.PrintCycloneDX("vex-xml", results)
+		case "cyclonedx-vex-json":
+			result.PrintCycloneDX("vex-json", results)
+		// SPDX Output Types
 		case "spdx-json":
-			result.PrintSPDX("json", arguments.Image, results)
+			result.PrintSPDX("json", file, results)
 		case "spdx-xml":
-			result.PrintSPDX("xml", arguments.Image, results)
+			result.PrintSPDX("xml", file, results)
 		case "spdx-tag-value":
-			result.PrintSPDX("tag-value", arguments.Image, results)
+			result.PrintSPDX("tag-value", file, results)
 		default:
 			log.Println()
 			if len(results) > 0 {

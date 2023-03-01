@@ -13,6 +13,9 @@ func parsePurl(keywords []string, p string) []string {
 
 	var upstream string
 	purl, err := packageurl.FromString(p)
+	if purl.Name == "" {
+		return keywords
+	}
 	if err != nil {
 		log.Fatalf("Error parsing package url: %v", err)
 	}

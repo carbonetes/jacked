@@ -64,10 +64,28 @@ func run(c *cobra.Command, args []string) {
 
 	compareOutputToOutputTypes(*arguments.Output)
 
-	if !strings.Contains(*arguments.Image, tagSeparator) {
+	if len(*arguments.Image) != 0 && !strings.Contains(*arguments.Image, tagSeparator) {
 		log.Print("Using default tag:", defaultTag)
 		modifiedTag := *arguments.Image + tagSeparator + defaultTag
 		arguments.Image = &modifiedTag
+		*arguments.Tar = ""
+		*arguments.Dir = ""
+		*arguments.SbomFile = ""
+	} else if len(*arguments.Tar) != 0 {
+		log.Printf("Scanning Tar File: %v", *arguments.Tar)
+		arguments.Image = nil
+		*arguments.Dir = ""
+		*arguments.SbomFile = ""
+	} else if len(*arguments.Dir) != 0 {
+		log.Printf("Scanning Directory: %v", *arguments.Dir)
+		arguments.Image = nil
+		*arguments.Tar = ""
+		*arguments.SbomFile = ""
+	} else if len(*arguments.SbomFile) != 0 {
+		log.Printf("Scanning SBOM JSON: %v", *arguments.SbomFile)
+		arguments.Image = nil
+		*arguments.Tar = ""
+		*arguments.Dir = ""
 	}
 
 	engine.Start(&arguments, &cfg)
