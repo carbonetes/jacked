@@ -15,7 +15,7 @@ const (
 
 func Show() {
 	log := log.GetLogger()
-	link := termlink.ColorLink(githubLink, githubLink, "green")
+	link := termlink.ColorLink("Jacked", githubLink, "green")
 	log.Println(footerMessage + link)
 	log.Println(credits)
 }
