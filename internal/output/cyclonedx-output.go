@@ -96,7 +96,9 @@ func convertPackage(results []model.ScanResult) *model.BOM {
 
 	}
 
-	components = append(components, addDistroComponent(parser.Distro()))
+	if parser.Distro() != nil {
+		components = append(components, addDistroComponent(parser.Distro()))
+	}
 
 	return &model.BOM{
 		BomFormat:    cyclonedx,

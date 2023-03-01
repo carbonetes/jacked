@@ -32,6 +32,7 @@ var (
 	totalPackages   int
 	log             = logger.GetLogger()
 	sbom            []byte
+	file            *string
 )
 
 // Start the scan engine with the given arguments and configurations
@@ -81,6 +82,20 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	}
 	matcher.WG.Wait()
 	spinner.OnVulnAnalysisEnd(nil)
+
+	// Get scan type value
+	if arguments.Image != nil {
+		file = arguments.Image
+	}
+	if arguments.Tar != nil {
+		file = arguments.Tar
+	}
+	if arguments.Dir != nil {
+		file = arguments.Dir
+	}
+	if arguments.SbomFile != nil {
+		file = arguments.SbomFile
+	}
 
 	// Compile the scan results based on the given configurations
 	selectOutputType(*arguments.Output, cfg, arguments)
@@ -135,11 +150,11 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 			result.PrintCycloneDX("vex-json", results)
 		// SPDX Output Types
 		case "spdx-json":
-			result.PrintSPDX("json", arguments.Image, results)
+			result.PrintSPDX("json", file, results)
 		case "spdx-xml":
-			result.PrintSPDX("xml", arguments.Image, results)
+			result.PrintSPDX("xml", file, results)
 		case "spdx-tag-value":
-			result.PrintSPDX("tag-value", arguments.Image, results)
+			result.PrintSPDX("tag-value", file, results)
 		default:
 			log.Println()
 			if len(results) > 0 {
