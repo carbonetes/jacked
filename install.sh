@@ -10,7 +10,6 @@ githubUrl="https://github.com"
 executable_folder="./bin"
 format="tar.gz"
 
-
 usage() (
   this=$1
   cat <<EOF
@@ -101,6 +100,7 @@ install_binary() (
   # install the binary to the destination dir
   install "${archive_dir}/$3" "$2"
 )
+
 verify_hash_sha256() (
   asset=$1
   checksums=$2
@@ -171,7 +171,7 @@ install_jacked() {
     downloaded_asset_file="${downloadFolder}/${file_name}"
     asset_uri="${githubUrl}/${owner}/${repo}/releases/download/${version}/${file_name}"
 
-     echo "[1/4] Download ${asset_uri} to tmp folder"
+    echo "[1/4] Download ${asset_uri} to tmp folder"
     rm -f ${downloaded_asset_file}
     curl --fail --location --output "${downloaded_asset_file}" "${asset_uri}"
 
@@ -190,7 +190,7 @@ install_jacked() {
 
     echo "[3/4] Install ${repo} to the ${executable_folder}"
 
-    install_binary "${downloaded_file}" "${executable_folder}" "${final_binary}"
+    install_binary "${downloaded_asset_file}" "${executable_folder}" "${final_binary}"
     exe=${executable_folder}/${repo}
     chmod +x ${exe}
 
