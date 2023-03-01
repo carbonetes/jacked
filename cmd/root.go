@@ -61,6 +61,9 @@ func run(c *cobra.Command, args []string) {
 		}
 		os.Exit(0)
 	}
+
+	compareOutputToOutputTypes(*arguments.Output)
+
 	if !strings.Contains(*arguments.Image, tagSeparator) {
 		log.Print("Using default tag:", defaultTag)
 		modifiedTag := *arguments.Image + tagSeparator + defaultTag
@@ -68,4 +71,24 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	engine.Start(&arguments, &cfg)
+}
+
+// ValidateOutputArg checks if output types specified are valid
+func compareOutputToOutputTypes(outputs string) {
+	var noMatch bool
+	for _, output := range strings.Split(outputs, ",") {
+		for _, outputType := range OutputTypes {
+			if strings.EqualFold(output, outputType) {
+				noMatch = true
+				break
+			}
+			noMatch = false
+		}
+		if !noMatch {
+			log.Printf("[warning]: Invalid output type: %+v \nSupported output types: %v", output, OutputTypes)
+			os.Exit(0)
+
+		}
+	}
+
 }

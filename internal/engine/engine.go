@@ -2,8 +2,10 @@ package engine
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/carbonetes/jacked/internal/config"
@@ -80,64 +82,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	spinner.OnVulnAnalysisEnd(nil)
 
 	// Compile the scan results based on the given configurations
-	switch cfg.Output {
-	case "json":
-		if cfg.LicenseFinder && len(licenses) > 0 {
-			output.Licenses = licenses
-		} else {
-			log.Print("\nNo package license has been found!")
-		}
-		if !cfg.SecretConfig.Disabled && len(secrets.Secrets) > 0 {
-			output.Secrets = &secrets
-		} else {
-			log.Print("\nNo secret has been found!")
-		}
-		if len(results) > 0 {
-			output.Results = results
-		} else {
-			log.Print("\nNo vulnerability found!")
-		}
-		log.Printf("%v", printJSONResult())
-	case "cyclonedx-xml":
-		result.PrintCycloneDX("xml", results)
-	case "cyclonedx-json":
-		result.PrintCycloneDX("json", results)
-	case "cyclonedx-vex-xml":
-		result.PrintCycloneDX("vex-xml", results)
-	case "cyclonedx-vex-json":
-		result.PrintCycloneDX("vex-json", results)
-
-	// SPDX Output Formats
-	case "spdx-json":
-		result.PrintSPDX("json", arguments.Image, results)
-	case "spdx-xml":
-		result.PrintSPDX("xml", arguments.Image, results)
-	case "spdx-tag-value":
-		result.PrintSPDX("tag-value", arguments.Image, results)
-	default:
-		log.Println()
-		if len(results) > 0 {
-			table.DisplayScanResultTable(results)
-		} else {
-			log.Print("\nNo vulnerability found!")
-		}
-
-		if cfg.LicenseFinder {
-			if len(licenses) > 0 {
-				table.PrintLicenses(licenses)
-			} else {
-				log.Print("\nNo package license has been found!")
-			}
-		}
-
-		if !cfg.SecretConfig.Disabled {
-			if len(secrets.Secrets) > 0 {
-				table.PrintSecrets(secrets)
-			} else {
-				log.Print("\nNo secret has been found!")
-			}
-		}
-	}
+	selectOutputType(*arguments.Output, cfg, arguments)
 
 	log.Printf("\nAnalysis finished in %.2fs", time.Since(start).Seconds())
 	credits.Show()
@@ -151,4 +96,64 @@ func printJSONResult() string {
 	}
 
 	return string(jsonraw)
+}
+
+// Select Output Type based on the User Input
+func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *model.Arguments) {
+	for _, userOutput := range strings.Split(outputTypes, ",") {
+		switch userOutput {
+		case "json":
+			if cfg.LicenseFinder && len(licenses) > 0 {
+				output.Licenses = licenses
+			} else {
+				log.Print("\nNo package license has been found!")
+			}
+			if !cfg.SecretConfig.Disabled && len(secrets.Secrets) > 0 {
+				output.Secrets = &secrets
+			} else {
+				log.Print("\nNo secret has been found!")
+			}
+			if len(results) > 0 {
+				output.Results = results
+			} else {
+				log.Print("\nNo vulnerability found!")
+			}
+			fmt.Printf("%v", printJSONResult())
+		case "cyclonedx-xml":
+			result.PrintCycloneDX("xml", results)
+		case "cyclonedx-json":
+			result.PrintCycloneDX("json", results)
+		case "spdx-json":
+			result.PrintSPDX("json", arguments.Image, results)
+		case "spdx-xml":
+			result.PrintSPDX("xml", arguments.Image, results)
+		case "spdx-tag-value":
+			result.PrintSPDX("tag-value", arguments.Image, results)
+		default:
+			log.Println()
+			if len(results) > 0 {
+				table.DisplayScanResultTable(results)
+			} else {
+				log.Print("\nNo vulnerability found!")
+			}
+
+			if cfg.LicenseFinder {
+				if len(licenses) > 0 {
+					table.PrintLicenses(licenses)
+				} else {
+					log.Print("\nNo package license has been found!")
+				}
+			}
+
+			if !cfg.SecretConfig.Disabled {
+				if len(secrets.Secrets) > 0 {
+					table.PrintSecrets(secrets)
+				} else {
+					log.Print("\nNo secret has been found!")
+				}
+			}
+		}
+		log.Println()
+
+	}
 }
