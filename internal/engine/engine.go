@@ -123,7 +123,10 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	}
 
 	log.Printf("\nAnalysis finished in %.2fs", time.Since(start).Seconds())
-	update.ShowLatestVersion()
+	err := update.ShowLatestVersion()
+	if err != nil {
+		log.Printf("Error on show latest version: %v", err)
+	}
 	credits.Show()
 }
 
