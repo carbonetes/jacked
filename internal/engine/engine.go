@@ -74,7 +74,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		file = arguments.Tar
 	}
 	// Compile the scan results based on the given configurations
-	switch cfg.Output {
+	switch *arguments.Output {
 	case "json":
 		if cfg.LicenseFinder && len(licenses) > 0 {
 			output.Licenses = licenses
