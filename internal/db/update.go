@@ -25,24 +25,24 @@ func download(url string) string {
 
 	out, err := os.OpenFile(tempFile, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Error("Error creating temporary file: %v", err)
+		log.Errorf("Error creating temporary file: %v", err)
 	}
 	defer out.Close()
 
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Error("Error downloading database: %v", err)
+		log.Errorf("Error downloading database: %v", err)
 	}
 
 	bar.OnDownloading(resp.ContentLength)
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		log.Error("Error downloading database: %v", resp.Status)
+		log.Errorf("Error downloading database: %v", resp.Status)
 	}
 
 	_, err = io.Copy(io.MultiWriter(out, bar.GetBar()), resp.Body)
 	if err != nil {
-		log.Error("Error copying downloaded data into output tar file: %v", err)
+		log.Errorf("Error copying downloaded data into output tar file: %v", err)
 	}
 	defer out.Close()
 
