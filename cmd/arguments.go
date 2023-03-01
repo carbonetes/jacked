@@ -26,12 +26,11 @@ var (
 		RegistryPassword:    new(string),
 		RegistryToken:       new(string),
 	}
-	cfg          config.Configuration
-	outputFormat string
-	quiet        bool
-	license      bool
-	secrets      bool
-	parserNames  = []string{
+	cfg         config.Configuration
+	quiet       bool
+	license     bool
+	secrets     bool
+	parserNames = []string{
 		"apk",
 		"debian",
 		"java",
