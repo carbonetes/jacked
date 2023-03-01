@@ -16,6 +16,7 @@ import (
 	"github.com/carbonetes/jacked/internal/ui/credits"
 	"github.com/carbonetes/jacked/internal/ui/spinner"
 	"github.com/carbonetes/jacked/internal/ui/table"
+	"github.com/carbonetes/jacked/internal/ui/update"
 )
 
 var (
@@ -128,6 +129,10 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	}
 
 	log.Printf("\nAnalysis finished in %.2fs", time.Since(start).Seconds())
+	err := update.ShowLatestVersion()
+	if err != nil {
+		log.Printf("Error on show latest version: %v", err)
+	}
 	credits.Show()
 }
 
