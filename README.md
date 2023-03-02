@@ -3,6 +3,11 @@
 </p>
 
 # Jacked
+[![Github All Releases](https://img.shields.io/github/downloads/carbonetes/jacked/total.svg)]()
+[![Go Report Card](https://goreportcard.com/badge/github.com/carbonetes/jacked)](https://goreportcard.com/report/github.com/carbonetes/jacked)
+[![GitHub release](https://img.shields.io/github/release/carbonetes/jacked.svg)](https://github.com/carbonetes/jacked/releases/latest)
+[![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/carbonetes/jacked.svg)](https://github.com/carbonetes/jacked)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/carbonetes/jacked/blob/main/LICENSE)
 
 Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures. 
 
