@@ -52,7 +52,11 @@ You can specify a release version and destination directory for the installation
 ```
 curl -sSfL https://raw.githubusercontent.com/carbonetes/jacked/main/install.sh | sh -s -- -d <DESTINATION_DIR> -v <RELEASE_VERSION>
 ```
-
+### Homebrew
+```sh
+brew tap carbonetes/jacked
+brew install jacked
+```
 
 # Getting Started 🚀  
 
