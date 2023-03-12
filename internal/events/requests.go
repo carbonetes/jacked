@@ -29,11 +29,11 @@ func RequestSBOMAnalysis(newArgs *model.Arguments) []byte {
 		file = *newArgs.Image
 		channelName = *newArgs.Image
 	}
-	if newArgs.Tar != nil {
+	if len(*newArgs.Tar) > 0 {
 		file = *newArgs.Tar
 		channelName = *newArgs.Tar
 	}
-	if newArgs.Dir != nil {
+	if len(*newArgs.Dir) > 0 {
 		file = *newArgs.Dir
 		channelName = *newArgs.Dir
 	}
