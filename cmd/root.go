@@ -62,7 +62,15 @@ func run(c *cobra.Command, args []string) {
 		os.Exit(0)
 	}
 
-	compareOutputToOutputTypes(*arguments.Output)
+	// Check user output type is supported
+	if arguments.Output != nil && *arguments.Output != "" {
+		compareOutputToOutputTypes(*arguments.Output)
+	}
+
+	// Check user failcriteria is supported
+	if arguments.FailCriteria != nil && *arguments.FailCriteria != "" {
+		compareFailCriteriaToSeverities(arguments.FailCriteria)
+	}
 
 	if len(*arguments.Image) != 0 && !strings.Contains(*arguments.Image, tagSeparator) {
 		log.Print("Using default tag:", defaultTag)
@@ -103,10 +111,27 @@ func compareOutputToOutputTypes(outputs string) {
 			noMatch = false
 		}
 		if !noMatch {
-			log.Printf("[warning]: Invalid output type: %+v \nSupported output types: %v", output, OutputTypes)
+			log.Errorf("[warning]: Invalid output type: %+v \nSupported output types: %v", output, OutputTypes)
 			os.Exit(0)
 
 		}
 	}
 
+}
+
+func compareFailCriteriaToSeverities(failCriteria *string) {
+	var noMatch bool
+	for _, severity := range Severities {
+		if strings.EqualFold(*failCriteria, severity) {
+			noMatch = true
+			break
+		}
+		noMatch = false
+	}
+
+	if !noMatch {
+		log.Errorf("[warning]: Invalid output type: %+v \nSupported output types: %v", *failCriteria, Severities)
+		os.Exit(0)
+
+	}
 }

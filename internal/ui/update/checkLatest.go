@@ -31,7 +31,7 @@ func ShowLatestVersion() error {
 
 	getLatestVersion()
 	// Compare version, if version is not latest, show latest version
-	if !strings.EqualFold(installedVersion, latestVersion) {
+	if !(strings.EqualFold("v"+installedVersion, latestVersion)) {
 
 		link := termlink.ColorLink(latestVersion, githubReleaseLink+latestVersion, "green")
 		log.Println(newVersionMsg + link)
@@ -42,7 +42,8 @@ func ShowLatestVersion() error {
 func getLatestVersion() {
 
 	// Check the installed version of the binary
-	installedVersion = version.GetBuild().Version
+	info := version.GetBuild()
+	installedVersion = info.Version
 	context := context.Background()
 
 	// Get the latest release from GitHub

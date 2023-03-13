@@ -3,6 +3,8 @@ package output
 import (
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
+	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -64,25 +66,26 @@ func PrintCycloneDX(formatType string, results []model.ScanResult) {
 	case "xml":
 		cdxOutputBOM = convertPackage(results)
 		result, _ := xml.MarshalIndent(cdxOutputBOM, "", " ")
-		log.Printf("%+v\n", string(result))
+		fmt.Printf("%+v\n", string(result))
 	case "json":
 		cdxOutputBOM = convertPackage(results)
 		result, _ := json.MarshalIndent(cdxOutputBOM, "", " ")
-		log.Printf("%+v\n", string(result))
+		fmt.Printf("%+v\n", string(result))
 
 	// CycloneDX VEX
 	case "vex-json":
 		showVex = true
 		cdxOutputBOM = convertPackage(results)
 		result, _ := json.MarshalIndent(cdxOutputBOM, "", " ")
-		log.Printf("%+v\n", string(result))
+		fmt.Printf("%+v\n", string(result))
 	case "vex-xml":
 		showVex = true
 		cdxOutputBOM = convertPackage(results)
 		result, _ := xml.MarshalIndent(cdxOutputBOM, "", " ")
-		log.Printf("%+v\n", string(result))
+		fmt.Printf("%+v\n", string(result))
 	default:
 		log.Error("Format type not found")
+		os.Exit(1)
 	}
 
 }

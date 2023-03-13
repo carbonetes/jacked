@@ -33,6 +33,7 @@ var (
 	log             = logger.GetLogger()
 	sbom            []byte
 	file            *string
+	severity        *string
 )
 
 // Start the scan engine with the given arguments and configurations
@@ -78,6 +79,12 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 			scanresult.Package = p
 			scanresult.Vulnerabilities = *result
 			results = append(results, scanresult)
+
+			if len(*arguments.FailCriteria) > 0 {
+				severity = arguments.FailCriteria
+				failCriteria(scanresult, severity)
+			}
+
 		}
 	}
 	matcher.WG.Wait()
@@ -181,5 +188,18 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 		}
 		log.Println()
 
+	}
+}
+
+func failCriteria(scanresult model.ScanResult, severity *string) {
+	vulns := scanresult.Vulnerabilities
+
+	for _, vuln := range vulns {
+		if strings.EqualFold(vuln.CVSS.Severity, *severity) {
+
+			log.Printf("Package: %v | CVE: %v | Severity: %v", vuln.Package, vuln.CVE, vuln.CVSS.Severity)
+			log.Errorf("%v found on scan result:", *severity)
+			os.Exit(1)
+		}
 	}
 }

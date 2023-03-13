@@ -26,6 +26,7 @@ var (
 		RegistryUsername:    new(string),
 		RegistryPassword:    new(string),
 		RegistryToken:       new(string),
+		FailCriteria:        new(string),
 	}
 	cfg         config.Configuration
 	quiet       bool
@@ -55,6 +56,14 @@ var (
 		"spdx-xml",
 		"spdx-tag-value",
 	}
+	Severities = []string{
+		"unknown",
+		"negligible",
+		"low",
+		"medium",
+		"high",
+		"critical",
+	}
 )
 
 func init() {
@@ -75,11 +84,12 @@ func init() {
 	arguments.Output = &cfg.Output
 
 	rootCmd.Flags().StringVar(arguments.SbomFile, "sbom", "", "Input sbom file from diggity to scan (Only read from json file)")
-	rootCmd.Flags().StringVarP(arguments.Output, "output", "o", cfg.Output, "Show scan results in \"table\", \"json\", \"cyclonedx-json\", \"cyclonedx-xml\", \"cyclonedx-vex-json\", \"cyclonedx-vex-xml\", \"spdx-json\", \"spdx-xml\", \"spdx-tag-value\" format")
+	rootCmd.Flags().StringVarP(arguments.Output, "output", "o", cfg.Output, fmt.Sprintf("Show scan results in (%v) format", OutputTypes))
 	rootCmd.Flags().BoolVarP(&secrets, "secrets", "s", !cfg.SecretConfig.Disabled, "Enable scanning for secrets")
 	rootCmd.Flags().BoolVarP(&license, "licenses", "l", cfg.LicenseFinder, "Enable scanning for package licenses")
 	rootCmd.Flags().BoolVarP(&quiet, "quiet", "q", cfg.Quiet, "Disable all logging statements")
 	rootCmd.Flags().BoolP("version", "v", false, "Print application version")
+	rootCmd.Flags().StringVar(arguments.FailCriteria, "fail-criteria", "", fmt.Sprintf("Input a severity that will be found at or above given severity then return code will be 1 (%v)", Severities))
 
 	rootCmd.Flags().StringVarP(arguments.Dir, "dir", "d", "", "Read directly from a path on disk (any directory) (e.g. 'jacked path/to/dir)'")
 	rootCmd.Flags().StringVarP(arguments.Tar, "tar", "t", "", "Read a tarball from a path on disk for archives created from docker save (e.g. 'jacked path/to/image.tar)'")
