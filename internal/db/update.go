@@ -3,6 +3,7 @@ package db
 import (
 	"archive/tar"
 	"compress/gzip"
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -50,27 +51,25 @@ func download(url string) string {
 }
 
 // Read tar file, extract all files.
-func extractTarGz(target, extractionPath string) {
-
+func extractTarGz(target, extractionPath string) error {
 	reader, err := os.Open(target)
-
 	if err != nil {
-		log.Errorf("Error opening tar file: %v", err)
+		return err
 	}
+
 	defer reader.Close()
 
 	fileStat, err := reader.Stat()
-
 	if err != nil {
-		log.Errorf("Error reading file stat: %v", err)
+		return err
 	}
 
 	bar.OnExtracting(fileStat.Size())
 	gzipReader, err := gzip.NewReader(reader)
-
 	if err != nil {
-		log.Errorf("Error creating gzip reader: %v", err)
+		return err
 	}
+
 	defer gzipReader.Close()
 
 	tarReader := tar.NewReader(gzipReader)
@@ -82,7 +81,7 @@ func extractTarGz(target, extractionPath string) {
 		}
 
 		if err != nil {
-			log.Errorf("Error reading tar header: %v", err)
+			return err
 		}
 
 		if strings.Contains(header.Name, "..") {
@@ -92,34 +91,34 @@ func extractTarGz(target, extractionPath string) {
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if err := os.Mkdir(header.Name, 0755); err != nil {
-				log.Errorf("Error creating directory: %v", err)
+				return err
 			}
 		case tar.TypeReg:
 			_filepath := path.Join(extractionPath, header.Name)
 			err := os.MkdirAll(filepath.Dir(_filepath), 0700)
 			if err != nil {
-				log.Errorf("Cannot create directory %v", err.Error())
+				return err
 			}
 			out, err := os.Create(_filepath)
 			if err != nil {
-				log.Errorf("Error creating output file: %v", err)
+				return err
 			}
 			if _, err := io.Copy(io.MultiWriter(out, bar.GetBar()), tarReader); err != nil {
-				log.Errorf("Error copying uncompressed data into output file: %v", err)
+				return err
 			}
 			defer out.Close()
 		default:
-			log.Errorf("Unknown tar header type flag")
+			return errors.New("Unknown tar header type flag")
 		}
 	}
-
+	return nil
 }
 
 // Deleting temporary files after using it on integrity file checking to clear up space.
-func deleteTempFile(target string) {
+func deleteTempFile(target string) error {
 	err := os.Remove(target)
 	if err != nil {
-		log.Errorf("Error deleting temp file: %v", err)
+		return err
 	}
-
+	return nil
 }
