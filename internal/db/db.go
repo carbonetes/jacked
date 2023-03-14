@@ -43,13 +43,14 @@ func init() {
 }
 
 // Fetch all vulnerabilities in database based on the list of keywords from packages
-func Fetch(packages *[]model.Package, vulnerabilities *[]model.Vulnerability) {
+func Fetch(packages *[]model.Package, vulnerabilities *[]model.Vulnerability) error {
 	ctx := context.Background()
 	var keywords []string
 	for _, p := range *packages {
 		keywords = append(keywords, p.Keywords...)
 	}
 	if err := db.NewSelect().Model(vulnerabilities).Where("package IN (?)", bun.In(keywords)).Scan(ctx); err != nil {
-		log.Fatalf("Error getting vulnerabilities: %v", err)
+		return err
 	}
+	return nil
 }

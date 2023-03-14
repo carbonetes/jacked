@@ -45,11 +45,11 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	if len(*arguments.SbomFile) > 0 {
 		file, err := os.Open(*arguments.SbomFile)
 		if err != nil {
-			log.Fatalln(err.Error())
+			log.Fatalf("\nUnable to Open SBOM JSON file: %v", err)
 		}
 		sbom, err = io.ReadAll(file)
 		if err != nil {
-			log.Fatalln(err.Error())
+			log.Fatal(err)
 		}
 	} else {
 		// Request for sbom through event bus
@@ -66,7 +66,10 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	spinner.OnVulnAnalysisStart(totalPackages)
 
 	// Fetch and filter all vulnerabilities for each package
-	db.Fetch(&packages, &vulnerabilities)
+	err := db.Fetch(&packages, &vulnerabilities)
+	if err != nil {
+		log.Fatalf("\nError Fetch Database: %v", err)
+	}
 	db.Filter(&vulnerabilities, &cfg.Ignore.Vulnerability)
 
 	// Begin matching vulnerabilities for each package
@@ -108,21 +111,21 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	selectOutputType(*arguments.Output, cfg, arguments)
 
 	log.Printf("\nAnalysis finished in %.2fs", time.Since(start).Seconds())
-	err := update.ShowLatestVersion()
+	err = update.ShowLatestVersion()
 	if err != nil {
-		log.Printf("Error on show latest version: %v", err)
+		log.Errorf("Error on show latest version: %v", err)
 	}
 	credits.Show()
 }
 
 // Print json format of the scan results
-func printJSONResult() string {
+func printJSONResult() (string, error) {
 	jsonraw, err := json.MarshalIndent(output, "", "  ")
 	if err != nil {
-		log.Printf("Error marshalling: %v", err.Error())
+		return "", err
 	}
 
-	return string(jsonraw)
+	return string(jsonraw), nil
 }
 
 // Select Output Type based on the User Input
@@ -145,7 +148,11 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 			} else {
 				log.Print("\nNo vulnerability found!")
 			}
-			fmt.Printf("%v", printJSONResult())
+			result, err := printJSONResult()
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("%v", result)
 		// CycloneDX Output Types
 		case "cyclonedx-xml":
 			result.PrintCycloneDX("xml", results)
