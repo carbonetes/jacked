@@ -66,7 +66,7 @@ func createTableRows(results []model.ScanResult) {
 				{Text: elliptical(_package.Package.Version, 18)},
 				{Text: _package.Package.Type},
 				{Text: v.CVE},
-				{Text: fmt.Sprintf("%.1f", v.CVSS.BaseScore)},
+				{Text: fmt.Sprintf("%.1f", v.CVSS.Score)},
 				{Text: caser.String(v.CVSS.Severity)},
 				{Text: v.VersionRange},
 			}

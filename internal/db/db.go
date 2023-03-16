@@ -11,6 +11,7 @@ import (
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
+	"github.com/uptrace/bun/extra/bundebug"
 	_ "modernc.org/sqlite"
 )
 
@@ -32,24 +33,21 @@ var (
 )
 
 func init() {
-	conn, err := sql.Open(driver, dbFilepath)
+	sqldb, err := sql.Open(driver, dbFilepath)
 	if err != nil {
 		log.Fatalf("Error establishing database connection: %v", err)
 	}
-	db = bun.NewDB(conn, sqlitedialect.New())
+	db = bun.NewDB(sqldb, sqlitedialect.New())
 	if err != nil {
 		log.Fatalf("Error establishing database connection: %v", err)
 	}
+	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 }
 
 // Fetch all vulnerabilities in database based on the list of keywords from packages
-func Fetch(packages *[]model.Package, vulnerabilities *[]model.Vulnerability) error {
+func Fetch(keyword string, vulnerabilities *[]model.Vulnerability) error {
 	ctx := context.Background()
-	var keywords []string
-	for _, p := range *packages {
-		keywords = append(keywords, p.Keywords...)
-	}
-	if err := db.NewSelect().Model(vulnerabilities).Where("package IN (?)", bun.In(keywords)).Scan(ctx); err != nil {
+	if err := db.NewSelect().Model(vulnerabilities).Where("packages LIKE ?", "%/"+keyword+"%").Scan(ctx); err != nil {
 		return err
 	}
 	return nil

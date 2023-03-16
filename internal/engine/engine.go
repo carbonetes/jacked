@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/carbonetes/jacked/internal/analysis"
 	"github.com/carbonetes/jacked/internal/config"
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/internal/events"
 	"github.com/carbonetes/jacked/internal/logger"
-	"github.com/carbonetes/jacked/internal/matcher"
 	"github.com/carbonetes/jacked/internal/model"
 	result "github.com/carbonetes/jacked/internal/output"
 	"github.com/carbonetes/jacked/internal/parser"
@@ -23,17 +23,16 @@ import (
 )
 
 var (
-	output          model.Output
-	results         []model.ScanResult
-	vulnerabilities []model.Vulnerability
-	packages        []model.Package
-	licenses        []model.License
-	secrets         model.SecretResults
-	totalPackages   int
-	log             = logger.GetLogger()
-	sbom            []byte
-	file            *string
-	severity        *string
+	output        model.Output
+	results       []model.ScanResult
+	packages      []model.Package
+	licenses      []model.License
+	secrets       model.SecretResults
+	totalPackages int
+	log           = logger.GetLogger()
+	sbom          []byte
+	file          *string
+	severity      *string
 )
 
 // Start the scan engine with the given arguments and configurations
@@ -65,32 +64,31 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 
 	spinner.OnVulnAnalysisStart(totalPackages)
 
-	// Fetch and filter all vulnerabilities for each package
-	err := db.Fetch(&packages, &vulnerabilities)
-	if err != nil {
-		log.Fatalf("\nError Fetch Database: %v", err)
-	}
-	db.Filter(&vulnerabilities, &cfg.Ignore.Vulnerability)
-
 	// Begin matching vulnerabilities for each package
-	matcher.WG.Add(totalPackages)
+	analysis.WG.Add(totalPackages)
 	for _, p := range packages {
+		// Fetch and filter all vulnerabilities for each package
+		var vulnerabilities []model.Vulnerability
+		err := db.Fetch(p.Name, &vulnerabilities)
+		if err != nil {
+			log.Error("\nError Fetch Database: %v", err)
+		}
+		db.Filter(&vulnerabilities, &cfg.Ignore.Vulnerability)
+
 		var scanresult model.ScanResult
 		var result *[]model.Result = new([]model.Result)
-		analysis.FindMatch()
+		analysis.FindMatch(&p, &vulnerabilities, result)
 		if *result != nil {
 			scanresult.Package = p
 			scanresult.Vulnerabilities = *result
 			results = append(results, scanresult)
-
 			if len(*arguments.FailCriteria) > 0 {
 				severity = arguments.FailCriteria
 				failCriteria(scanresult, severity)
 			}
-
 		}
 	}
-	matcher.WG.Wait()
+	analysis.WG.Wait()
 	spinner.OnVulnAnalysisEnd(nil)
 
 	// Get scan type value
@@ -111,7 +109,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	selectOutputType(*arguments.Output, cfg, arguments)
 
 	log.Printf("\nAnalysis finished in %.2fs", time.Since(start).Seconds())
-	err = update.ShowLatestVersion()
+	err := update.ShowLatestVersion()
 	if err != nil {
 		log.Errorf("Error on show latest version: %v", err)
 	}
