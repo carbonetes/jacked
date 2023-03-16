@@ -319,9 +319,9 @@ func parseRatingsVEX(vuln model.Result, metadata model.PackageMetadata) model.Ra
 			Url:  "",
 		},
 		Description: parseDescription(vuln.Description),
-		BaseScore:   vuln.CVSS.BaseScore,
+		BaseScore:   vuln.CVSS.Score,
 		Severity:    vuln.CVSS.Severity,
-		Method:      cvssMethod(vuln.CVSS.Version),
+		Method:      vuln.CVSS.Method,
 		Vector:      "",
 	}
 }
@@ -334,23 +334,6 @@ func parseDescription(description string) *string {
 	return nil
 }
 
-func cvssMethod(version string) string {
-
-	cvssValue, err := strconv.ParseFloat(version, 64)
-	if err != nil {
-		return ""
-	}
-	switch cvssValue {
-	case 2:
-		return CVSSv2Method
-	case 3:
-		return CVSSv3Method
-	case 3.1:
-		return CVSSv31Method
-	default:
-		return OtherMethod
-	}
-}
 
 func parsePackageMetada(pMetadata interface{}) model.PackageMetadata {
 

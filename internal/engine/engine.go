@@ -77,7 +77,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	for _, p := range packages {
 		var scanresult model.ScanResult
 		var result *[]model.Result = new([]model.Result)
-		matcher.Matcher(&p, result, &vulnerabilities)
+		analysis.FindMatch()
 		if *result != nil {
 			scanresult.Package = p
 			scanresult.Vulnerabilities = *result
