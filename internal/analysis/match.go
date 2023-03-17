@@ -24,7 +24,6 @@ func FindMatch(pkg *model.Package, vulnerabilities *[]model.Vulnerability, resul
 						}
 					}
 					if len(c.Constraints) > 0 && len(pkg.Version) > 0 {
-						if pkg.Version
 						matched, constraint := MatchConstraint(pkg.Version, c)
 						if matched {
 							result := formResult(vulnerability, *pkg, constraint, c)
