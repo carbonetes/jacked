@@ -5,12 +5,12 @@ type ScanResult struct {
 	Vulnerabilities []Result `json:"vulnerabilities"`
 }
 type Result struct {
-	CVE            string      `json:"cve"`
-	Package        string      `json:"package"`
-	CurrentVersion string      `json:"current_version"`
-	VersionRange   string      `json:"version_range"`
-	Description    string      `json:"description"`
-	CVSS           Cvss        `json:"cvss"`
-	Remediation    Remediation `json:"remediation"`
-	Reference      Reference   `json:"reference"`
+	CVE            string       `json:"cve"`
+	Package        string       `json:"package"`
+	CurrentVersion string       `json:"current_version"`
+	VersionRange   string       `json:"version_range"`
+	Description    *Description `json:"description,omitempty"`
+	CVSS           Cvss         `json:"cvss"`
+	Remediation    Remediation  `json:"remediation"`
+	Reference      Reference    `json:"reference"`
 }

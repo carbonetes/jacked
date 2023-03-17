@@ -89,7 +89,7 @@ func formResult(vulnerability model.Vulnerability, pkg model.Package, versionRan
 		CurrentVersion: pkg.Version,
 		VersionRange:   versionRange,
 		CVSS:           finalCVSS,
-		Description:    finalDescription.Content,
+		Description:    &finalDescription,
 		Remediation:    remediation,
 		Reference:      reference,
 	}
