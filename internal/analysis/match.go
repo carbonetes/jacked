@@ -1,6 +1,7 @@
 package analysis
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/carbonetes/jacked/internal/model"
@@ -10,27 +11,38 @@ var WG sync.WaitGroup
 
 func FindMatch(pkg *model.Package, vulnerabilities *[]model.Vulnerability, results *[]model.Result) {
 
-	if len(pkg.CPEs) > 0 && len(*vulnerabilities) > 0 {
-		for _, vulnerability := range *vulnerabilities {
-			if len(vulnerability.Criteria) > 0 {
-				for _, c := range vulnerability.Criteria {
-					if len(c.CPES) > 0 && len(pkg.CPEs) > 0 {
-						matched, cpe := MatchCPE(pkg.CPEs, c.CPES)
-						if matched {
-							result := formResult(vulnerability, *pkg, "= "+cpe.Version, c)
-							if !contains(results, &result) {
-								*results = append(*results, result)
-							}
-						}
+	// check vulnerabilities if empty
+	if vulnerabilities == nil {
+		WG.Done()
+		return
+	}
+
+	// get all vulnerabilities related to this package
+	fv := filter(vulnerabilities, *pkg)
+
+	// check filtered vulnerabilities if empty
+	if len(fv) == 0 {
+		WG.Done()
+		return
+	}
+
+	if len(pkg.CPEs) > 0 && len(fv) > 0 {
+		for _, vulnerability := range fv {
+			if len(vulnerability.Criteria.CPES) > 0 && len(pkg.CPEs) > 0 {
+				matched, cpe := MatchCPE(pkg, &vulnerability.Criteria)
+				if matched {
+					result := FormResult(vulnerability, *pkg, "= "+cpe.Version, vulnerability.Criteria)
+					if !contains(results, &result) {
+						*results = append(*results, result)
 					}
-					if len(c.Constraints) > 0 && len(pkg.Version) > 0 {
-						matched, constraint := MatchConstraint(pkg.Version, c)
-						if matched {
-							result := formResult(vulnerability, *pkg, constraint, c)
-							if !contains(results, &result) {
-								*results = append(*results, result)
-							}
-						}
+				}
+			}
+			if CheckProductVendor(pkg, &vulnerability.Criteria, vulnerability.Package) && len(vulnerability.Criteria.Constraint) > 0 {
+				matched, constraint := MatchConstraint(pkg.Version, vulnerability.Criteria)
+				if matched {
+					result := FormResult(vulnerability, *pkg, constraint, vulnerability.Criteria)
+					if !contains(results, &result) {
+						*results = append(*results, result)
 					}
 				}
 			}
@@ -39,48 +51,35 @@ func FindMatch(pkg *model.Package, vulnerabilities *[]model.Vulnerability, resul
 	defer WG.Done()
 }
 
-func formResult(vulnerability model.Vulnerability, pkg model.Package, versionRange string, criteria model.Criteria) model.Result {
-	var finalDescription model.Description
-	if len(vulnerability.Descriptions) > 0 {
-		for _, description := range vulnerability.Descriptions {
-			if description.Source == criteria.Source {
-				finalDescription = description
-			} else {
-				finalDescription = description
+// Select all vulnerabilities can be asociated based on the keywords and vendor of the package
+func filter(vulnerabilities *[]model.Vulnerability, _package model.Package) []model.Vulnerability {
+	var fv []model.Vulnerability
+	for _, v := range *vulnerabilities {
+		for _, keyword := range _package.Keywords {
+			if len(v.Package) > 0 {
+				if strings.EqualFold(v.Package, keyword) {
+					fv = append(fv, v)
+				}
 			}
 		}
 	}
+	return fv
+}
 
-	var finalCVSS model.Cvss
-	if len(vulnerability.CVSS) > 0 {
-		for _, cvss := range vulnerability.CVSS {
-			if cvss.Method == "3.1" {
-				finalCVSS = cvss
-			} else {
-				finalCVSS = cvss
-				finalCVSS.Severity = GetSeverity(cvss.Score)
-			}
-		}
-	} else {
-		finalCVSS.Severity = "UNKNOWN"
-	}
+func FormResult(vulnerability model.Vulnerability, pkg model.Package, versionRange string, criteria model.Criteria) model.Result {
 
-	var remediation model.Remediation
-	if len(vulnerability.Remediations) > 0 {
-		for _, r := range vulnerability.Remediations {
-			if r.Scope == criteria.Scope {
-				remediation = r
-			}
+	if strings.EqualFold(vulnerability.CVSS.Severity, "UNKNOWN") {
+		if strings.EqualFold(vulnerability.CVSS.Method, "2") {
+			vulnerability.CVSS.Severity = GetCVSS2Severity(vulnerability.CVSS.Score)
 		}
 	}
 
-	var reference model.Reference
-	if len(vulnerability.References) > 0 {
-		for _, r := range vulnerability.References {
-			if r.Source == criteria.Scope {
-				reference = r
-			}
-		}
+	if len(vulnerability.CVSS.Method) == 0 {
+		vulnerability.CVSS.Severity = "UNKNOWN"
+	}
+
+	if len(vulnerability.Remediation.Fix) == 0 {
+		vulnerability.Remediation.Fix = "-"
 	}
 
 	return model.Result{
@@ -88,14 +87,14 @@ func formResult(vulnerability model.Vulnerability, pkg model.Package, versionRan
 		Package:        pkg.Name,
 		CurrentVersion: pkg.Version,
 		VersionRange:   versionRange,
-		CVSS:           finalCVSS,
-		Description:    finalDescription.Content,
-		Remediation:    remediation,
-		Reference:      reference,
+		CVSS:           vulnerability.CVSS,
+		Description:    vulnerability.Description.Content,
+		Remediation:    vulnerability.Remediation,
+		Reference:      vulnerability.Reference,
 	}
 }
 
-func GetSeverity(baseScore float64) string {
+func GetCVSS2Severity(baseScore float64) string {
 	if baseScore >= 0.0 && baseScore <= 3.9 {
 		return "LOW"
 	}
