@@ -18,7 +18,7 @@ func FindMatch(pkg *model.Package, vulnerabilities *[]model.Vulnerability, resul
 	}
 
 	// get all vulnerabilities related to this package
-	fv := filter(vulnerabilities, *pkg)
+	fv := filter(vulnerabilities, &pkg.Keywords)
 
 	// check filtered vulnerabilities if empty
 	if len(fv) == 0 {
@@ -28,49 +28,55 @@ func FindMatch(pkg *model.Package, vulnerabilities *[]model.Vulnerability, resul
 
 	if len(pkg.CPEs) > 0 && len(fv) > 0 {
 		for _, vulnerability := range fv {
-			if len(vulnerability.Criteria.CPES) > 0 && len(pkg.CPEs) > 0 {
-				matched, cpe := MatchCPE(pkg, &vulnerability.Criteria)
-				if matched {
-					result := FormResult(vulnerability, *pkg, "= "+cpe.Version, vulnerability.Criteria)
-					if !contains(results, &result) {
-						*results = append(*results, result)
-					}
+			matched := match(pkg, &vulnerability)
+			if matched {
+				result := FormResult(&vulnerability, pkg)
+				if !contains(results, &result) {
+					*results = append(*results, result)
 				}
 			}
-			if CheckProductVendor(pkg, &vulnerability.Criteria, vulnerability.Package) && len(vulnerability.Criteria.Constraint) > 0 {
-				matched, constraint := MatchConstraint(pkg.Version, vulnerability.Criteria)
-				if matched {
-					result := FormResult(vulnerability, *pkg, constraint, vulnerability.Criteria)
-					if !contains(results, &result) {
-						*results = append(*results, result)
-					}
-				}
-			}
+
 		}
 	}
+
 	defer WG.Done()
 }
 
+func match(pkg *model.Package, vulnerability *model.Vulnerability) bool {
+	var matched bool
+	if len(vulnerability.Criteria.CPES) > 0 && len(pkg.CPEs) > 0 {
+		matched = MatchCPE(pkg, &vulnerability.Criteria)
+	}
+
+	if matched {
+		return matched
+	}
+
+	if checkProductVendor(pkg, vulnerability) && len(vulnerability.Criteria.Constraint) > 0 {
+		return MatchConstraint(&pkg.Version, &vulnerability.Criteria)
+	}
+
+	return matched
+}
+
 // Select all vulnerabilities can be asociated based on the keywords and vendor of the package
-func filter(vulnerabilities *[]model.Vulnerability, _package model.Package) []model.Vulnerability {
+func filter(vulnerabilities *[]model.Vulnerability, keywords *[]string) []model.Vulnerability {
 	var fv []model.Vulnerability
 	for _, v := range *vulnerabilities {
-		for _, keyword := range _package.Keywords {
-			if len(v.Package) > 0 {
-				if strings.EqualFold(v.Package, keyword) {
-					fv = append(fv, v)
-				}
+		for _, keyword := range *keywords {
+			if strings.EqualFold(v.Package, keyword) {
+				fv = append(fv, v)
 			}
 		}
 	}
 	return fv
 }
 
-func FormResult(vulnerability model.Vulnerability, pkg model.Package, versionRange string, criteria model.Criteria) model.Result {
+func FormResult(vulnerability *model.Vulnerability, pkg *model.Package) model.Result {
 
 	if strings.EqualFold(vulnerability.CVSS.Severity, "UNKNOWN") {
 		if strings.EqualFold(vulnerability.CVSS.Method, "2") {
-			vulnerability.CVSS.Severity = GetCVSS2Severity(vulnerability.CVSS.Score)
+			vulnerability.CVSS.Severity = GetCVSS2Severity(&vulnerability.CVSS.Score)
 		}
 	}
 
@@ -86,7 +92,7 @@ func FormResult(vulnerability model.Vulnerability, pkg model.Package, versionRan
 		CVE:            vulnerability.CVE,
 		Package:        pkg.Name,
 		CurrentVersion: pkg.Version,
-		VersionRange:   versionRange,
+		VersionRange:   vulnerability.Criteria.Constraint,
 		CVSS:           vulnerability.CVSS,
 		Description:    vulnerability.Description.Content,
 		Remediation:    vulnerability.Remediation,
@@ -94,14 +100,14 @@ func FormResult(vulnerability model.Vulnerability, pkg model.Package, versionRan
 	}
 }
 
-func GetCVSS2Severity(baseScore float64) string {
-	if baseScore >= 0.0 && baseScore <= 3.9 {
+func GetCVSS2Severity(baseScore *float64) string {
+	if *baseScore >= 0.0 && *baseScore <= 3.9 {
 		return "LOW"
 	}
-	if baseScore >= 4.0 && baseScore <= 6.9 {
+	if *baseScore >= 4.0 && *baseScore <= 6.9 {
 		return "MEDIUM"
 	}
-	if baseScore >= 7.0 && baseScore <= 10.0 {
+	if *baseScore >= 7.0 && *baseScore <= 10.0 {
 		return "HIGH"
 	}
 	return "UNKNOWN"

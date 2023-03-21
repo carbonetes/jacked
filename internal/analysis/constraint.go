@@ -4,31 +4,28 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/carbonetes/jacked/internal/model"
 	"github.com/hashicorp/go-version"
 )
 
-var log = logger.GetLogger()
+func MatchConstraint(packageVersion *string, criteria *model.Criteria) bool {
 
-func MatchConstraint(packageVersion string, criteria model.Criteria) (bool, string) {
-
-	v, err := version.NewVersion(normalizeVersion(packageVersion))
+	v, err := version.NewVersion(normalizeVersion(*packageVersion))
 	if err != nil {
-		log.Error(err)
+		return false
 	}
 
 	c, err := version.NewConstraint(normalizeConstraint(criteria.Constraint))
 	if err != nil {
-		log.Error(err)
+		return false
 	}
 
 	if err == nil {
 		if c.Check(v) {
-			return true, criteria.Constraint
+			return true
 		}
 	}
-	return false, ""
+	return false
 }
 
 func normalizeConstraint(constraint string) string {

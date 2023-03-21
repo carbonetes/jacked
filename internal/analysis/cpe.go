@@ -7,7 +7,7 @@ import (
 	"github.com/facebookincubator/nvdtools/wfn"
 )
 
-func MatchCPE(pkg *model.Package, criteria *model.Criteria) (bool, *wfn.Attributes) {
+func MatchCPE(pkg *model.Package, criteria *model.Criteria) bool {
 	for _, p := range pkg.CPEs {
 		pcpe, err := wfn.UnbindFmtString(p)
 		if err != nil {
@@ -21,31 +21,7 @@ func MatchCPE(pkg *model.Package, criteria *model.Criteria) (bool, *wfn.Attribut
 			}
 
 			if pcpe.Vendor == vcpe.Vendor && pcpe.Product == vcpe.Product && pcpe.Version == vcpe.Version {
-				return true, vcpe
-			}
-		}
-	}
-
-	return false, nil
-}
-
-func CheckProductVendor(pkg *model.Package, criteria *model.Criteria, pkgName string) bool {
-	if len(criteria.CPES) > 0 {
-		for _, v := range criteria.CPES {
-			vcpe, err := wfn.UnbindFmtString(v)
-			if err != nil {
-				continue
-			}
-
-			if strings.EqualFold(CleanString(vcpe.Product), pkg.Name) {
-				return true
-			}
-		}
-	}
-
-	if strings.EqualFold(criteria.Source, "ghsa") && len(pkgName) > 0 {
-		if strings.EqualFold(criteria.Scope, "maven") && strings.EqualFold(pkg.Type, "java") {
-			if strings.Contains(pkgName, pkg.Name) {
+				criteria.Constraint = "= " + vcpe.Version
 				return true
 			}
 		}
@@ -54,7 +30,24 @@ func CheckProductVendor(pkg *model.Package, criteria *model.Criteria, pkgName st
 	return false
 }
 
-func CleanString(s string) string {
+func checkProductVendor(pkg *model.Package, vulnerability *model.Vulnerability) bool {
+	if len(vulnerability.Criteria.CPES) > 0 {
+		for _, v := range vulnerability.Criteria.CPES {
+			vcpe, err := wfn.UnbindFmtString(v)
+			if err != nil {
+				continue
+			}
+
+			if strings.EqualFold(cleanString(vcpe.Product), pkg.Name) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func cleanString(s string) string {
 	if strings.Contains(s, "\\") {
 		r := strings.Replace(s, "\\", "", -1)
 		return r
