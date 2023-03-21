@@ -106,6 +106,7 @@ type VexBOM struct {
 	Description        *string            `json:"description,omitempty" xml:"description,omitempty"`
 	Detail             *string            `json:"detail,omitempty" xml:"detail,omitempty"`
 	Recommendation     *string            `json:"recommendation,omitempty" xml:"recommendation,omitempty"`
+	Reference          *SourceVEX         `json:"reference,omitempty" xml:"reference,omitempty"`
 	Advisories         *[]AdvisoryVEX     `json:"advisories,omitempty" xml:"advisories>advisory,omitempty"`
 	VulnerabilitiesVEX []VulnerabilityVEX `json:"vulnerability-exposure,omitempty" xml:"vulnerability-exposure>vulnerability,omitempty"`
 	AnalysisVEX        *AnalysisVEX       `json:"analysis,omitempty" xml:"analysis,omitempty"`
@@ -142,7 +143,7 @@ type RatingVEX struct {
 }
 
 type AnalysisVEX struct {
-	State         string   `json:"state,omitempty" xml:"state,omitempty"` // affected, not_affected
+	State         *string  `json:"state,omitempty" xml:"state,omitempty"` // affected, not_affected
 	Justification string   `json:"justification,omitempty" xml:"justification,omitempty"`
 	Response      []string `json:"response,omitempty" xml:"response,omitempty"` // ["will_not_fix", "update"]
 	Detail        string   `json:"detail,omitempty" xml:"detail,omitempty"`     // Vulnerability Detail
