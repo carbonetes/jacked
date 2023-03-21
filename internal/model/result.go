@@ -10,7 +10,7 @@ type Result struct {
 	CurrentVersion string      `json:"current_version"`
 	VersionRange   string      `json:"version_range"`
 	Description    string      `json:"description"`
-	CVSS           Cvss        `json:"cvss"`
+	CVSS           CVSS        `json:"cvss"`
 	Remediation    Remediation `json:"remediation"`
 	Reference      Reference   `json:"reference"`
 }
