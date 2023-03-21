@@ -23,16 +23,17 @@ import (
 )
 
 var (
-	output        model.Output
-	results       []model.ScanResult
-	packages      []model.Package
-	licenses      []model.License
-	secrets       model.SecretResults
-	totalPackages int
-	log           = logger.GetLogger()
-	sbom          []byte
-	file          *string
-	severity      *string
+	output          model.Output
+	vulnerabilities []model.Vulnerability
+	results         []model.ScanResult
+	packages        []model.Package
+	licenses        []model.License
+	secrets         model.SecretResults
+	totalPackages   int
+	log             = logger.GetLogger()
+	sbom            []byte
+	file            *string
+	severity        *string
 )
 
 // Start the scan engine with the given arguments and configurations
@@ -64,17 +65,15 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 
 	spinner.OnVulnAnalysisStart(totalPackages)
 
+	err := db.Fetch(&packages, &vulnerabilities)
+	if err != nil {
+		log.Error("\nError Fetch Database: %v", err)
+	}
+	//db.Filter(&vulnerabilities, &cfg.Ignore.Vulnerability)
+
 	// Begin matching vulnerabilities for each package
 	analysis.WG.Add(totalPackages)
 	for _, p := range packages {
-		// Fetch and filter all vulnerabilities for each package
-		var vulnerabilities []model.Vulnerability
-		err := db.Fetch(p.Name, &vulnerabilities)
-		if err != nil {
-			log.Error("\nError Fetch Database: %v", err)
-		}
-		db.Filter(&vulnerabilities, &cfg.Ignore.Vulnerability)
-
 		var scanresult model.ScanResult
 		var result *[]model.Result = new([]model.Result)
 		analysis.FindMatch(&p, &vulnerabilities, result)
@@ -109,7 +108,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	selectOutputType(*arguments.Output, cfg, arguments)
 
 	log.Printf("\nAnalysis finished in %.2fs", time.Since(start).Seconds())
-	err := update.ShowLatestVersion()
+	err = update.ShowLatestVersion()
 	if err != nil {
 		log.Errorf("Error on show latest version: %v", err)
 	}
