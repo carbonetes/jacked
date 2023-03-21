@@ -67,7 +67,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 
 	err := db.Fetch(&packages, &vulnerabilities)
 	if err != nil {
-		log.Error("\nError Fetch Database: %v", err)
+		log.Errorf("\nError Fetch Database: %v", err)
 	}
 	//db.Filter(&vulnerabilities, &cfg.Ignore.Vulnerability)
 
