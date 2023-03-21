@@ -291,7 +291,7 @@ func parseVexBOM(results []model.ScanResult) []model.VexBOM {
 				RatingsVEX:     generateRatingsVEX(vuln, metadata),
 				CWEs:           nil,
 				Description:    hasValue(metadata.PackageDescription), // Package Description
-				Detail:         &vuln.Description.Content,             // Detail - Vulnerability Description
+				Detail:         &vuln.Description,                     // Detail - Vulnerability Description
 				Recommendation: generateRecommendation(vuln, result.Package),
 				Reference:      generateReference(vuln.Reference),
 				Advisories:     generateAdvisoryVex(vuln.CVE),
