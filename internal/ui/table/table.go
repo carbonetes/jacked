@@ -24,6 +24,7 @@ const (
 	Score          string = "Score"
 	Severity       string = "Severity"
 	VersionRange   string = "Affected Versions"
+	Fix            string = "Fix"
 	Total          string = "Vulnerability Found"
 )
 
@@ -47,12 +48,14 @@ func createTableHeader() {
 			{Align: simpletable.AlignCenter, Text: Score},
 			{Align: simpletable.AlignCenter, Text: Severity},
 			{Align: simpletable.AlignCenter, Text: VersionRange},
+			{Align: simpletable.AlignCenter, Text: Fix},
 		},
 	}
 }
 
 // From the scan results, table rows will be generated and apply data on a specified table header.
 func createTableRows(results []model.ScanResult) {
+
 	sort.SliceStable(results, func(i, j int) bool {
 		return results[i].Package.Name < results[j].Package.Name
 	})
@@ -69,6 +72,7 @@ func createTableRows(results []model.ScanResult) {
 				{Text: fmt.Sprintf("%.1f", v.CVSS.Score)},
 				{Text: caser.String(v.CVSS.Severity)},
 				{Text: v.VersionRange},
+				{Text: v.Remediation.Fix},
 			}
 			index++
 			table.Body.Cells = append(table.Body.Cells, r)
@@ -82,7 +86,7 @@ func createTableFooter(count int) {
 	table.Footer = &simpletable.Footer{
 		Cells: []*simpletable.Cell{
 			{
-				Span:  8,
+				Span:  9,
 				Align: simpletable.AlignLeft,
 				Text:  fmt.Sprintf("%s: %v", Total, count),
 			},
