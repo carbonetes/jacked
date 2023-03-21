@@ -194,12 +194,36 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 func failCriteria(scanresult model.ScanResult, severity *string) {
 	vulns := scanresult.Vulnerabilities
 
-	for _, vuln := range vulns {
-		if strings.EqualFold(vuln.CVSS.Severity, *severity) {
+	Severities := []string{
+		"unknown",
+		"negligible",
+		"low",
+		"medium",
+		"high",
+		"critical",
+	}
 
-			log.Printf("Package: %v | CVE: %v | Severity: %v", vuln.Package, vuln.CVE, vuln.CVSS.Severity)
-			log.Errorf("%v found on scan result:", *severity)
-			os.Exit(1)
+	index := -1
+	for i := 0; i < len(Severities); i++ {
+		if Severities[i] == "low" {
+			index = i
+			break
+		}
+	}
+	var newSeverities []string
+	if index != -1 {
+		newSeverities = Severities[index:]
+	}
+
+	for _, vuln := range vulns {
+		for _, newSeverity := range newSeverities {
+
+			if strings.EqualFold(vuln.CVSS.Severity, newSeverity) {
+
+				log.Errorf("\n\nFAILED: Found a vulnerability that is equal or higher than %v severity!", strings.ToUpper(*severity))
+				log.Printf("Package Reference: %v | CVE: %v | Severity: %v\n", vuln.Package, vuln.CVE, vuln.CVSS.Severity)
+				os.Exit(1)
+			}
 		}
 	}
 }
