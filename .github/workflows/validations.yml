@@ -51,4 +51,4 @@ jobs:
             version: latest
             skip-pkg-cache: true
             # Optional: golangci-lint command line arguments.
-            args: --timeout 50000
+            args: --timeout 50000s
