@@ -102,7 +102,7 @@ You can have Jacked exit with an error if any vulnerabilities are reported equal
 
 Example, here's how you could trigger a CI pipeline failure if any vulnerabilities are found in the image with a severity of "low" or higher:
 ```
-jacked --fail-criteria low
+jacked <image> --fail-criteria low
 ```
 
 ## Useful Commands and Flags 🚩
