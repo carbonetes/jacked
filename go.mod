@@ -19,7 +19,6 @@ require (
 	github.com/theckman/yacspin v0.13.12
 	github.com/uptrace/bun v1.1.12
 	github.com/uptrace/bun/dialect/sqlitedialect v1.1.12
-	github.com/uptrace/bun/extra/bundebug v1.1.12
 	github.com/vmware/transport-go v1.3.4
 	golang.org/x/text v0.6.0
 	gopkg.in/yaml.v2 v2.4.0
