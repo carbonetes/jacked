@@ -40,10 +40,7 @@ var (
 func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	start := time.Now()
 
-	secrets.Configuration.Excludes = arguments.ExcludedFilenames
-	secrets.Configuration.Disabled = *arguments.DisableSecretSearch
-	secrets.Configuration.SecretRegex = *arguments.SecretContentRegex
-	secrets.Configuration.MaxFileSize = arguments.SecretMaxFileSize
+	setSecrets(arguments)
 
 	// Check database for any updates
 	db.DBCheck()
@@ -207,4 +204,12 @@ func failCriteria(scanresult model.ScanResult, severity *string) {
 			os.Exit(1)
 		}
 	}
+}
+
+func setSecrets(arguments *model.Arguments) {
+
+	secrets.Configuration.Excludes = arguments.ExcludedFilenames
+	secrets.Configuration.Disabled = *arguments.DisableSecretSearch
+	secrets.Configuration.SecretRegex = *arguments.SecretContentRegex
+	secrets.Configuration.MaxFileSize = arguments.SecretMaxFileSize
 }
