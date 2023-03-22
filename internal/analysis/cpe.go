@@ -8,6 +8,7 @@ import (
 )
 
 func MatchCPE(pkg *model.Package, criteria *model.Criteria) bool {
+
 	for _, p := range pkg.CPEs {
 		pcpe, err := wfn.UnbindFmtString(p)
 		if err != nil {
@@ -31,6 +32,7 @@ func MatchCPE(pkg *model.Package, criteria *model.Criteria) bool {
 }
 
 func checkProductVendor(pkg *model.Package, vulnerability *model.Vulnerability) bool {
+
 	if len(vulnerability.Criteria.CPES) > 0 {
 		for _, v := range vulnerability.Criteria.CPES {
 			vcpe, err := wfn.UnbindFmtString(v)
@@ -38,8 +40,10 @@ func checkProductVendor(pkg *model.Package, vulnerability *model.Vulnerability) 
 				continue
 			}
 
-			if strings.EqualFold(cleanString(vcpe.Product), pkg.Name) {
-				return true
+			for _, keyword := range pkg.Keywords {
+				if strings.EqualFold(cleanString(vcpe.Product), keyword) {
+					return true
+				}
 			}
 		}
 	}
