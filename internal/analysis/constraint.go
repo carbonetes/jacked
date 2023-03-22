@@ -83,6 +83,7 @@ func normalizeVersion(version string) string {
 
 	// Replace any occurrences of "_final" or "-final" with an empty string.
 	version = strings.Replace(version, "_final", "", -1)
+	version = strings.Replace(version, "v", "", -1)
 	version = strings.Replace(version, "-final", "", -1)
 
 	// Replace any occurrences of "-rc" or "-b" with an empty string, followed by a dot.
