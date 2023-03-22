@@ -15,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const root = "https://vulnerability-database-test.s3.us-west-2.amazonaws.com/metadata"
+const root = "https://vulnerability-db-2.s3.us-west-2.amazonaws.com/metadata"
 
 type Metadata struct {
 	Build    int64  `json:"build,omitempty"`
