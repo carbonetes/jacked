@@ -1,7 +1,6 @@
 package analysis
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 
@@ -50,7 +49,6 @@ func match(pkg *model.Package, vulnerability *model.Vulnerability) bool {
 	case "go-module":
 
 		if vulnerability.Package == pkg.Name {
-			fmt.Printf("%s:%s [%s] \n", pkg.Name, pkg.Version, vulnerability.Criteria.Constraint)
 			return MatchConstraint(&pkg.Version, &vulnerability.Criteria)
 		}
 
