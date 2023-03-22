@@ -40,6 +40,11 @@ var (
 func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	start := time.Now()
 
+	secrets.Configuration.Excludes = arguments.ExcludedFilenames
+	secrets.Configuration.Disabled = *arguments.DisableSecretSearch
+	secrets.Configuration.SecretRegex = *arguments.SecretContentRegex
+	secrets.Configuration.MaxFileSize = arguments.SecretMaxFileSize
+
 	// Check database for any updates
 	db.DBCheck()
 	if len(*arguments.SbomFile) > 0 {
