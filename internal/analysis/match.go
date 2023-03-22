@@ -1,6 +1,7 @@
 package analysis
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -44,18 +45,24 @@ func FindMatch(pkg *model.Package, vulnerabilities *[]model.Vulnerability, resul
 
 func match(pkg *model.Package, vulnerability *model.Vulnerability) bool {
 	var matched bool
-	if len(vulnerability.Criteria.CPES) > 0 && len(pkg.CPEs) > 0 {
-		matched = MatchCPE(pkg, &vulnerability.Criteria)
-	}
 
-	if matched {
-		return matched
-	}
+	switch pkg.Type {
+	case "go-module":
 
-	if checkProductVendor(pkg, vulnerability) && len(vulnerability.Criteria.Constraint) > 0 {
-		return MatchConstraint(&pkg.Version, &vulnerability.Criteria)
-	}
+		if vulnerability.Package == pkg.Name {
+			fmt.Printf("%s:%s [%s] \n", pkg.Name, pkg.Version, vulnerability.Criteria.Constraint)
+			return MatchConstraint(&pkg.Version, &vulnerability.Criteria)
+		}
 
+	case "java":
+		if checkProductVendor(pkg, vulnerability) && len(vulnerability.Criteria.Constraint) > 0 {
+			return MatchConstraint(&pkg.Version, &vulnerability.Criteria)
+		}
+	default:
+		if len(vulnerability.Criteria.CPES) > 0 && len(pkg.CPEs) > 0 {
+			matched = MatchCPE(pkg, &vulnerability.Criteria)
+		}
+	}
 	return matched
 }
 
