@@ -10,8 +10,8 @@ jobs:
       - name: Checkout repository # Checkout user's current repository
         uses: actions/checkout@v2
 
-      - name: Run carbonetes/jacked # runs the github action of jacked.
-        uses: carbonetes/jacked@v1.0.0 # runs the github action using this version.
+      - name: Run sairen-carbonetes/jacked-action # runs the github action of jacked.
+        uses: sairen-carbonetes/jacked-action@v1.0.0 # runs the github action using this version.
         with: # user’s input reference for scanning options, results that jacked-action supported.
           directory: "."
           fail-criteria: "" # user's input severity reference to be considered as failed-build when detected from the scan result.
