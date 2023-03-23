@@ -105,7 +105,11 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	}
 
 	// Compile the scan results based on the given configurations
-	selectOutputType(*arguments.Output, cfg, arguments)
+	if len(results) <= 0 {
+		log.Print("\nNo vulnerability found!")
+	} else {
+		selectOutputType(*arguments.Output, cfg, arguments)
+	}
 
 	log.Printf("\nAnalysis finished in %.2fs", time.Since(start).Seconds())
 	err := update.ShowLatestVersion()
