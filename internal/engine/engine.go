@@ -40,6 +40,8 @@ var (
 func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	start := time.Now()
 
+	setSecrets(arguments)
+
 	// Check database for any updates
 	db.DBCheck()
 	if len(*arguments.SbomFile) > 0 {
@@ -105,12 +107,16 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	}
 
 	// Compile the scan results based on the given configurations
-	selectOutputType(*arguments.Output, cfg, arguments)
+	if len(results) <= 0 {
+		log.Print("\nNo vulnerability found!")
+	} else {
+		selectOutputType(*arguments.Output, cfg, arguments)
+	}
 
 	log.Printf("\nAnalysis finished in %.2fs", time.Since(start).Seconds())
 	err := update.ShowLatestVersion()
 	if err != nil {
-		log.Printf("Error on show latest version: %v", err)
+		log.Errorf("Error on show latest version: %v", err)
 	}
 	credits.Show()
 }
@@ -194,12 +200,44 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 func failCriteria(scanresult model.ScanResult, severity *string) {
 	vulns := scanresult.Vulnerabilities
 
-	for _, vuln := range vulns {
-		if strings.EqualFold(vuln.CVSS.Severity, *severity) {
+	Severities := []string{
+		"unknown",
+		"negligible",
+		"low",
+		"medium",
+		"high",
+		"critical",
+	}
 
-			log.Printf("Package: %v | CVE: %v | Severity: %v", vuln.Package, vuln.CVE, vuln.CVSS.Severity)
-			log.Errorf("%v found on scan result:", *severity)
-			os.Exit(1)
+	index := -1
+	for i := 0; i < len(Severities); i++ {
+		if Severities[i] == "low" {
+			index = i
+			break
 		}
 	}
+	var newSeverities []string
+	if index != -1 {
+		newSeverities = Severities[index:]
+	}
+
+	for _, vuln := range vulns {
+		for _, newSeverity := range newSeverities {
+
+			if strings.EqualFold(vuln.CVSS.Severity, newSeverity) {
+
+				log.Errorf("\n\nFAILED: Found a vulnerability that is equal or higher than %v severity!", strings.ToUpper(*severity))
+				log.Printf("Package Reference: %v | CVE: %v | Severity: %v\n", vuln.Package, vuln.CVE, vuln.CVSS.Severity)
+				os.Exit(1)
+			}
+		}
+	}
+}
+
+func setSecrets(arguments *model.Arguments) {
+
+	secrets.Configuration.Excludes = arguments.ExcludedFilenames
+	secrets.Configuration.Disabled = *arguments.DisableSecretSearch
+	secrets.Configuration.SecretRegex = *arguments.SecretContentRegex
+	secrets.Configuration.MaxFileSize = arguments.SecretMaxFileSize
 }

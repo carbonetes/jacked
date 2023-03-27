@@ -31,7 +31,7 @@ func ShowLatestVersion() error {
 
 	getLatestVersion()
 	// Compare version, if version is not latest, show latest version
-	if !(strings.EqualFold("v"+installedVersion, latestVersion)) {
+	if !(strings.EqualFold("v"+installedVersion, latestVersion)) && latestVersion != "" {
 
 		link := termlink.ColorLink(latestVersion, githubReleaseLink+latestVersion, "green")
 		log.Println(newVersionMsg + link)
@@ -50,8 +50,8 @@ func getLatestVersion() {
 	client := github.NewClient(nil)
 	release, _, err := client.Repositories.GetLatestRelease(context, owner, repo)
 	if err != nil {
-		log.Errorf("Error getting latest release: %v", err)
-
+		latestVersion = ""
+	} else {
+		latestVersion = *release.TagName
 	}
-	latestVersion = *release.TagName
 }
