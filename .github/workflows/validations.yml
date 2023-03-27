@@ -50,5 +50,4 @@ jobs:
           with:
             version: latest
             skip-pkg-cache: true
-            # Optional: golangci-lint command line arguments.
             args: --timeout 2m
