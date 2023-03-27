@@ -94,6 +94,17 @@ The available `formats` are:
 - `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
 - `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).format.
 - `spdx-xml`: A XML report conforming to the [SPDX 2.2 XML: Schema](https://github.com/mil-oss/spdx-xsd/blob/master/xml/xsd/spdx-xml-ref.xsd).format.
+
+## Gating on severity of vulnerabilities
+Gating on the severity of vulnerabilities refers to the practice of selectively allowing or disallowing certain actions or operations based on the severity level of a vulnerability. For example, in the context of software security, gating on severity can involve setting up rules or policies that restrict certain activities or operations (such as code changes, deployments, or releases) if the severity level of any identified vulnerabilities exceeds a certain threshold.
+
+You can have Jacked exit with an error if any vulnerabilities are reported equal or higher than the specified severity. This works perfectly using Jacked CI pipeline. To use this, use the --fail-criteria <severity> CLI flag.
+
+Example, here's how you could trigger a CI pipeline failure if any vulnerabilities are found in the image with a severity of "low" or higher:
+```
+jacked <image> --fail-criteria low
+```
+
 ## Useful Commands and Flags 🚩
 ```
 jacked [command] [flag]
