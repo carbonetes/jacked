@@ -32,24 +32,25 @@ var (
 )
 
 func init() {
-	conn, err := sql.Open(driver, dbFilepath)
+	sqldb, err := sql.Open(driver, dbFilepath)
 	if err != nil {
 		log.Fatalf("Error establishing database connection: %v", err)
 	}
-	db = bun.NewDB(conn, sqlitedialect.New())
+	db = bun.NewDB(sqldb, sqlitedialect.New())
 	if err != nil {
 		log.Fatalf("Error establishing database connection: %v", err)
 	}
 }
 
 // Fetch all vulnerabilities in database based on the list of keywords from packages
-func Fetch(packages *[]model.Package, vulnerabilities *[]model.Vulnerability) {
+func Fetch(packages *[]model.Package, vulnerabilities *[]model.Vulnerability) error {
 	ctx := context.Background()
 	var keywords []string
 	for _, p := range *packages {
 		keywords = append(keywords, p.Keywords...)
 	}
 	if err := db.NewSelect().Model(vulnerabilities).Where("package IN (?)", bun.In(keywords)).Scan(ctx); err != nil {
-		log.Fatalf("Error getting vulnerabilities: %v", err)
+		return err
 	}
+	return nil
 }

@@ -21,9 +21,9 @@ const (
 	Type           string = "Type"
 	CurrentVersion string = "Current Version"
 	Cve            string = "CVE"
-	Score          string = "Score"
 	Severity       string = "Severity"
 	VersionRange   string = "Affected Versions"
+	Fix            string = "Fix"
 	Total          string = "Vulnerability Found"
 )
 
@@ -44,15 +44,16 @@ func createTableHeader() {
 			{Align: simpletable.AlignCenter, Text: CurrentVersion},
 			{Align: simpletable.AlignCenter, Text: Type},
 			{Align: simpletable.AlignCenter, Text: Cve},
-			{Align: simpletable.AlignCenter, Text: Score},
 			{Align: simpletable.AlignCenter, Text: Severity},
 			{Align: simpletable.AlignCenter, Text: VersionRange},
+			{Align: simpletable.AlignCenter, Text: Fix},
 		},
 	}
 }
 
 // From the scan results, table rows will be generated and apply data on a specified table header.
 func createTableRows(results []model.ScanResult) {
+
 	sort.SliceStable(results, func(i, j int) bool {
 		return results[i].Package.Name < results[j].Package.Name
 	})
@@ -62,13 +63,13 @@ func createTableRows(results []model.ScanResult) {
 		for _, v := range _package.Vulnerabilities {
 			r := []*simpletable.Cell{
 				{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v", index)},
-				{Text: elliptical(_package.Package.Name, 33)},
+				{Text: elliptical(_package.Package.Name, 26)},
 				{Text: elliptical(_package.Package.Version, 18)},
 				{Text: _package.Package.Type},
 				{Text: v.CVE},
-				{Text: fmt.Sprintf("%.1f", v.CVSS.BaseScore)},
 				{Text: caser.String(v.CVSS.Severity)},
-				{Text: v.VersionRange},
+				{Text: elliptical(v.VersionRange, 15)},
+				{Text: v.Remediation.Fix},
 			}
 			index++
 			table.Body.Cells = append(table.Body.Cells, r)

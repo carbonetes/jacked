@@ -66,6 +66,8 @@ func CreateKeywords(pkg model.Package) model.Package {
 	}
 	pkg.Keywords = append(pkg.Keywords, keywords...)
 	pkg = *addCPEs(&pkg)
+	pkg.Keywords = append(pkg.Keywords, pkg.Name)
+
 	return pkg
 }
 

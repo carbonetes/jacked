@@ -7,6 +7,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/carbonetes/jacked/internal/model"
@@ -287,18 +288,19 @@ func parseVexBOM(results []model.ScanResult) []model.VexBOM {
 				BomRef:         uuid.NameSpaceDNS.URN() + "/" + vexBOMVersion,
 				ID:             vuln.CVE,
 				SourceVEX:      generateSourceVex(vuln.CVE),
-				RatingsVEX:     parseRatingsVEX(vuln, metadata),
+				RatingsVEX:     generateRatingsVEX(vuln, metadata),
 				CWEs:           nil,
-				Description:    parseDescription(metadata.PackageDescription),
-				Detail:         nil,
-				Recommendation: nil,
+				Description:    hasValue(metadata.PackageDescription), // Package Description
+				Detail:         &vuln.Description,                     // Detail - Vulnerability Description
+				Recommendation: generateRecommendation(vuln, result.Package),
+				Reference:      generateReference(vuln.Reference),
 				Advisories:     generateAdvisoryVex(vuln.CVE),
 				CreatedVEX:     "",
 				PublishedVEX:   "",
 				UpdatedVEX:     "",
 				CreditsVEX:     nil,
 				ToolsVEX:       nil,
-				AnalysisVEX:    nil,
+				AnalysisVEX:    generateAnalysisVEX(vuln.Remediation),
 				AffectsVEX: []model.AffectVEX{
 					{
 						Ref: uuid.NameSpaceDNS.URN() + "/" + vexBOMVersion + "#" + string(p.PURL),
@@ -310,46 +312,36 @@ func parseVexBOM(results []model.ScanResult) []model.VexBOM {
 
 	return vexsBOM
 }
+func generateRatingsVEX(vuln model.Result, metadata model.PackageMetadata) model.RatingVEX {
 
-func parseRatingsVEX(vuln model.Result, metadata model.PackageMetadata) model.RatingVEX {
+	urlCalc := "https://nvd.nist.gov/vuln-metrics/cvss/"
+	calcVersion := "v2-calculator?vector="
+	vector := strings.Replace(vuln.CVSS.Vector, "CVSS:3.1/", "", 1)
+	version := "&.0"
+
+	if vuln.CVSS.Method == "3.1" {
+		calcVersion = "v3-calculator?vector="
+		version = "&.version=3.1"
+	}
 
 	return model.RatingVEX{
 		SourceVEX: model.SourceVEX{
-			Name: "",
-			Url:  "",
+			Name: "NVD",
+			Url:  urlCalc + calcVersion + vector + version,
 		},
-		Description: parseDescription(vuln.Description),
-		BaseScore:   vuln.CVSS.BaseScore,
-		Severity:    vuln.CVSS.Severity,
-		Method:      cvssMethod(vuln.CVSS.Version),
-		Vector:      "",
+		BaseScore: vuln.CVSS.Score,
+		Severity:  vuln.CVSS.Severity,
+		Method:    cvssMethod(vuln.CVSS.Method),
+		Vector:    vector,
 	}
 }
 
-func parseDescription(description string) *string {
+func hasValue(description string) *string {
 	// Returns nil on empty string
 	if description != "" {
 		return &description
 	}
 	return nil
-}
-
-func cvssMethod(version string) string {
-
-	cvssValue, err := strconv.ParseFloat(version, 64)
-	if err != nil {
-		return ""
-	}
-	switch cvssValue {
-	case 2:
-		return CVSSv2Method
-	case 3:
-		return CVSSv3Method
-	case 3.1:
-		return CVSSv31Method
-	default:
-		return OtherMethod
-	}
 }
 
 func parsePackageMetada(pMetadata interface{}) model.PackageMetadata {
@@ -398,4 +390,55 @@ func generateAdvisoryVex(cveId string) *[]model.AdvisoryVEX {
 	}
 	return nil
 
+}
+
+func cvssMethod(version string) string {
+
+	cvssValue, err := strconv.ParseFloat(version, 64)
+	if err != nil {
+		return ""
+	}
+	switch cvssValue {
+	case 2:
+		return CVSSv2Method
+	case 3:
+		return CVSSv3Method
+	case 3.1:
+		return CVSSv31Method
+	default:
+		return OtherMethod
+	}
+}
+
+func generateAnalysisVEX(remediation model.Remediation) *model.AnalysisVEX {
+	if remediation.State != "" {
+		return &model.AnalysisVEX{
+			State: &remediation.State,
+		}
+	} else {
+		return nil
+	}
+}
+
+func generateRecommendation(vuln model.Result, _package model.Package) *string {
+	var recommendation = make([]string, 0)
+	if vuln.Remediation.Fix != "" {
+		recommendation = append(recommendation, "Upgrade")
+		recommendation = append(recommendation, _package.Name+":"+_package.Vendor)
+		recommendation = append(recommendation, "to version")
+		recommendation = append(recommendation, vuln.Remediation.Fix)
+		recommendationMsg := strings.Join(recommendation, " ")
+		return &recommendationMsg
+	}
+	return nil
+}
+
+func generateReference(ref model.Reference) *model.SourceVEX {
+	if ref.URL != "" && ref.Source != "" {
+		return &model.SourceVEX{
+			Name: ref.Source,
+			Url:  ref.URL,
+		}
+	}
+	return nil
 }

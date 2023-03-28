@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/facebookincubator/nvdtools v0.1.5
 	github.com/gitchander/permutation v0.0.0-20210517125447-a5d73722e1b1
+	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-version v1.6.0
 	github.com/mitchellh/mapstructure v1.5.0
@@ -16,10 +17,9 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
 	github.com/theckman/yacspin v0.13.12
-	github.com/uptrace/bun v1.1.9
-	github.com/uptrace/bun/dialect/sqlitedialect v1.1.9
+	github.com/uptrace/bun v1.1.12
+	github.com/uptrace/bun/dialect/sqlitedialect v1.1.12
 	github.com/vmware/transport-go v1.3.4
-	golang.org/x/exp v0.0.0-20230105202349-8879d0199aa3
 	golang.org/x/text v0.6.0
 	gopkg.in/yaml.v2 v2.4.0
 	modernc.org/sqlite v1.20.0
@@ -36,10 +36,11 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/fatih/color v1.13.0 // indirect
+	github.com/fatih/color v1.14.1 // indirect
 	github.com/go-stomp/stomp/v3 v3.0.5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -88,10 +89,11 @@ require (
 
 require (
 	github.com/alexeyco/simpletable v1.0.0
-	github.com/carbonetes/diggity v1.0.0
+	github.com/carbonetes/diggity v1.0.2
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/schollz/progressbar/v3 v3.13.0
-	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0
+	golang.org/x/sys v0.5.0 // indirect
 )
 
 replace gorm.io/driver/sqlite => gorm.io/driver/sqlite v1.4.3

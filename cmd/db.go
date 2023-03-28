@@ -20,13 +20,13 @@ var (
 func init() {
 	rootCmd.AddCommand(dbCmd)
 
-	dbCmd.Flags().BoolP("version", "v", false, "Print database current version")
+	dbCmd.Flags().BoolP("build", "b", false, "Print database current build")
 	dbCmd.Flags().BoolP("info", "i", false, "Print database metadata information")
 }
 
 func dbRun(c *cobra.Command, _ []string) {
-	if c.Flags().Changed("version") {
-		log.Infof("%v", db.GetLocalMetadata().Version)
+	if c.Flags().Changed("build") {
+		log.Infof("%v", db.GetLocalMetadata().Build)
 		os.Exit(0)
 	}
 	if c.Flags().Changed("info") {

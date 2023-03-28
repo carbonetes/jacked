@@ -22,7 +22,7 @@ func Filter(vulnerabilities *[]model.Vulnerability, ignore *config.Vulnerability
 	enabledfilterCVE = len(ignore.CVE) > 0
 	enabledfilterSeverity = len(ignore.Severity) > 0
 	if enabledfilterCVE || enabledfilterSeverity {
-		filter(vulnerabilities, ignore)
+		filterIndex(vulnerabilities, ignore)
 	}
 
 	// Remove elements with index found in filter
@@ -34,29 +34,27 @@ func Filter(vulnerabilities *[]model.Vulnerability, ignore *config.Vulnerability
 			// Slice if array element exist
 			if len(*vulnerabilities) > indexToRemove {
 				*vulnerabilities = append((*vulnerabilities)[:indexToRemove], (*vulnerabilities)[indexToRemove+1:]...)
-			} else {
-
-				log.Printf("testing: %v = %v", len(*vulnerabilities) > indexToRemove, indexToRemove)
 			}
 		}
 	}
 }
 
 // Filter all CVEs and Severities on ignore list
-func filter(vulnerabilities *[]model.Vulnerability, ignore *config.Vulnerability) {
+func filterIndex(vulnerabilities *[]model.Vulnerability, ignore *config.Vulnerability) {
 
 	for index, vulnerability := range *vulnerabilities {
 
 		// CVEs Filter
 		if enabledfilterCVE {
-			id := vulnerability.Id
+			id := vulnerability.CVE
 			cves := ignore.CVE
 			filterCVE(id, cves, index)
+
 		}
 
 		// Severities Filter
 		if enabledfilterSeverity {
-			filterSeverity(vulnerability, ignore, index)
+			filterSeverity(vulnerability.CVSS, ignore, vulnerability, index)
 		}
 
 	}
@@ -74,23 +72,14 @@ func filterCVE(id string, cves []string, index int) {
 }
 
 // Filter all severities listed in vulnerability ignore list
-func filterSeverity(vulnerability model.Vulnerability, ignore *config.Vulnerability, index int) {
+func filterSeverity(cvss model.CVSS, ignore *config.Vulnerability, vulnerability model.Vulnerability, index int) {
 
 	for _, severity := range ignore.Severity {
-		if vulnerability.Cvssv3BaseScore > 0 && strings.EqualFold(vulnerability.Cvssv3BaseSeverity, severity) {
+		if strings.EqualFold(cvss.Severity, severity) {
 			if !slices.Contains(indexes, index) {
 				indexes = append(indexes, index)
-			}
-		} else if vulnerability.Cvssv2BaseScore > 0 && strings.EqualFold(vulnerability.Cvssv2BaseSeverity, severity) {
-			if !slices.Contains(indexes, index) {
-				indexes = append(indexes, index)
-			}
-		} else {
-			if strings.EqualFold(severity, "Unknown") && len(vulnerability.Cvssv2BaseSeverity) == 0 && len(vulnerability.Cvssv3BaseSeverity) == 0 {
-				if !slices.Contains(indexes, index) {
-					indexes = append(indexes, index)
-				}
 			}
 		}
 	}
+
 }
