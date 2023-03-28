@@ -130,6 +130,11 @@ func (cfg *Configuration) Load() *Configuration {
 			log.Fatalf("Error loading configurations: %v", err)
 		}
 	}
+
+	if cfg.SecretConfig.Excludes == nil {
+		cfg.ResetDefault()
+	}
+
 	return cfg
 }
 
