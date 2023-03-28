@@ -110,6 +110,7 @@ brews:
       owner: carbonetes
       name: homebrew-jacked
       branch: main
+      token: "{{ .GITHUB_TOKEN }}"
     folder: Formula
     ids:
       - tar-archives
@@ -117,10 +118,12 @@ brews:
     homepage: https://www.carbonetes.com/
     description: "Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures."
     license: "Apache License 2.0"
+    dependencies:
+      - name : docker
 
 chocolateys:
   -
-    skip_publish: true   # set to true to avoid uploading while under testing
+    skip_publish: false   # set to true to avoid uploading while under testing
     authors: carbonetes
     description: "Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures."
     name: jacked
@@ -134,6 +137,9 @@ chocolateys:
     docs_url: https://github.com/carbonetes/jacked/blob/main/README.md
     release_notes: "https://github.com/carbonetes/jacked/releases/tag/v{{ .Version }}"
     source_repo: "https://push.chocolatey.org/"
+    api_key: '{{ .CHOCOLATEY_API_KEY }}'
+    dependencies:
+      - id: docker
 
 checksum:
   name_template: '{{.ProjectName}}_{{.Version}}_checksums.txt'
