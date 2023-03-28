@@ -110,7 +110,7 @@ brews:
       owner: carbonetes
       name: homebrew-jacked
       branch: main
-      token: "{{ .GITHUB_TOKEN }}"
+      token: "{{ .Env.GITHUB_TOKEN }}"
     folder: Formula
     ids:
       - tar-archives
@@ -137,7 +137,7 @@ chocolateys:
     docs_url: https://github.com/carbonetes/jacked/blob/main/README.md
     release_notes: "https://github.com/carbonetes/jacked/releases/tag/v{{ .Version }}"
     source_repo: "https://push.chocolatey.org/"
-    api_key: '{{ .CHOCOLATEY_API_KEY }}'
+    api_key: '{{ .Env.CHOCOLATEY_API_KEY }}'
     dependencies:
       - id: docker
 
