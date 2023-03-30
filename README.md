@@ -57,6 +57,11 @@ curl -sSfL https://raw.githubusercontent.com/carbonetes/jacked/main/install.sh |
 brew tap carbonetes/jacked
 brew install jacked
 ```
+### Scoop
+```sh
+scoop bucket add jacked https://github.com/carbonetes/jacked-bucket
+scoop install jacked
+```
 
 # Getting Started 🚀  
 
