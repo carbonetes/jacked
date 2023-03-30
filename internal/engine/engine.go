@@ -108,7 +108,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 
 	// Compile the scan results based on the given configurations
 	if len(results) <= 0 {
-		log.Print("\nNo vulnerability found!")
+		fmt.Print("\nNo vulnerability found!")
 	} else {
 		selectOutputType(*arguments.Output, cfg, arguments)
 	}
@@ -149,7 +149,7 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 			if len(results) > 0 {
 				output.Results = results
 			} else {
-				log.Print("\nNo vulnerability found!")
+				fmt.Print("\nNo vulnerability found!")
 			}
 			result, err := printJSONResult()
 			if err != nil {
@@ -177,7 +177,7 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 			if len(results) > 0 {
 				table.DisplayScanResultTable(results)
 			} else {
-				log.Print("\nNo vulnerability found!")
+				fmt.Print("\nNo vulnerability found!")
 			}
 
 			if cfg.LicenseFinder {
@@ -231,7 +231,7 @@ func failCriteria(scanresult model.ScanResult, severity *string) {
 			if strings.EqualFold(vuln.CVSS.Severity, newSeverity) {
 
 				log.Errorf("\n\nFAILED: Found a vulnerability that is equal or higher than %v severity!", strings.ToUpper(*severity))
-				log.Printf("Package Reference: %v | CVE: %v | Severity: %v\n", vuln.Package, vuln.CVE, vuln.CVSS.Severity)
+				fmt.Printf("Package Reference: %v | CVE: %v | Severity: %v\n", vuln.Package, vuln.CVE, vuln.CVSS.Severity)
 				os.Exit(1)
 			}
 		}
