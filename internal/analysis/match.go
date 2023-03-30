@@ -60,6 +60,14 @@ func match(pkg *model.Package, vulnerability *model.Vulnerability) bool {
 		if len(vulnerability.Criteria.CPES) > 0 && len(pkg.CPEs) > 0 {
 			matched = MatchCPE(pkg, &vulnerability.Criteria)
 		}
+
+		if matched {
+			return matched
+		}
+
+		if checkProductVendor(pkg, vulnerability) && len(vulnerability.Criteria.Constraint) > 0 {
+			return MatchConstraint(&pkg.Version, &vulnerability.Criteria)
+		}
 	}
 	return matched
 }
