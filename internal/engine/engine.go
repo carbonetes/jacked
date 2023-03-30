@@ -173,7 +173,7 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 		case "spdx-tag-value":
 			result.PrintSPDX("tag-value", file, results)
 		default:
-			fmt.Println()
+			log.Println()
 			if len(results) > 0 {
 				table.DisplayScanResultTable(results)
 			} else {
@@ -184,7 +184,7 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 				if len(licenses) > 0 {
 					table.PrintLicenses(licenses)
 				} else {
-					fmt.Print("\nNo package license has been found!")
+					log.Print("\nNo package license has been found!")
 				}
 			}
 
@@ -192,11 +192,11 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 				if len(secrets.Secrets) > 0 {
 					table.PrintSecrets(secrets)
 				} else {
-					fmt.Print("\nNo secret has been found!")
+					log.Print("\nNo secret has been found!")
 				}
 			}
 		}
-		fmt.Println()
+		log.Println()
 
 	}
 }
