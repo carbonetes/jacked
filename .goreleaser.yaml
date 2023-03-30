@@ -64,6 +64,7 @@ builds:
 
 archives:
   - id: tar-archives
+    rlcp: true
     builds:
       - linux-builds
       - darwin-builds
@@ -78,6 +79,7 @@ archives:
       - src: CHANGELOG*
 
   - id: zip-archives
+    rlcp: true
     builds:
       - windows-build
     name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
@@ -123,12 +125,10 @@ brews:
 
 chocolateys:
   -
-    skip_publish: false   # set to true to avoid uploading while under testing
+    skip_publish: true   # set to true to avoid uploading while under testing
     authors: carbonetes
     description: "Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures."
     name: jacked
-    ids:
-      - zip-archives
     project_url: https://www.carbonetes.com/
     copyright: 2023 Carbonetes
     license_url: https://github.com/carbonetes/jacked/blob/main/LICENSE
@@ -140,6 +140,22 @@ chocolateys:
     api_key: '{{ .Env.CHOCOLATEY_API_KEY }}'
     dependencies:
       - id: docker
+
+scoop:
+  skip_upload: false
+  bucket:
+    owner: carbonetes
+    name: jacked-bucket
+    branch: main
+    token: "{{ .Env.GITHUB_TOKEN }}"
+  commit_author:
+    name: carbonetes
+    email: eng@carbonetes.com
+  commit_msg_template: "Update for {{ .ProjectName }} version {{ .Tag }}"
+  homepage: https://www.carbonetes.com/
+  description: "Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures."
+  license: "Apache License 2.0"
+  depends: ["docker"]
 
 checksum:
   name_template: '{{.ProjectName}}_{{.Version}}_checksums.txt'
