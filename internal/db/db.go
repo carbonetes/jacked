@@ -54,3 +54,14 @@ func Fetch(packages *[]model.Package, vulnerabilities *[]model.Vulnerability) er
 	}
 	return nil
 }
+
+// FindPackage is a function that takes in a package name and a pointer to a slice of Vulnerability objects, and queries the database for vulnerabilities associated with that package.
+// Input: a string representing the package name, and a pointer to a slice of `model.Vulnerability` objects.
+// Output: None (the results are stored in the `vulnerabilities` slice).
+func FindPackage(pkgName string, vulnerabilities *[]model.Vulnerability) {
+    // Query the database using the `NewSelect()` method from the `db` package's API, passing in the `vulnerabilities` slice as the destination for the query results. Limit the results to those where the package name matches `pkgName`.
+    // If an error occurs during querying, log the error and exit the program with an error status code.
+    if err := db.NewSelect().Model(vulnerabilities).Where("package = ?", pkgName).Scan(context.Background()); err != nil {
+        log.Fatal(err)
+    }
+}
