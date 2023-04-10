@@ -12,60 +12,66 @@ import (
 // diggity cpe2.3 property flag
 const cpe = "diggity:cpe23"
 
-// AnalyzeCDX analyzes the given sbom to find vulnerabilities.
-// It takes a pointer to cyclonedx.BOM, which contains information about components.
+// AnalyzeCDX is a function that accepts a CycloneDX BOM (Software Bill of Materials) as input.
+// It calls findMatchingVulnerabilities to search for vulnerabilities affecting the components in the BOM, and appends any found vulnerabilities to the BOM's Vulnerabilities list.
 func AnalyzeCDX(sbom *cyclonedx.BOM) {
-
-	// Check if there are any components in the sbom. If not, return.
+	// If there are no components in the BOM, return immediately.
 	if len(*sbom.Components) == 0 {
 		return
 	}
-
-	// Find vulnerabilities that match the components in the sbom.
+	// Call findMatchingVulnerabilities to get a list of matching vulnerabilities for the BOM.
 	vexList := findMatchingVulnerabilities(sbom)
-
-	// Create a new list of vulnerabilities in the sbom and append the found vulnerabilities to it.
+	// Create a new empty slice for storing the vulnerabilities found.
 	sbom.Vulnerabilities = new([]cyclonedx.Vulnerability)
+	// Append the vulnerabilities in vexList to the BOM's Vulnerabilities slice.
 	*sbom.Vulnerabilities = append(*sbom.Vulnerabilities, *vexList...)
 }
 
-// findMatchingVulnerabilities returns a pointer to a slice of vulnerabilities that match the criteria for a given BOM.
-// The function takes a pointer to a CycloneDX BOM structure as input and creates a new slice of vulnerabilities.
-// It then iterates through all components in the BOM in parallel using goroutines, finds any vulnerabilities related to
-// that component, checks if it matches the criteria, and appends them to the vexList slice. Finally, it waits for all
-// goroutines to finish and returns a pointer to the populated vexList slice.
+// findMatchingVulnerabilities is a helper function called by AnalyzeCDX.
+// It searches for vulnerabilities affecting the components in the BOM, and returns a list of matching vulnerabilities.
 func findMatchingVulnerabilities(sbom *cyclonedx.BOM) *[]cyclonedx.Vulnerability {
+	// Create an empty slice for storing the found vulnerabilities.
 	vexList := []cyclonedx.Vulnerability{}
+	// Create a WaitGroup to wait until all component analysis goroutines have completed.
 	var wg sync.WaitGroup
+	// Use findVulnerabilitiesForPackages to look up known vulnerabilities for the components in the BOM.
+	// Return early if there are no known vulnerabilities.
+	vulnerabilities := findVulnerabilitiesForPackages(sbom.Components)
+	if vulnerabilities == nil {
+		return nil
+	}
+	// Loop through each component in the BOM.
+	// Spawn a goroutine to analyze each component for matching vulnerabilities.
 	wg.Add(len(*sbom.Components))
 	for _, c := range *sbom.Components {
 		go func(comp cyclonedx.Component) {
+			// Decrement the WaitGroup counter when analysis is complete.
 			defer wg.Done()
-			vulnerabilities := findVulnerabilitiesForPackage(&comp)
+			packageVulnerabilties := filterVulnerabilitiesByKeyword(&comp.Name, vulnerabilities)
+
+			// Extract the CPEs (Common Platform Enumeration) associated with the component, if any.
 			cpes := getCPES(comp.Properties)
-			// iterates through all vulnerabilities for the component checking if they meet either of the following criteria:
-			// 1. match component version constraints or
-			// 2. match CPEs associated with the component properties
-			for _, v := range *vulnerabilities {
+			if len(comp.CPE) != 0 {
+				cpes = append(cpes, comp.CPE)
+			}
+			// Loop through each known vulnerability and check if it applies to the current component.
+			// If a match is found, create a new Vulnerability Exploitability eXchange (VEX) record for the component/vulnerability pair and add it to vexList.
+			for _, v := range *packageVulnerabilties {
 				if analysis.MatchConstraint(&comp.Version, &v.Criteria) ||
 					len(cpes) > 0 && MatchCPE(cpes, &v.Criteria) {
-					// create a new VEX structure for the matched vulnerability and append it to vexList
 					vex := NewVEX(&comp, &v)
 					vexList = append(vexList, *vex)
 				}
 			}
 		}(c)
 	}
-	// wait for all goroutines to complete before returning vexList
+	// Wait for all component analysis goroutines to complete before returning vexList.
 	wg.Wait()
 	return &vexList
 }
 
-// getCPES returns a slice of strings representing Common Platform Enumeration (CPE) names that are associated with a component.
-// The function takes a pointer to a slice of CycloneDX properties as input, which detail the properties of the component.
-// It first initializes an empty slice for cpes, and then iterates through each property in the slice. If the name of the
-// current property is equal to the string "cpe", it will append the value of that property to the cpes slice.
-// After iterating through all properties, the function returns the cpes slice.
+// getCPES is a helper function used by findMatchingVulnerabilities.
+// It extracts an array of CPE strings associated with the component properties, if any.
 func getCPES(c *[]cyclonedx.Property) []string {
 	var cpes []string
 	if c != nil {
@@ -78,18 +84,33 @@ func getCPES(c *[]cyclonedx.Property) []string {
 	return cpes
 }
 
-// findVulnerabilitiesForPackage function takes a pointer to a CycloneDX component as input, and uses its name property
-// to search our database for any associated vulnerabilities with that package. The function returns a pointer to a slice of
-// model.Vulnerability objects found in the database.
-func findVulnerabilitiesForPackage(pkg *cyclonedx.Component) *[]model.Vulnerability {
-	// Initialize an empty pointer to a slice of Vulnerability objects.
+// findVulnerabilitiesForPackages is a helper function used by findMatchingVulnerabilities.
+// It looks up known vulnerabilities for the components in pkgs and returns them as a slice of model.Vulnerability structs.
+func findVulnerabilitiesForPackages(pkgs *[]cyclonedx.Component) *[]model.Vulnerability {
+	// Create a new empty slice for storing the found vulnerabilities.
 	vulnerabilities := new([]model.Vulnerability)
-
-	// Search database for vulnerabilities related to current package
-	db.FindPackage(pkg.Name, vulnerabilities)
-
-	// Return pointer to slice of vulnerabilities found
+	// Create a new empty slice for storing search keywords (i.e. package names).
+	keywords := new([]string)
+	// Loop through each component in the BOM and add its name to the keywords list.
+	for _, pkg := range *pkgs {
+		if len(pkg.Name) > 0 {
+			*keywords = append(*keywords, pkg.Name)
+		}
+	}
+	// Call db.FindPackage to find vulnerabilities matching any of the keywords.
+	db.FindByKeywords(keywords, vulnerabilities)
+	// Return nil if no vulnerabilities were found, otherwise return the found vulnerabilities.
 	return vulnerabilities
+}
+
+func filterVulnerabilitiesByKeyword(keyword *string, vulnerabilities *[]model.Vulnerability) *[]model.Vulnerability {
+	filtered := new([]model.Vulnerability)
+	for _, v := range *vulnerabilities {
+		if v.Package == *keyword {
+			*filtered = append(*filtered, v)
+		}
+	}
+	return filtered
 }
 
 // NewVEX function creates a new CycloneDX vulnerability object given a pointer to a CycloneDX component and
