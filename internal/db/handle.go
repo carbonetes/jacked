@@ -17,6 +17,6 @@ func FindByKeywords(keywords *[]string, vulnerabilities *[]model.Vulnerability) 
 	// Finally, use .Scan(context.Background()) to execute the query and scan the results into the vulnerabilities struct.
 	if err := db.NewSelect().Model(vulnerabilities).Where("package IN (?)", bun.In(*keywords)).Scan(context.Background()); err != nil {
 		// If there is an error while executing the query, log it as fatal.
-		log.Fatalf("FIND", err)
+		log.Fatal(err)
 	}
 }
