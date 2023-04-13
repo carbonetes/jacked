@@ -54,3 +54,4 @@ func Fetch(packages *[]model.Package, vulnerabilities *[]model.Vulnerability) er
 	}
 	return nil
 }
+
