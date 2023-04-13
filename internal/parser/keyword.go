@@ -151,6 +151,9 @@ func addCPEs(pkg *model.Package) *model.Package {
 			if err != nil {
 				log.Errorln(err.Error())
 			}
+			if len(cpe.String()) == 0 {
+				continue
+			}
 			if cpe.Product != cpe.Vendor {
 				vendors = append(vendors, cpe.Vendor)
 			}
