@@ -29,7 +29,6 @@ var (
 	totalPackages   int
 	log             = logger.GetLogger()
 	sbom            []byte
-	file            *string
 	severity        *string
 )
 
