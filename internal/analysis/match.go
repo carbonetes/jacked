@@ -9,7 +9,7 @@ import (
 
 var WG sync.WaitGroup
 
-func FindMatch(pkg *model.Package, vulnerabilities *[]model.Vulnerability, results *[]model.Result) {
+func FindMatch(pkg *model.Package, vulnerabilities *[]model.Vulnerability, results *[]model.Vulnerability) {
 
 	// check vulnerabilities if empty
 	if vulnerabilities == nil {
@@ -30,9 +30,9 @@ func FindMatch(pkg *model.Package, vulnerabilities *[]model.Vulnerability, resul
 		for _, vulnerability := range fv {
 			matched := match(pkg, &vulnerability)
 			if matched {
-				result := FormResult(&vulnerability, pkg)
-				if !contains(results, &result) {
-					*results = append(*results, result)
+				FormResult(&vulnerability, pkg)
+				if !contains(results, &vulnerability) {
+					*results = append(*results, vulnerability)
 				}
 			}
 
@@ -85,7 +85,7 @@ func filter(vulnerabilities *[]model.Vulnerability, keywords *[]string) []model.
 	return fv
 }
 
-func FormResult(vulnerability *model.Vulnerability, pkg *model.Package) model.Result {
+func FormResult(vulnerability *model.Vulnerability, pkg *model.Package) {
 
 	if strings.EqualFold(vulnerability.CVSS.Severity, "UNKNOWN") {
 		if strings.EqualFold(vulnerability.CVSS.Method, "2") {
@@ -98,18 +98,7 @@ func FormResult(vulnerability *model.Vulnerability, pkg *model.Package) model.Re
 	}
 
 	if len(vulnerability.Remediation.Fix) == 0 {
-		vulnerability.Remediation.Fix = "-"
-	}
-
-	return model.Result{
-		CVE:            vulnerability.CVE,
-		Package:        pkg.Name,
-		CurrentVersion: pkg.Version,
-		VersionRange:   vulnerability.Criteria.Constraint,
-		CVSS:           vulnerability.CVSS,
-		Description:    vulnerability.Description.Content,
-		Remediation:    vulnerability.Remediation,
-		Reference:      vulnerability.Reference,
+		vulnerability.Remediation.Fix = ""
 	}
 }
 
@@ -126,7 +115,7 @@ func GetCVSS2Severity(baseScore *float64) string {
 	return "UNKNOWN"
 }
 
-func contains(result *[]model.Result, newResult *model.Result) bool {
+func contains(result *[]model.Vulnerability, newResult *model.Vulnerability) bool {
 	for _, r := range *result {
 		if r.CVE == newResult.CVE && r.Package == newResult.Package {
 			return true
