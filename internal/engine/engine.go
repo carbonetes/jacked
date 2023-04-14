@@ -89,20 +89,6 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	analysis.WG.Wait()
 	spinner.OnVulnAnalysisEnd(nil)
 
-	// Get scan type value
-	if arguments.Image != nil {
-		file = arguments.Image
-	}
-	if arguments.Tar != nil {
-		file = arguments.Tar
-	}
-	if arguments.Dir != nil {
-		file = arguments.Dir
-	}
-	if arguments.SbomFile != nil {
-		file = arguments.SbomFile
-	}
-
 	// Compile the scan results based on the given configurations
 	output.PrintResult(&results, arguments, cfg, &secrets, &licenses)
 

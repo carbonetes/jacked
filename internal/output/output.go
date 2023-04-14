@@ -11,6 +11,21 @@ import (
 
 func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *config.Configuration, secrets *model.SecretResults, licenses *[]model.License) {
 
+	var source *string
+
+	if arguments.Image != nil {
+		source = arguments.Image
+	}
+	if arguments.Tar != nil {
+		source = arguments.Tar
+	}
+	if arguments.Dir != nil {
+		source = arguments.Dir
+	}
+	if arguments.SbomFile != nil {
+		source = arguments.SbomFile
+	}
+
 	if len(*results) == 0 {
 		fmt.Print("\nNo vulnerability has been found!")
 	}
@@ -53,7 +68,7 @@ func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *c
 			}
 		}
 	case "spdx-json":
-		PrintSPDX("json", arguments.Image, *results)
+		PrintSPDX("json", source, *results)
 		if !*arguments.DisableSecretSearch {
 			if len(secrets.Secrets) > 0 {
 				printJsonSecret(secrets)
@@ -77,7 +92,7 @@ func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *c
 			}
 		}
 	case "spdx-xml":
-		PrintSPDX("xml", arguments.Image, *results)
+		PrintSPDX("xml", source, *results)
 		if !*arguments.DisableSecretSearch {
 			if len(secrets.Secrets) > 0 {
 				PrintXMLSecret(secrets)
@@ -89,7 +104,7 @@ func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *c
 			}
 		}
 	case "spdx-tag-value":
-		PrintSPDX("tag-value", arguments.Image, *results)
+		PrintSPDX("tag-value", source, *results)
 	default:
 		table.DisplayScanResultTable(results)
 		if !*arguments.DisableSecretSearch {
