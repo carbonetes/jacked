@@ -28,9 +28,9 @@ const (
 )
 
 // Method that generates table header, table rows from the scan result, and displaying the generated table format output.
-func DisplayScanResultTable(results []model.ScanResult) {
+func DisplayScanResultTable(results *[]model.ScanResult) {
 	createTableHeader()
-	createTableRows(results)
+	createTableRows(*results)
 	generateTable()
 }
 
@@ -68,7 +68,7 @@ func createTableRows(results []model.ScanResult) {
 				{Text: _package.Package.Type},
 				{Text: v.CVE},
 				{Text: caser.String(v.CVSS.Severity)},
-				{Text: elliptical(v.VersionRange, 15)},
+				{Text: elliptical(v.Criteria.Constraint, 15)},
 				{Text: v.Remediation.Fix},
 			}
 			index++

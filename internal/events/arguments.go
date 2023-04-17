@@ -33,6 +33,8 @@ func loadArgs(newArgs *model.Arguments) {
 	arguments.Tar = newArgs.Tar
 	arguments.SecretMaxFileSize = int64(newArgs.SecretMaxFileSize)
 	arguments.SecretContentRegex = newArgs.SecretContentRegex
+	arguments.Provenance = new(string)
+	arguments.DisablePullTimeout = new(bool)
 }
 
 // Set Args Split

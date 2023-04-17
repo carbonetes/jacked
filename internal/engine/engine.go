@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -14,16 +13,14 @@ import (
 	"github.com/carbonetes/jacked/internal/events"
 	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/carbonetes/jacked/internal/model"
-	result "github.com/carbonetes/jacked/internal/output"
+	"github.com/carbonetes/jacked/internal/output"
 	"github.com/carbonetes/jacked/internal/parser"
 	"github.com/carbonetes/jacked/internal/ui/credits"
 	"github.com/carbonetes/jacked/internal/ui/spinner"
-	"github.com/carbonetes/jacked/internal/ui/table"
 	"github.com/carbonetes/jacked/internal/ui/update"
 )
 
 var (
-	output          model.Output
 	vulnerabilities []model.Vulnerability
 	results         []model.ScanResult
 	packages        []model.Package
@@ -32,7 +29,6 @@ var (
 	totalPackages   int
 	log             = logger.GetLogger()
 	sbom            []byte
-	file            *string
 	severity        *string
 )
 
@@ -77,7 +73,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	analysis.WG.Add(totalPackages)
 	for _, p := range packages {
 		var scanresult model.ScanResult
-		var result *[]model.Result = new([]model.Result)
+		var result *[]model.Vulnerability = new([]model.Vulnerability)
 		analysis.FindMatch(&p, &vulnerabilities, result)
 		if *result != nil {
 			scanresult.Package = p
@@ -92,26 +88,8 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	analysis.WG.Wait()
 	spinner.OnVulnAnalysisEnd(nil)
 
-	// Get scan type value
-	if arguments.Image != nil {
-		file = arguments.Image
-	}
-	if arguments.Tar != nil {
-		file = arguments.Tar
-	}
-	if arguments.Dir != nil {
-		file = arguments.Dir
-	}
-	if arguments.SbomFile != nil {
-		file = arguments.SbomFile
-	}
-
 	// Compile the scan results based on the given configurations
-	if len(results) <= 0 {
-		fmt.Print("\nNo vulnerability found!")
-	} else {
-		selectOutputType(*arguments.Output, cfg, arguments)
-	}
+	output.PrintResult(&results, arguments, cfg, &secrets, &licenses)
 
 	log.Printf("\nAnalysis finished in %.2fs", time.Since(start).Seconds())
 	err = update.ShowLatestVersion()
@@ -119,86 +97,6 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		log.Errorf("Error on show latest version: %v", err)
 	}
 	credits.Show()
-}
-
-// Print json format of the scan results
-func printJSONResult() (string, error) {
-	jsonraw, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return "", err
-	}
-
-	return string(jsonraw), nil
-}
-
-// Select Output Type based on the User Input
-func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *model.Arguments) {
-	for _, userOutput := range strings.Split(outputTypes, ",") {
-		switch userOutput {
-		case "json":
-			if cfg.LicenseFinder && len(licenses) > 0 {
-				output.Licenses = licenses
-			} else if cfg.LicenseFinder && len(licenses) == 0 {
-				log.Print("\nNo package license has been found!")
-			}
-			if !cfg.SecretConfig.Disabled && len(secrets.Secrets) > 0 {
-				output.Secrets = &secrets
-			} else if !cfg.SecretConfig.Disabled && len(secrets.Secrets) == 0 {
-				log.Print("\nNo secret has been found!")
-			}
-			if len(results) > 0 {
-				output.Results = results
-			} else {
-				fmt.Print("\nNo vulnerability found!")
-			}
-			result, err := printJSONResult()
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Printf("%+v\n", string(result))
-		// CycloneDX Output Types
-		case "cyclonedx-xml":
-			result.PrintCycloneDX("xml", results)
-		case "cyclonedx-json":
-			result.PrintCycloneDX("json", results)
-		case "cyclonedx-vex-xml":
-			result.PrintCycloneDX("vex-xml", results)
-		case "cyclonedx-vex-json":
-			result.PrintCycloneDX("vex-json", results)
-		// SPDX Output Types
-		case "spdx-json":
-			result.PrintSPDX("json", file, results)
-		case "spdx-xml":
-			result.PrintSPDX("xml", file, results)
-		case "spdx-tag-value":
-			result.PrintSPDX("tag-value", file, results)
-		default:
-			log.Println()
-			if len(results) > 0 {
-				table.DisplayScanResultTable(results)
-			} else {
-				fmt.Print("\nNo vulnerability found!")
-			}
-
-			if cfg.LicenseFinder {
-				if len(licenses) > 0 {
-					table.PrintLicenses(licenses)
-				} else {
-					log.Print("\nNo package license has been found!")
-				}
-			}
-
-			if !cfg.SecretConfig.Disabled {
-				if len(secrets.Secrets) > 0 {
-					table.PrintSecrets(secrets)
-				} else {
-					log.Print("\nNo secret has been found!")
-				}
-			}
-		}
-		log.Println()
-
-	}
 }
 
 func failCriteria(scanresult model.ScanResult, severity *string) {
