@@ -3,6 +3,7 @@ module github.com/carbonetes/jacked
 go 1.19
 
 require (
+	github.com/CycloneDX/cyclonedx-go v0.7.1
 	github.com/facebookincubator/nvdtools v0.1.5
 	github.com/gitchander/permutation v0.0.0-20210517125447-a5d73722e1b1
 	github.com/google/go-github v17.0.0+incompatible
@@ -14,7 +15,7 @@ require (
 	github.com/savioxavier/termlink v1.2.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
 	github.com/theckman/yacspin v0.13.12
 	github.com/uptrace/bun v1.1.12
@@ -64,6 +65,7 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/rivo/uniseg v0.4.3 // indirect
+	github.com/spdx/tools-golang v0.4.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
@@ -89,7 +91,7 @@ require (
 
 require (
 	github.com/alexeyco/simpletable v1.0.0
-	github.com/carbonetes/diggity v1.1.0
+	github.com/carbonetes/diggity v1.2.0
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/schollz/progressbar/v3 v3.13.0
 	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0
