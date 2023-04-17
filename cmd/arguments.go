@@ -50,8 +50,6 @@ var (
 		"json",
 		"cyclonedx-json",
 		"cyclonedx-xml",
-		"cyclonedx-vex-json",
-		"cyclonedx-vex-xml",
 		"spdx-json",
 		"spdx-xml",
 		"spdx-tag-value",

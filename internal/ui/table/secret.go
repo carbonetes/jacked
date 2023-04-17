@@ -24,7 +24,7 @@ func secretHeader() {
 	}
 }
 
-func secretRows(secrets model.SecretResults) {
+func secretRows(secrets *model.SecretResults) {
 	var index int = 1
 	for _, secret := range secrets.Secrets {
 		r := []*simpletable.Cell{
@@ -52,7 +52,7 @@ func secretFooter(count int) {
 	}
 }
 
-func PrintSecrets(secrets model.SecretResults) {
+func PrintSecrets(secrets *model.SecretResults) {
 	secretHeader()
 	secretRows(secrets)
 	secretTable.SetStyle(simpletable.StyleCompactLite)

@@ -14,20 +14,20 @@ type SpdxDocument struct {
 }
 
 type SpdxPackage struct {
-	SpdxID           string        `json:"SPDXID" xml:"SPDXID,omitempty"`
-	Name             string        `json:"name,omitempty" xml:"name,omitempty"`
-	LicenseConcluded string        `json:"licenseConcluded,omitempty" xml:"licenseConcluded,omitempty"`
-	Description      string        `json:"description,omitempty" xml:"description,omitempty"`
-	DownloadLocation string        `json:"downloadLocation,omitempty" xml:"downloadLocation,omitempty"`
-	ExternalRefs     []ExternalRef `json:"externalRefs,omitempty" xml:"externalRefs>externalRef,omitempty"`
-	FilesAnalyzed    bool          `json:"filesAnalyzed" xml:"filesAnalyzed"`
-	Homepage         string        `json:"homepage,omitempty" xml:"homepage,omitempty"`
-	LicenseDeclared  string        `json:"licenseDeclared,omitempty" xml:"licenseDeclared,omitempty"`
-	Originator       string        `json:"originator,omitempty" xml:"originator,omitempty"`
-	SourceInfo       string        `json:"sourceInfo,omitempty" xml:"sourceInfo,omitempty"`
-	VersionInfo      string        `json:"versionInfo,omitempty" xml:"versionInfo,omitempty"`
-	Copyright        string        `json:"copyright,omitempty"  xml:"copyright,omitempty"`
-	Vulnerabilities  []Result      `json:"vulnerabilities,omitempty" xml:"vulnerabilities>vulnerability,omitempty"`
+	SpdxID           string          `json:"SPDXID" xml:"SPDXID,omitempty"`
+	Name             string          `json:"name,omitempty" xml:"name,omitempty"`
+	LicenseConcluded string          `json:"licenseConcluded,omitempty" xml:"licenseConcluded,omitempty"`
+	Description      string          `json:"description,omitempty" xml:"description,omitempty"`
+	DownloadLocation string          `json:"downloadLocation,omitempty" xml:"downloadLocation,omitempty"`
+	ExternalRefs     []ExternalRef   `json:"externalRefs,omitempty" xml:"externalRefs>externalRef,omitempty"`
+	FilesAnalyzed    bool            `json:"filesAnalyzed" xml:"filesAnalyzed"`
+	Homepage         string          `json:"homepage,omitempty" xml:"homepage,omitempty"`
+	LicenseDeclared  string          `json:"licenseDeclared,omitempty" xml:"licenseDeclared,omitempty"`
+	Originator       string          `json:"originator,omitempty" xml:"originator,omitempty"`
+	SourceInfo       string          `json:"sourceInfo,omitempty" xml:"sourceInfo,omitempty"`
+	VersionInfo      string          `json:"versionInfo,omitempty" xml:"versionInfo,omitempty"`
+	Copyright        string          `json:"copyright,omitempty"  xml:"copyright,omitempty"`
+	Vulnerabilities  []Vulnerability `json:"vulnerabilities,omitempty" xml:"vulnerabilities>vulnerability,omitempty"`
 }
 
 // ExternalRef Model
