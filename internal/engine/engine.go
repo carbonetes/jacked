@@ -155,7 +155,7 @@ func selectOutputType(outputTypes string, cfg *config.Configuration, arguments *
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Printf("%v", result)
+			fmt.Printf("%+v\n", string(result))
 		// CycloneDX Output Types
 		case "cyclonedx-xml":
 			result.PrintCycloneDX("xml", results)
