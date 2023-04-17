@@ -67,7 +67,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	if err != nil {
 		log.Errorf("\nError Fetch Database: %v", err)
 	}
-	//db.Filter(&vulnerabilities, &cfg.Ignore.Vulnerability)
+	db.Filter(&vulnerabilities, &cfg.Ignore.Vulnerability)
 
 	// Begin matching vulnerabilities for each package
 	analysis.WG.Add(totalPackages)
