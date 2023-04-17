@@ -39,7 +39,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	setSecrets(arguments)
 
 	// Check database for any updates
-	// db.DBCheck()
+	db.DBCheck()
 	if len(*arguments.SbomFile) > 0 {
 		file, err := os.Open(*arguments.SbomFile)
 		if err != nil {
