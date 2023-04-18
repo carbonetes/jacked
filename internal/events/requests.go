@@ -4,8 +4,8 @@ import (
 	diggity "github.com/carbonetes/diggity/pkg/event-bus"
 
 	"github.com/carbonetes/jacked/internal/logger"
-	"github.com/carbonetes/jacked/internal/model"
 	"github.com/carbonetes/jacked/internal/ui/spinner"
+	"github.com/carbonetes/jacked/pkg/core/model"
 
 	"github.com/google/uuid"
 	"github.com/vmware/transport-go/bus"

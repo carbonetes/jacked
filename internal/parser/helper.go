@@ -3,7 +3,7 @@ package parser
 import (
 	"sort"
 
-	"github.com/carbonetes/jacked/internal/model"
+	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
 func SortPackages(packages []model.Package) {

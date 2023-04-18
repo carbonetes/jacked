@@ -1,6 +1,6 @@
 package parser
 
-import "github.com/carbonetes/jacked/internal/model"
+import "github.com/carbonetes/jacked/pkg/core/model"
 
 // Compile all license found on each package
 func getLicense(pkg *model.Package) []model.License {

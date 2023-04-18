@@ -12,12 +12,12 @@ import (
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/internal/events"
 	"github.com/carbonetes/jacked/internal/logger"
-	"github.com/carbonetes/jacked/internal/model"
 	"github.com/carbonetes/jacked/internal/output"
 	"github.com/carbonetes/jacked/internal/parser"
 	"github.com/carbonetes/jacked/internal/ui/credits"
 	"github.com/carbonetes/jacked/internal/ui/spinner"
 	"github.com/carbonetes/jacked/internal/ui/update"
+	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
 var (

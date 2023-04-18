@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/carbonetes/jacked/internal/config"
-	"github.com/carbonetes/jacked/internal/model"
+	"github.com/carbonetes/jacked/pkg/core/model"
 
 	"github.com/spf13/cobra"
 )

@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/carbonetes/jacked/internal/config"
-	"github.com/carbonetes/jacked/internal/model"
 	"github.com/carbonetes/jacked/internal/output/cyclonedx"
 	"github.com/carbonetes/jacked/internal/ui/table"
+	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
 func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *config.Configuration, secrets *model.SecretResults, licenses *[]model.License) {

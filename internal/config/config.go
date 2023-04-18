@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/carbonetes/jacked/internal/logger"
-	"github.com/carbonetes/jacked/internal/model"
+	"github.com/carbonetes/jacked/pkg/core/model"
 
 	"gopkg.in/yaml.v2"
 )

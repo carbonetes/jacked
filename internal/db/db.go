@@ -7,7 +7,7 @@ import (
 	"path"
 
 	"github.com/carbonetes/jacked/internal/logger"
-	"github.com/carbonetes/jacked/internal/model"
+	"github.com/carbonetes/jacked/pkg/core/model"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
@@ -54,4 +54,3 @@ func Fetch(packages *[]model.Package, vulnerabilities *[]model.Vulnerability) er
 	}
 	return nil
 }
-

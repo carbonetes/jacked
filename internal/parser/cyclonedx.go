@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/CycloneDX/cyclonedx-go"
-	"github.com/carbonetes/jacked/internal/model"
 	build "github.com/carbonetes/jacked/internal/version"
+	"github.com/carbonetes/jacked/pkg/core/model"
 	"github.com/google/uuid"
 )
 

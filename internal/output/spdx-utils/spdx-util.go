@@ -5,12 +5,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/carbonetes/jacked/internal/model"
 	"github.com/carbonetes/jacked/internal/version"
+	"github.com/carbonetes/jacked/pkg/core/model"
 
 	"github.com/google/uuid"
 
-	metadata "github.com/carbonetes/jacked/internal/model/metadata"
+	metadata "github.com/carbonetes/jacked/pkg/core/model/metadata"
 )
 
 const (

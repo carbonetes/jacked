@@ -3,7 +3,7 @@ package table
 import (
 	"fmt"
 
-	"github.com/carbonetes/jacked/internal/model"
+	"github.com/carbonetes/jacked/pkg/core/model"
 
 	"github.com/alexeyco/simpletable"
 )

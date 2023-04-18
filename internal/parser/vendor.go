@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"github.com/carbonetes/jacked/internal/model"
+	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
 // Identity vendor via type for os packages

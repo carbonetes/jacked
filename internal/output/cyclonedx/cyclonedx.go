@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/carbonetes/jacked/internal/model"
 	"github.com/carbonetes/jacked/internal/parser"
+	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
 func PrintCycloneDXJSON(results *[]model.ScanResult) {

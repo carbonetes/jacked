@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/carbonetes/jacked/internal/logger"
-	"github.com/carbonetes/jacked/internal/model"
 	spdxutils "github.com/carbonetes/jacked/internal/output/spdx-utils"
+	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
 var log = logger.GetLogger()
