@@ -6,10 +6,7 @@ import (
 	"github.com/carbonetes/jacked/internal/config"
 	"github.com/carbonetes/jacked/internal/model"
 
-	"github.com/facebookincubator/nvdtools/wfn"
 	"golang.org/x/exp/slices"
-
-	prmt "github.com/gitchander/permutation"
 )
 
 // Collection of common keywords that cannot be used on each package
@@ -61,11 +58,7 @@ func CreateKeywords(pkg model.Package) model.Package {
 
 	keywords = checkDelimeters(keywords)
 	keywords = removeExcluded(keywords)
-	if len(pkg.PURL) > 0 {
-		keywords = parsePurl(keywords, string(pkg.PURL))
-	}
 	pkg.Keywords = append(pkg.Keywords, keywords...)
-	pkg = *addCPEs(&pkg)
 	pkg.Keywords = append(pkg.Keywords, pkg.Name)
 
 	return pkg
@@ -78,33 +71,11 @@ func checkDelimeters(keywords []string) []string {
 			if !slices.Contains(keywords, keyword) {
 				keywords = append(keywords, keyword)
 			}
-			k = strings.ReplaceAll(k, "_", "-")
-			parts := strings.Split(k, "-")
-			keywords = shuffleKeywordParts(parts, keywords, "-")
-			if len(parts) > 2 {
-				parts = parts[:len(parts)-1]
-				keyword = strings.Join(parts, "-")
-				if !slices.Contains(keywords, keyword) {
-					keywords = append(keywords, strings.Join(parts, "-"))
-				}
-				keywords = shuffleKeywordParts(parts, keywords, "-")
-			}
 		}
 		if strings.Contains(k, "_") {
 			keyword := strings.ReplaceAll(k, "_", "-")
 			if !slices.Contains(keywords, keyword) {
 				keywords = append(keywords, keyword)
-			}
-			k = strings.ReplaceAll(k, "-", "_")
-			parts := strings.Split(k, "_")
-			// keywords = shuffleKeywordParts(parts, keywords, "_")
-			if len(parts) > 2 {
-				parts = parts[:len(parts)-1]
-				keyword = strings.Join(parts, "_")
-				if !slices.Contains(keywords, keyword) {
-					keywords = append(keywords, keyword)
-				}
-				// keywords = shuffleKeywordParts(parts, keywords, "_")
 			}
 		}
 	}
@@ -122,74 +93,4 @@ func removeExcluded(keywords []string) []string {
 
 	}
 	return keywords
-}
-
-// Create a new set of keywords by shuffling the parts a the string
-func shuffleKeywordParts(parts, keywords []string, separator string) []string {
-	if len(parts) > 0 {
-		result := prmt.New(prmt.StringSlice(parts))
-		for result.Next() {
-			newKeyword := strings.Join(parts, separator)
-			if !slices.Contains(keywords, newKeyword) {
-				keywords = append(keywords, newKeyword)
-			}
-		}
-	}
-	return keywords
-}
-
-// Generate new set of cpes based on the set vendor and keywords
-func addCPEs(pkg *model.Package) *model.Package {
-	if len(pkg.Keywords) == 0 {
-		return pkg
-	}
-
-	var vendors []string
-	if len(pkg.CPEs) > 0 {
-		for _, c := range pkg.CPEs {
-			cpe, err := wfn.UnbindFmtString(c)
-			if err != nil {
-				log.Errorln(err.Error())
-			}
-			if len(cpe.String()) == 0 {
-				continue
-			}
-			if cpe.Product != cpe.Vendor {
-				vendors = append(vendors, cpe.Vendor)
-			}
-		}
-	}
-
-	for _, keyword := range pkg.Keywords {
-		newCpe, err := wfn.UnbindFmtString("cpe:2.3:a:*:*:*:*:*:*:*:*:*:*")
-		if err != nil {
-			log.Errorln(err.Error())
-		}
-		if len(pkg.Vendor) > 0 {
-			newCpe.Vendor = pkg.Vendor
-			newCpe.Product = keyword
-			newCpe.Version = pkg.Version
-			if !slices.Contains(pkg.CPEs, newCpe.BindToFmtString()) {
-				pkg.CPEs = append(pkg.CPEs, newCpe.BindToFmtString())
-			}
-		}
-		newCpe.Vendor = keyword
-		newCpe.Product = keyword
-		newCpe.Version = pkg.Version
-		if !slices.Contains(pkg.CPEs, newCpe.BindToFmtString()) {
-			pkg.CPEs = append(pkg.CPEs, newCpe.BindToFmtString())
-		}
-
-		if len(vendors) > 0 {
-			for _, vendor := range vendors {
-				newCpe.Product = keyword
-				newCpe.Vendor = vendor
-				newCpe.Version = pkg.Version
-				if !slices.Contains(pkg.CPEs, newCpe.BindToFmtString()) {
-					pkg.CPEs = append(pkg.CPEs, newCpe.BindToFmtString())
-				}
-			}
-		}
-	}
-	return pkg
 }
