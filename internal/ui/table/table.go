@@ -61,6 +61,12 @@ func createTableRows(results []model.ScanResult) {
 	caser := cases.Title(language.English)
 	for _, _package := range results {
 		for _, v := range _package.Vulnerabilities {
+			var fix string
+			if v.Remediation != nil {
+				fix = v.Remediation.Fix
+			} else {
+				fix = "-"
+			}
 			r := []*simpletable.Cell{
 				{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v", index)},
 				{Text: elliptical(_package.Package.Name, 26)},
@@ -69,7 +75,7 @@ func createTableRows(results []model.ScanResult) {
 				{Text: v.CVE},
 				{Text: caser.String(v.CVSS.Severity)},
 				{Text: elliptical(v.Criteria.Constraint, 15)},
-				{Text: v.Remediation.Fix},
+				{Text: fix},
 			}
 			index++
 			table.Body.Cells = append(table.Body.Cells, r)
