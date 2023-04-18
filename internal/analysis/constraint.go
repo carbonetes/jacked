@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/carbonetes/jacked/internal/model"
+	"github.com/carbonetes/jacked/pkg/core/model"
 	"github.com/hashicorp/go-version"
 )
 

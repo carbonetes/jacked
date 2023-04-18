@@ -4,7 +4,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/carbonetes/jacked/internal/model"
+	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
 var WG sync.WaitGroup

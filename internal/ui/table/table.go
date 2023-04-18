@@ -5,7 +5,7 @@ import (
 	"sort"
 	"unicode"
 
-	"github.com/carbonetes/jacked/internal/model"
+	"github.com/carbonetes/jacked/pkg/core/model"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 

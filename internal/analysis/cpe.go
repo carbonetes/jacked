@@ -3,7 +3,7 @@ package analysis
 import (
 	"strings"
 
-	"github.com/carbonetes/jacked/internal/model"
+	"github.com/carbonetes/jacked/pkg/core/model"
 	"github.com/facebookincubator/nvdtools/wfn"
 )
 

@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"github.com/carbonetes/jacked/internal/model"
-	metadata "github.com/carbonetes/jacked/internal/model/metadata"
+	metadata "github.com/carbonetes/jacked/pkg/core/model/metadata"
+	"github.com/carbonetes/jacked/pkg/core/model"
 
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/exp/slices"

@@ -6,7 +6,7 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/carbonetes/jacked/internal/analysis"
 	"github.com/carbonetes/jacked/internal/db"
-	"github.com/carbonetes/jacked/internal/model"
+	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
 // diggity cpe2.3 property flag

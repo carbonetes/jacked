@@ -5,8 +5,8 @@ import (
 
 	"github.com/carbonetes/jacked/internal/config"
 	"github.com/carbonetes/jacked/internal/events"
-	jacked "github.com/carbonetes/jacked/internal/model"
 	"github.com/carbonetes/jacked/internal/parser"
+	jacked "github.com/carbonetes/jacked/pkg/core/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/transport-go/bus"
 	"github.com/vmware/transport-go/model"

@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 
-	"github.com/carbonetes/jacked/internal/model"
+	"github.com/carbonetes/jacked/pkg/core/model"
 	"github.com/uptrace/bun"
 )
 

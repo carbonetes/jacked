@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	diggity "github.com/carbonetes/diggity/pkg/event-bus"
-	"github.com/carbonetes/jacked/internal/model"
+	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
 const (
