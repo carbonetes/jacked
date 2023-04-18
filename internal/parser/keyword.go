@@ -65,7 +65,7 @@ func CreateKeywords(pkg model.Package) model.Package {
 		keywords = parsePurl(keywords, string(pkg.PURL))
 	}
 	pkg.Keywords = append(pkg.Keywords, keywords...)
-	pkg = *addCPEs(&pkg)
+	// pkg = *addCPEs(&pkg) // adds too many unnecessary package cpes
 	pkg.Keywords = append(pkg.Keywords, pkg.Name)
 
 	return pkg
