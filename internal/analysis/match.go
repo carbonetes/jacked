@@ -98,7 +98,7 @@ func FormResult(vulnerability *model.Vulnerability, pkg *model.Package) {
 	}
 
 	if len(vulnerability.Remediation.Fix) == 0 {
-		vulnerability.Remediation.Fix = ""
+		vulnerability.Remediation = nil
 	}
 }
 
