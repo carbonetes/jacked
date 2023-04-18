@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"strings"
-
 	"github.com/carbonetes/jacked/internal/model"
 )
 
@@ -21,15 +19,6 @@ func getOSVendor(p *model.Package) *model.Package {
 	}
 	if p.Type == "gem" {
 		p.Vendor = "rubyonrails"
-	}
-
-	if p.Type == "java" {
-		if strings.Contains(p.Name, "spring") {
-			p.Vendor = "vmware"
-		}
-		if p.Name == "spring-core" {
-			p.Keywords = append(p.Keywords, "spring_framework")
-		}
 	}
 
 	return p
