@@ -338,7 +338,7 @@ func createAdvisories(id string) *[]cyclonedx.Advisory {
 }
 
 func createRecommendation(vuln *model.Vulnerability, pkg *model.Package) string {
-	if len(vuln.Remediation.Fix) == 0 {
+	if vuln.Remediation == nil || len(vuln.Remediation.Fix) == 0 {
 		return ""
 	}
 	recommendation := fmt.Sprintf("Upgrade %s to version %s", pkg.Name, vuln.Remediation.Fix)
