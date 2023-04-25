@@ -28,10 +28,10 @@ const (
 )
 
 // Method that generates table header, table rows from the scan result, and displaying the generated table format output.
-func DisplayScanResultTable(results *[]model.ScanResult) {
+func DisplayScanResultTable(results *[]model.ScanResult) string{
 	createTableHeader()
 	createTableRows(*results)
-	generateTable()
+	return generateTable()
 }
 
 // Using the constant variable to generate columns from the table.
@@ -98,10 +98,11 @@ func createTableFooter(count int) {
 }
 
 // Set style "StyleCompactLite" to make the table style clean and print out the table.
-func generateTable() {
+func generateTable() string{
 	// Set Table Style
 	table.SetStyle(simpletable.StyleCompactLite)
 	fmt.Println(table.String())
+	return table.String()
 }
 
 // Handles long text from the table data to generate ellipsis that helps UI table to generated properly.

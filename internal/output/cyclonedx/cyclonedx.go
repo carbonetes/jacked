@@ -10,7 +10,7 @@ import (
 	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
-func PrintCycloneDXJSON(results *[]model.ScanResult) {
+func PrintCycloneDXJSON(results *[]model.ScanResult) string{
 	cdx := parser.ConvertToCycloneDX(results)
 
 	json, err := json.MarshalIndent(cdx, "", "  ")
@@ -19,10 +19,11 @@ func PrintCycloneDXJSON(results *[]model.ScanResult) {
 	}
 
 	fmt.Printf("%s\n", string(json))
+	return string(json)
 
 }
 
-func PrintCycloneDXXML(results *[]model.ScanResult) {
+func PrintCycloneDXXML(results *[]model.ScanResult) string{
 	cdx := parser.ConvertToCycloneDX(results)
 
 	xml, err := xml.MarshalIndent(cdx, "", " ")
@@ -31,4 +32,5 @@ func PrintCycloneDXXML(results *[]model.ScanResult) {
 	}
 
 	fmt.Printf("%+v\n", string(xml))
+	return string(xml)
 }

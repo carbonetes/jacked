@@ -15,8 +15,8 @@ import (
 
 var log = logger.GetLogger()
 
-func PrintSPDX(formatType string, image *string, results []model.ScanResult) {
-
+func PrintSPDX(formatType string, image *string, results []model.ScanResult) string{
+    
 	spdx := GetSpdx(image, results)
 
 	switch formatType {
@@ -26,18 +26,21 @@ func PrintSPDX(formatType string, image *string, results []model.ScanResult) {
 			log.Errorln(err.Error())
 		}
 		fmt.Printf("%+v\n", string(result))
+		return string(result)
 	case "json":
 		result, err := json.MarshalIndent(spdx, "", " ")
 		if err != nil {
 			log.Errorln(err.Error())
 		}
 		fmt.Printf("%+v\n", string(result))
+		return string(result)
 	case "tag-value":
-		printSpdxTagValue(image, results)
+		return printSpdxTagValue(image, results)
 	default:
 		log.Error("Format type not found")
 		os.Exit(1)
 	}
+	return ""
 }
 
 func GetSpdx(image *string, results []model.ScanResult) model.SpdxDocument {
@@ -151,9 +154,10 @@ func GetSpdxTagValues(image *string, results []model.ScanResult) (spdxTagValues 
 }
 
 // PrintSpdxTagValue Print Packages in SPDX-TAG_VALUE format
-func printSpdxTagValue(image *string, results []model.ScanResult) {
+func printSpdxTagValue(image *string, results []model.ScanResult) string{
 	spdxTagValues := GetSpdxTagValues(image, results)
 	fmt.Printf("%+v", stringSliceToString(spdxTagValues))
+	return stringSliceToString(spdxTagValues)
 
 }
 

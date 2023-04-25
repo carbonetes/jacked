@@ -5,12 +5,13 @@ import (
 
 	"github.com/carbonetes/jacked/internal/config"
 	"github.com/carbonetes/jacked/internal/output/cyclonedx"
+	"github.com/carbonetes/jacked/internal/output/save"
 	"github.com/carbonetes/jacked/internal/ui/table"
 	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
 func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *config.Configuration, secrets *model.SecretResults, licenses *[]model.License) {
-
+    var outputText string
 	var source *string
 
 	if arguments.Image != nil {
@@ -44,7 +45,7 @@ func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *c
 
 	switch *arguments.Output {
 	case "json":
-		printJsonResult(results)
+		outputText = printJsonResult(results)
 		if !*arguments.DisableSecretSearch {
 			if len(secrets.Secrets) > 0 {
 				printJsonSecret(secrets)
@@ -56,7 +57,7 @@ func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *c
 			}
 		}
 	case "cyclonedx-json":
-		cyclonedx.PrintCycloneDXJSON(results)
+		outputText = cyclonedx.PrintCycloneDXJSON(results)
 		if !*arguments.DisableSecretSearch {
 			if len(secrets.Secrets) > 0 {
 				printJsonSecret(secrets)
@@ -68,7 +69,7 @@ func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *c
 			}
 		}
 	case "spdx-json":
-		PrintSPDX("json", source, *results)
+		outputText = PrintSPDX("json", source, *results)
 		if !*arguments.DisableSecretSearch {
 			if len(secrets.Secrets) > 0 {
 				printJsonSecret(secrets)
@@ -80,7 +81,7 @@ func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *c
 			}
 		}
 	case "cyclonedx-xml":
-		cyclonedx.PrintCycloneDXXML(results)
+		outputText = cyclonedx.PrintCycloneDXXML(results)
 		if !*arguments.DisableSecretSearch {
 			if len(secrets.Secrets) > 0 {
 				PrintXMLSecret(secrets)
@@ -92,7 +93,7 @@ func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *c
 			}
 		}
 	case "spdx-xml":
-		PrintSPDX("xml", source, *results)
+		outputText = PrintSPDX("xml", source, *results)
 		if !*arguments.DisableSecretSearch {
 			if len(secrets.Secrets) > 0 {
 				PrintXMLSecret(secrets)
@@ -104,9 +105,9 @@ func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *c
 			}
 		}
 	case "spdx-tag-value":
-		PrintSPDX("tag-value", source, *results)
+		outputText = PrintSPDX("tag-value", source, *results)
 	default:
-		table.DisplayScanResultTable(results)
+		outputText = table.DisplayScanResultTable(results)
 		if !*arguments.DisableSecretSearch {
 			if len(secrets.Secrets) > 0 {
 				table.PrintSecrets(secrets)
@@ -118,4 +119,9 @@ func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *c
 			}
 		}
 	}
+	
+	if arguments.OutputFile != nil && *arguments.OutputFile != "" {
+		save.SaveOutputAsFile(*arguments.OutputFile,*arguments.Output,outputText)
+	}
 }
+
