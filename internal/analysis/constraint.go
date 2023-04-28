@@ -8,24 +8,26 @@ import (
 	"github.com/hashicorp/go-version"
 )
 
-func MatchConstraint(packageVersion *string, criteria *model.Criteria) bool {
+func MatchConstraint(packageVersion *string, criteria *model.Criteria) *bool {
+	matched := new(bool)
 
 	v, err := version.NewVersion(normalizeVersion(*packageVersion))
 	if err != nil {
-		return false
+		return matched
 	}
 
 	c, err := version.NewConstraint(normalizeConstraint(criteria.Constraint))
 	if err != nil {
-		return false
+		return matched
 	}
 
 	if err == nil {
 		if c.Check(v) {
-			return true
+			*matched = true
+			return matched
 		}
 	}
-	return false
+	return matched
 }
 
 func normalizeConstraint(constraint string) string {

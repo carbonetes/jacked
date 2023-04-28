@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/carbonetes/jacked/pkg/core/model"
+	dm "github.com/carbonetes/diggity/pkg/model"
 )
 
-func printJsonResult(results *[]model.ScanResult) {
+func printJsonResult(results *dm.SBOM) {
 	json, err := json.MarshalIndent(results, "", "  ")
 	if err != nil {
 		log.Fatal(err)

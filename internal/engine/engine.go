@@ -7,36 +7,32 @@ import (
 	"strings"
 	"time"
 
+	dm "github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/jacked/internal/analysis"
 	"github.com/carbonetes/jacked/internal/config"
 	"github.com/carbonetes/jacked/internal/db"
-	"github.com/carbonetes/jacked/internal/events"
 	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/carbonetes/jacked/internal/output"
-	"github.com/carbonetes/jacked/internal/parser"
+	diggity "github.com/carbonetes/jacked/internal/sbom"
 	"github.com/carbonetes/jacked/internal/ui/credits"
 	"github.com/carbonetes/jacked/internal/ui/spinner"
 	"github.com/carbonetes/jacked/internal/ui/update"
 	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
-var (
-	vulnerabilities []model.Vulnerability
-	results         []model.ScanResult
-	packages        []model.Package
-	licenses        []model.License
-	secrets         model.SecretResults
-	totalPackages   int
-	log             = logger.GetLogger()
-	sbom            []byte
-	severity        *string
-)
+var log = logger.GetLogger()
 
 // Start the scan engine with the given arguments and configurations
 func Start(arguments *model.Arguments, cfg *config.Configuration) {
-	start := time.Now()
 
-	setSecrets(arguments)
+	var (
+		sbom            *dm.SBOM
+		licenses        = new([]model.License)
+		totalPackages   int
+		vulnerabilities = new([]model.Vulnerability)
+	)
+
+	start := time.Now()
 
 	// Check database for any updates
 	db.DBCheck()
@@ -45,51 +41,45 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		if err != nil {
 			log.Fatalf("\nUnable to Open SBOM JSON file: %v", err)
 		}
-		sbom, err = io.ReadAll(file)
+		result, err := io.ReadAll(file)
 		if err != nil {
 			log.Fatal(err)
 		}
+		sbom = diggity.ParseSBOM(&result)
 	} else {
 		// Request for sbom through event bus
-		sbom = events.RequestSBOMAnalysis(arguments)
+		sbom = diggity.Scan(arguments)
 	}
 
 	// Run all parsers and filters for packages
-	parser.ParseSBOM(&sbom, &packages, &secrets)
-	parser.Filter(&packages, &cfg.Ignore.Package)
-	parser.ParsePackages(&packages, &licenses, cfg)
+	diggity.Filter(sbom.Packages, &cfg.Ignore.Package)
+	if cfg.LicenseFinder {
+		diggity.GetLicense(sbom.Packages, licenses)
+	}
 
-	totalPackages = len(packages)
+	totalPackages = len(*sbom.Packages)
 
 	spinner.OnVulnAnalysisStart(totalPackages)
 
-	err := db.Fetch(&packages, &vulnerabilities)
+	err := db.Fetch(sbom.Packages, vulnerabilities)
 	if err != nil {
 		log.Errorf("\nError Fetch Database: %v", err)
 	}
-	db.Filter(&vulnerabilities, &cfg.Ignore.Vulnerability)
+
+	db.Filter(vulnerabilities, &cfg.Ignore.Vulnerability)
 
 	// Begin matching vulnerabilities for each package
 	analysis.WG.Add(totalPackages)
-	for _, p := range packages {
-		var scanresult model.ScanResult
-		var result *[]model.Vulnerability = new([]model.Vulnerability)
-		analysis.FindMatch(&p, &vulnerabilities, result)
-		if *result != nil {
-			scanresult.Package = p
-			scanresult.Vulnerabilities = *result
-			results = append(results, scanresult)
-			if len(*arguments.FailCriteria) > 0 {
-				severity = arguments.FailCriteria
-				failCriteria(scanresult, severity)
-			}
-		}
+	for index, _ := range *sbom.Packages {
+		go func(sbom *dm.SBOM, vulnerabilities *[]model.Vulnerability, index int) {
+			(*sbom.Packages)[index].Vulnerabilities = analysis.FindMatch(&(*sbom.Packages)[index], vulnerabilities)
+		}(sbom, vulnerabilities, index)
 	}
 	analysis.WG.Wait()
-	spinner.OnVulnAnalysisEnd(nil)
+	spinner.OnStop(nil)
 
 	// Compile the scan results based on the given configurations
-	output.PrintResult(&results, arguments, cfg, &secrets, &licenses)
+	output.PrintResult(sbom, arguments, cfg, licenses)
 
 	log.Printf("\nAnalysis finished in %.2fs", time.Since(start).Seconds())
 	err = update.ShowLatestVersion()
@@ -99,8 +89,8 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	credits.Show()
 }
 
-func failCriteria(scanresult model.ScanResult, severity *string) {
-	vulns := scanresult.Vulnerabilities
+func failCriteria(pkg *dm.Package, severity *string) {
+	vulns := pkg.Vulnerabilities
 
 	Severities := []string{
 		"unknown",
@@ -123,7 +113,7 @@ func failCriteria(scanresult model.ScanResult, severity *string) {
 		newSeverities = Severities[index:]
 	}
 
-	for _, vuln := range vulns {
+	for _, vuln := range *vulns {
 		for _, newSeverity := range newSeverities {
 
 			if strings.EqualFold(vuln.CVSS.Severity, newSeverity) {
@@ -134,12 +124,4 @@ func failCriteria(scanresult model.ScanResult, severity *string) {
 			}
 		}
 	}
-}
-
-func setSecrets(arguments *model.Arguments) {
-
-	secrets.Configuration.Excludes = arguments.ExcludedFilenames
-	secrets.Configuration.Disabled = *arguments.DisableSecretSearch
-	secrets.Configuration.SecretRegex = *arguments.SecretContentRegex
-	secrets.Configuration.MaxFileSize = arguments.SecretMaxFileSize
 }

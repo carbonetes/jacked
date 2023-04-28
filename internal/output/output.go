@@ -3,13 +3,14 @@ package output
 import (
 	"fmt"
 
+	dm "github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/jacked/internal/config"
 	"github.com/carbonetes/jacked/internal/output/cyclonedx"
 	"github.com/carbonetes/jacked/internal/ui/table"
 	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
-func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *config.Configuration, secrets *model.SecretResults, licenses *[]model.License) {
+func PrintResult(sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configuration, licenses *[]model.License) {
 
 	var source *string
 
@@ -26,12 +27,8 @@ func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *c
 		source = arguments.SbomFile
 	}
 
-	if len(*results) == 0 {
-		fmt.Print("\nNo vulnerability has been found!")
-	}
-
 	if !*arguments.DisableSecretSearch {
-		if len(secrets.Secrets) == 0 {
+		if len(sbom.Secret.Secrets) == 0 {
 			fmt.Print("\nNo secret has been found!")
 		}
 	}
@@ -44,72 +41,51 @@ func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *c
 
 	switch *arguments.Output {
 	case "json":
-		printJsonResult(results)
-		if !*arguments.DisableSecretSearch {
-			if len(secrets.Secrets) > 0 {
-				printJsonSecret(secrets)
-			}
-		}
+		printJsonResult(sbom)
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintJsonLicense(licenses)
 			}
 		}
 	case "cyclonedx-json":
-		cyclonedx.PrintCycloneDXJSON(results)
-		if !*arguments.DisableSecretSearch {
-			if len(secrets.Secrets) > 0 {
-				printJsonSecret(secrets)
-			}
-		}
+		cyclonedx.PrintCycloneDXJSON(sbom)
+
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintJsonLicense(licenses)
 			}
 		}
 	case "spdx-json":
-		PrintSPDX("json", source, *results)
-		if !*arguments.DisableSecretSearch {
-			if len(secrets.Secrets) > 0 {
-				printJsonSecret(secrets)
-			}
-		}
+		PrintSPDX("json", source, sbom)
+
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintJsonLicense(licenses)
 			}
 		}
 	case "cyclonedx-xml":
-		cyclonedx.PrintCycloneDXXML(results)
-		if !*arguments.DisableSecretSearch {
-			if len(secrets.Secrets) > 0 {
-				PrintXMLSecret(secrets)
-			}
-		}
+		cyclonedx.PrintCycloneDXXML(sbom)
+
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintXMLLicense(licenses)
 			}
 		}
 	case "spdx-xml":
-		PrintSPDX("xml", source, *results)
-		if !*arguments.DisableSecretSearch {
-			if len(secrets.Secrets) > 0 {
-				PrintXMLSecret(secrets)
-			}
-		}
+		PrintSPDX("xml", source, sbom)
+
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintXMLLicense(licenses)
 			}
 		}
 	case "spdx-tag-value":
-		PrintSPDX("tag-value", source, *results)
+		PrintSPDX("tag-value", source, sbom)
 	default:
-		table.DisplayScanResultTable(results)
+		table.DisplayScanResultTable(sbom.Packages)
 		if !*arguments.DisableSecretSearch {
-			if len(secrets.Secrets) > 0 {
-				table.PrintSecrets(secrets)
+			if len(sbom.Secret.Secrets) > 0 {
+				table.PrintSecrets(sbom.Secret)
 			}
 		}
 		if cfg.LicenseFinder {

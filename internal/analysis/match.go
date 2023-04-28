@@ -4,46 +4,48 @@ import (
 	"strings"
 	"sync"
 
+	dm "github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
 var WG sync.WaitGroup
 
-func FindMatch(pkg *model.Package, vulnerabilities *[]model.Vulnerability, results *[]model.Vulnerability) {
+func FindMatch(pkg *dm.Package, vulnerabilities *[]model.Vulnerability) *[]model.Vulnerability {
 
-	// check vulnerabilities if empty
 	if vulnerabilities == nil {
 		WG.Done()
-		return
+		return nil
 	}
-
-	// get all vulnerabilities related to this package
-	fv := filter(vulnerabilities, &pkg.Keywords)
-
-	// check filtered vulnerabilities if empty
-	if len(fv) == 0 {
+	if len(*vulnerabilities) == 0 {
 		WG.Done()
-		return
+		return nil
 	}
 
-	if len(pkg.CPEs) > 0 && len(fv) > 0 {
-		for _, vulnerability := range fv {
-			matched := match(pkg, &vulnerability)
-			if matched {
-				FormResult(&vulnerability, pkg)
-				if !contains(results, &vulnerability) {
-					*results = append(*results, vulnerability)
-				}
-			}
+	if len(pkg.CPEs) == 0 {
+		WG.Done()
+		return nil
+	}
 
+	var result *[]model.Vulnerability
+
+	for _, vulnerability := range *vulnerabilities {
+		matched := match(pkg, &vulnerability)
+		if *matched {
+			if result == nil {
+				result = new([]model.Vulnerability)
+			}
+			format(&vulnerability, pkg)
+			if !exist(result, &vulnerability) {
+				*result = append(*result, vulnerability)
+			}
 		}
 	}
-
-	defer WG.Done()
+	WG.Done()
+	return result
 }
 
-func match(pkg *model.Package, vulnerability *model.Vulnerability) bool {
-	var matched bool
+func match(pkg *dm.Package, vulnerability *model.Vulnerability) *bool {
+	matched := new(bool)
 
 	switch pkg.Type {
 	case "go-module":
@@ -52,40 +54,24 @@ func match(pkg *model.Package, vulnerability *model.Vulnerability) bool {
 			return MatchConstraint(&pkg.Version, &vulnerability.Criteria)
 		}
 
-	case "java":
-		if checkProductVendor(pkg, vulnerability) && len(vulnerability.Criteria.Constraint) > 0 {
-			return MatchConstraint(&pkg.Version, &vulnerability.Criteria)
-		}
 	default:
-		if len(vulnerability.Criteria.CPES) > 0 && len(pkg.CPEs) > 0 {
-			matched = MatchCPE(pkg, &vulnerability.Criteria)
-		}
+		if vulnerability.Package == pkg.Name {
+			if len(vulnerability.Criteria.CPES) > 0 && len(pkg.CPEs) > 0 {
+				*matched = MatchCPE(pkg, &vulnerability.Criteria)
+			}
 
-		if matched {
-			return matched
-		}
+			if *matched {
+				return matched
+			}
 
-		if checkProductVendor(pkg, vulnerability) && len(vulnerability.Criteria.Constraint) > 0 {
 			return MatchConstraint(&pkg.Version, &vulnerability.Criteria)
 		}
+
 	}
 	return matched
 }
 
-// Select all vulnerabilities can be asociated based on the keywords and vendor of the package
-func filter(vulnerabilities *[]model.Vulnerability, keywords *[]string) []model.Vulnerability {
-	var fv []model.Vulnerability
-	for _, v := range *vulnerabilities {
-		for _, keyword := range *keywords {
-			if strings.EqualFold(v.Package, keyword) {
-				fv = append(fv, v)
-			}
-		}
-	}
-	return fv
-}
-
-func FormResult(vulnerability *model.Vulnerability, pkg *model.Package) {
+func format(vulnerability *model.Vulnerability, pkg *dm.Package) {
 
 	if strings.EqualFold(vulnerability.CVSS.Severity, "UNKNOWN") {
 		if strings.EqualFold(vulnerability.CVSS.Method, "2") {
@@ -115,9 +101,12 @@ func GetCVSS2Severity(baseScore *float64) string {
 	return "UNKNOWN"
 }
 
-func contains(result *[]model.Vulnerability, newResult *model.Vulnerability) bool {
+func exist(result *[]model.Vulnerability, entry *model.Vulnerability) bool {
+	if len(*result) == 0 {
+		return false
+	}
 	for _, r := range *result {
-		if r.CVE == newResult.CVE && r.Package == newResult.Package {
+		if r.CVE == entry.CVE && r.Package == entry.Package {
 			return true
 		}
 	}
