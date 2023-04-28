@@ -27,24 +27,21 @@ func PrintResult(sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configur
 		source = arguments.SbomFile
 	}
 
-	if !*arguments.DisableSecretSearch {
-		if len(sbom.Secret.Secrets) == 0 {
-			fmt.Print("\nNo secret has been found!")
-		}
-	}
-
-	if cfg.LicenseFinder {
-		if len(*licenses) == 0 {
-			fmt.Print("\nNo license has been found!")
-		}
-	}
-
 	switch *arguments.Output {
 	case "json":
 		printJsonResult(sbom)
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintJsonLicense(licenses)
+			} else {
+				fmt.Print("\nNo license has been found!\n")
+			}
+		}
+		if !*arguments.DisableSecretSearch {
+			if len(sbom.Secret.Secrets) > 0 {
+				PrintJsonSecret(sbom.Secret)
+			} else {
+				fmt.Print("\nNo secret has been found!\n")
 			}
 		}
 	case "cyclonedx-json":
@@ -53,6 +50,15 @@ func PrintResult(sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configur
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintJsonLicense(licenses)
+			} else {
+				fmt.Print("\nNo license has been found!\n")
+			}
+		}
+		if !*arguments.DisableSecretSearch {
+			if len(sbom.Secret.Secrets) > 0 {
+				PrintJsonSecret(sbom.Secret)
+			} else {
+				fmt.Print("\nNo secret has been found!\n")
 			}
 		}
 	case "spdx-json":
@@ -61,6 +67,15 @@ func PrintResult(sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configur
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintJsonLicense(licenses)
+			} else {
+				fmt.Print("\nNo license has been found!\n")
+			}
+		}
+		if !*arguments.DisableSecretSearch {
+			if len(sbom.Secret.Secrets) > 0 {
+				PrintJsonSecret(sbom.Secret)
+			} else {
+				fmt.Print("\nNo secret has been found!\n")
 			}
 		}
 	case "cyclonedx-xml":
@@ -69,6 +84,15 @@ func PrintResult(sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configur
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintXMLLicense(licenses)
+			} else {
+				fmt.Print("\nNo license has been found!\n")
+			}
+		}
+		if !*arguments.DisableSecretSearch {
+			if len(sbom.Secret.Secrets) > 0 {
+				PrintXMLSecret(sbom.Secret)
+			} else {
+				fmt.Print("\nNo secret has been found!\n")
 			}
 		}
 	case "spdx-xml":
@@ -77,20 +101,33 @@ func PrintResult(sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configur
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintXMLLicense(licenses)
+			} else {
+				fmt.Print("\nNo license has been found!\n")
+			}
+		}
+		if !*arguments.DisableSecretSearch {
+			if len(sbom.Secret.Secrets) > 0 {
+				PrintXMLSecret(sbom.Secret)
+			} else {
+				fmt.Print("\nNo secret has been found!\n")
 			}
 		}
 	case "spdx-tag-value":
 		PrintSPDX("tag-value", source, sbom)
 	default:
 		table.DisplayScanResultTable(sbom.Packages)
-		if !*arguments.DisableSecretSearch {
-			if len(sbom.Secret.Secrets) > 0 {
-				table.PrintSecrets(sbom.Secret)
-			}
-		}
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				table.PrintLicenses(*licenses)
+			} else {
+				fmt.Print("\nNo license has been found!\n")
+			}
+		}
+		if !*arguments.DisableSecretSearch {
+			if len(sbom.Secret.Secrets) > 0 {
+				table.PrintSecrets(sbom.Secret)
+			} else {
+				fmt.Print("\nNo secret has been found!\n")
 			}
 		}
 	}

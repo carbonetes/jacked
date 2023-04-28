@@ -5,10 +5,10 @@ import (
 	"encoding/xml"
 	"fmt"
 
-	"github.com/carbonetes/jacked/pkg/core/model"
+	dm "github.com/carbonetes/diggity/pkg/model"
 )
 
-func printJsonSecret(secrets *model.SecretResults) {
+func PrintJsonSecret(secrets *dm.SecretResults) {
 	json, err := json.MarshalIndent(secrets, "", "  ")
 	if err != nil {
 		log.Fatal(err)
@@ -16,7 +16,7 @@ func printJsonSecret(secrets *model.SecretResults) {
 	fmt.Printf("%s\n", string(json))
 }
 
-func PrintXMLSecret(secrets *model.SecretResults) {
+func PrintXMLSecret(secrets *dm.SecretResults) {
 	xml, err := xml.MarshalIndent(secrets, "", " ")
 	if err != nil {
 		log.Fatal(err)
