@@ -102,7 +102,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 func failCriteria(scanresult model.ScanResult, severity *string) {
 	vulns := scanresult.Vulnerabilities
 
-	Severities := []string{
+	Severities := []string {
 		"unknown",
 		"negligible",
 		"low",
@@ -118,6 +118,7 @@ func failCriteria(scanresult model.ScanResult, severity *string) {
 			break
 		}
 	}
+	
 	var newSeverities []string
 	if index != -1 {
 		newSeverities = Severities[index:]

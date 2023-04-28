@@ -8,6 +8,7 @@ import (
 	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/carbonetes/jacked/internal/ui/spinner"
 	"github.com/carbonetes/jacked/internal/version"
+	"github.com/carbonetes/jacked/pkg/core/ci"
 
 	"github.com/spf13/cobra"
 )
@@ -61,7 +62,9 @@ func run(c *cobra.Command, args []string) {
 		}
 		os.Exit(0)
 	}
-
+	if ciMode {
+		ci.Analyze(arguments)
+	}
 	// Check user output type is supported
 	if arguments.Output != nil && *arguments.Output != "" {
 		compareOutputToOutputTypes(*arguments.Output)
@@ -76,27 +79,15 @@ func run(c *cobra.Command, args []string) {
 		log.Print("Using default tag:", defaultTag)
 		modifiedTag := *arguments.Image + tagSeparator + defaultTag
 		arguments.Image = &modifiedTag
-		*arguments.Tar = ""
-		*arguments.Dir = ""
-		*arguments.SbomFile = ""
 	} else if len(*arguments.Tar) != 0 {
 		log.Printf("Scanning Tar File: %v", *arguments.Tar)
-		arguments.Image = nil
-		*arguments.Dir = ""
-		*arguments.SbomFile = ""
 	} else if len(*arguments.Dir) != 0 {
 		log.Printf("Scanning Directory: %v", *arguments.Dir)
-		arguments.Image = nil
-		*arguments.Tar = ""
-		*arguments.SbomFile = ""
 	} else if len(*arguments.SbomFile) != 0 {
 		log.Printf("Scanning SBOM JSON: %v", *arguments.SbomFile)
-		arguments.Image = nil
-		*arguments.Tar = ""
-		*arguments.Dir = ""
 	}
 
-	engine.Start(&arguments, &cfg)
+	engine.Start(arguments, &cfg)
 }
 
 // ValidateOutputArg checks if output types specified are valid

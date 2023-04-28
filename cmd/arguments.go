@@ -10,28 +10,12 @@ import (
 )
 
 var (
-	arguments model.Arguments = model.Arguments{
-		DisableFileListing:  new(bool),
-		SecretContentRegex:  new(string),
-		DisableSecretSearch: new(bool),
-		Image:               new(string),
-		SbomFile:            new(string),
-		Dir:                 new(string),
-		Tar:                 new(string),
-		Quiet:               new(bool),
-		OutputFile:          new(string),
-		ExcludedFilenames:   &[]string{},
-		EnabledParsers:      &[]string{},
-		RegistryURI:         new(string),
-		RegistryUsername:    new(string),
-		RegistryPassword:    new(string),
-		RegistryToken:       new(string),
-		FailCriteria:        new(string),
-	}
+	arguments   = model.NewArguments()
 	cfg         config.Configuration
 	quiet       bool
 	license     bool
 	secrets     bool
+	ciMode      bool
 	parserNames = []string{
 		"apk",
 		"debian",
@@ -88,6 +72,7 @@ func init() {
 	rootCmd.Flags().BoolVarP(&quiet, "quiet", "q", cfg.Quiet, "Disable all logging statements")
 	rootCmd.Flags().BoolP("version", "v", false, "Print application version")
 	rootCmd.Flags().StringVar(arguments.FailCriteria, "fail-criteria", "", fmt.Sprintf("Input a severity that will be found at or above given severity then return code will be 1 (%v)", Severities))
+	rootCmd.Flags().BoolVar(&ciMode, "ci", false, "[Test-Feature] CI Mode for CI/CD Integrations (default false)")
 
 	rootCmd.Flags().StringVarP(arguments.Dir, "dir", "d", "", "Read directly from a path on disk (any directory) (e.g. 'jacked path/to/dir)'")
 	rootCmd.Flags().StringVarP(arguments.Tar, "tar", "t", "", "Read a tarball from a path on disk for archives created from docker save (e.g. 'jacked path/to/image.tar)'")

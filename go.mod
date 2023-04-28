@@ -5,13 +5,12 @@ go 1.19
 require (
 	github.com/CycloneDX/cyclonedx-go v0.7.1
 	github.com/facebookincubator/nvdtools v0.1.5
-	github.com/gitchander/permutation v0.0.0-20210517125447-a5d73722e1b1
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-version v1.6.0
+	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mutecomm/go-sqlcipher/v4 v4.4.2
-	github.com/package-url/packageurl-go v0.1.0
 	github.com/savioxavier/termlink v1.2.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
@@ -91,7 +90,7 @@ require (
 
 require (
 	github.com/alexeyco/simpletable v1.0.0
-	github.com/carbonetes/diggity v1.2.0
+	github.com/carbonetes/diggity v1.3.1
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/schollz/progressbar/v3 v3.13.0
 	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0
