@@ -12,7 +12,6 @@ func OnCheckDatabaseUpdateStart() {
 
 func OnDatabaseUpdateStart() {
 	SetMessage("Database Updated")
-	Stop()
 }
 
 func OnSBOMScan(img string) {

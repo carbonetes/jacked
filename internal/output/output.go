@@ -2,6 +2,7 @@ package output
 
 import (
 	"fmt"
+	"strings"
 
 	dm "github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/jacked/internal/config"
@@ -12,6 +13,17 @@ import (
 
 func PrintResult(sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configuration, licenses *[]model.License) {
 
+	if strings.Contains(*arguments.Output, ",") {
+		for _, _type := range strings.Split(*arguments.Output, ",") {
+			ShowScanResult(_type, sbom, arguments, cfg, licenses)
+		}
+	} else {
+		ShowScanResult(*arguments.Output, sbom, arguments, cfg, licenses)
+	}
+
+}
+
+func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configuration, licenses *[]model.License) {
 	var source *string
 
 	if arguments.Image != nil {
@@ -26,8 +38,7 @@ func PrintResult(sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configur
 	if arguments.SbomFile != nil {
 		source = arguments.SbomFile
 	}
-
-	switch *arguments.Output {
+	switch outputType {
 	case "json":
 		printJsonResult(sbom)
 		if cfg.LicenseFinder {

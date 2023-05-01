@@ -19,14 +19,7 @@ func Scan(arguments *model.Arguments) *dm.SBOM {
 		spinner.OnSBOMScan(*arguments.Tar)
 	}
 
-	sbom, errors := diggity.Scan(parseArgs(arguments))
-	if errors != nil {
-		// if len(*errors) > 0 {
-		// 	for _, err := range *errors {
-		// 		// spinner.OnStop(err)
-		// 	}
-		// }
-	}
+	sbom, _ := diggity.Scan(parseArgs(arguments))
 	spinner.OnStop(nil)
 	return sbom
 }

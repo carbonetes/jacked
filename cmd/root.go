@@ -8,6 +8,7 @@ import (
 	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/carbonetes/jacked/internal/ui/spinner"
 	"github.com/carbonetes/jacked/internal/version"
+	"golang.org/x/exp/slices"
 
 	"github.com/spf13/cobra"
 )
@@ -64,12 +65,12 @@ func run(c *cobra.Command, args []string) {
 
 	// Check user output type is supported
 	if arguments.Output != nil && *arguments.Output != "" {
-		compareOutputToOutputTypes(*arguments.Output)
-	}
-
-	// Check user failcriteria is supported
-	if arguments.FailCriteria != nil && *arguments.FailCriteria != "" {
-		compareFailCriteriaToSeverities(arguments.FailCriteria)
+		acceptedArgs := ValidateOutputArg(*arguments.Output)
+		if len(acceptedArgs) > 0 {
+			*arguments.Output = strings.Join(acceptedArgs, ",")
+		} else {
+			*arguments.Output = acceptedArgs[0]
+		}
 	}
 
 	if len(*arguments.Image) != 0 && !strings.Contains(*arguments.Image, tagSeparator) {
@@ -82,36 +83,19 @@ func run(c *cobra.Command, args []string) {
 }
 
 // ValidateOutputArg checks if output types specified are valid
-func compareOutputToOutputTypes(outputs string) {
-	var noMatch bool
-	for _, output := range strings.Split(outputs, ",") {
-		for _, outputType := range OutputTypes {
-			if strings.EqualFold(output, outputType) {
-				noMatch = true
-				break
+func ValidateOutputArg(outputArg string) []string {
+	var acceptedArgs []string
+
+	if strings.Contains(outputArg, ",") {
+		for _, o := range strings.Split(outputArg, ",") {
+			if slices.Contains(OutputTypes, strings.ToLower(o)) {
+				acceptedArgs = append(acceptedArgs, strings.ToLower(o))
 			}
-			noMatch = false
 		}
-		if !noMatch {
-			log.Errorf("[warning]: Invalid output type: %+v \nSupported output types: %v", output, OutputTypes)
-			os.Exit(0)
+	} else {
+		if slices.Contains(OutputTypes, strings.ToLower(outputArg)) {
+			acceptedArgs = append(acceptedArgs, strings.ToLower(outputArg))
 		}
 	}
-}
-
-func compareFailCriteriaToSeverities(failCriteria *string) {
-	var noMatch bool
-	for _, severity := range Severities {
-		if strings.EqualFold(*failCriteria, severity) {
-			noMatch = true
-			break
-		}
-		noMatch = false
-	}
-
-	if !noMatch {
-		log.Errorf("[warning]: Invalid output type: %+v \nSupported output types: %v", *failCriteria, Severities)
-		os.Exit(0)
-
-	}
+	return acceptedArgs
 }
