@@ -14,9 +14,17 @@ func MatchCPE(pkg *dm.Package, criteria *model.Criteria) bool {
 			continue
 		}
 
+		if pcpe.Version == wfn.Any {
+			continue
+		}
+
 		for _, v := range criteria.CPES {
 			vcpe, err := wfn.UnbindFmtString(v)
 			if err != nil {
+				continue
+			}
+
+			if vcpe.Version == wfn.Any {
 				continue
 			}
 
