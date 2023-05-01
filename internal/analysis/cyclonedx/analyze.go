@@ -58,7 +58,7 @@ func findMatchingVulnerabilities(sbom *cyclonedx.BOM) *[]cyclonedx.Vulnerability
 			// Loop through each known vulnerability and check if it applies to the current component.
 			// If a match is found, create a new Vulnerability Exploitability eXchange (VEX) record for the component/vulnerability pair and add it to vexList.
 			for _, v := range *packageVulnerabilties {
-				if *analysis.MatchConstraint(&comp.Version, &v.Criteria) ||
+				if analysis.MatchConstraint(&comp.Version, &v.Criteria) ||
 					len(cpes) > 0 && MatchCPE(cpes, &v.Criteria) {
 					vex := convert.ToVex(&comp, &v)
 					vexList = append(vexList, *vex)

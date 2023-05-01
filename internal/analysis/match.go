@@ -10,42 +10,55 @@ import (
 
 var WG sync.WaitGroup
 
-func FindMatch(pkg *dm.Package, vulnerabilities *[]model.Vulnerability) *[]model.Vulnerability {
+func FindMatch(pkg *dm.Package, vulnerabilities *[]model.Vulnerability, signature *model.Signature) {
 
 	if vulnerabilities == nil {
 		WG.Done()
-		return nil
+		return
 	}
+
 	if len(*vulnerabilities) == 0 {
 		WG.Done()
-		return nil
+		return
 	}
 
-	if len(pkg.CPEs) == 0 {
-		WG.Done()
-		return nil
-	}
+	fv := filter(vulnerabilities, &signature.Keywords)
 
-	var result *[]model.Vulnerability
-
-	for _, vulnerability := range *vulnerabilities {
-		matched := match(pkg, &vulnerability)
-		if *matched {
-			if result == nil {
-				result = new([]model.Vulnerability)
+	for _, vulnerability := range *fv {
+		matched := match(pkg, &vulnerability, signature)
+		if matched {
+			if pkg.Vulnerabilities == nil {
+				pkg.Vulnerabilities = new([]model.Vulnerability)
 			}
-			format(&vulnerability, pkg)
-			if !exist(result, &vulnerability) {
-				*result = append(*result, vulnerability)
+			if !exist(pkg.Vulnerabilities, &vulnerability) {
+				format(&vulnerability, pkg)
+				*pkg.Vulnerabilities = append(*pkg.Vulnerabilities, vulnerability)
 			}
 		}
 	}
 	WG.Done()
-	return result
 }
 
-func match(pkg *dm.Package, vulnerability *model.Vulnerability) *bool {
-	matched := new(bool)
+func filter(vulnerabilities *[]model.Vulnerability, keywords *[]string) *[]model.Vulnerability {
+	fv := new([]model.Vulnerability)
+	for _, v := range *vulnerabilities {
+		for _, keyword := range *keywords {
+			if strings.EqualFold(v.Package, keyword) {
+				*fv = append(*fv, v)
+			}
+		}
+	}
+	return fv
+}
+
+func match(pkg *dm.Package, vulnerability *model.Vulnerability, signature *model.Signature) bool {
+	var matched bool
+
+	if pkg.Type == "deb" {
+		if vulnerability.Criteria.VersionFormat != "debian" {
+			return false
+		}
+	}
 
 	switch pkg.Type {
 	case "go-module":
@@ -55,20 +68,30 @@ func match(pkg *dm.Package, vulnerability *model.Vulnerability) *bool {
 		}
 
 	default:
-		if vulnerability.Package == pkg.Name {
-			if len(vulnerability.Criteria.CPES) > 0 && len(pkg.CPEs) > 0 {
-				*matched = MatchCPE(pkg, &vulnerability.Criteria)
-			}
-
-			if *matched {
-				return matched
-			}
-
-			return MatchConstraint(&pkg.Version, &vulnerability.Criteria)
+		if !checkKeywords(signature.Keywords, vulnerability.Package) {
+			return matched
 		}
+		if len(vulnerability.Criteria.CPES) > 0 && len(pkg.CPEs) > 0 {
+			matched = MatchCPE(pkg, &vulnerability.Criteria)
+		}
+
+		if matched {
+			return matched
+		}
+
+		return MatchConstraint(&pkg.Version, &vulnerability.Criteria)
 
 	}
 	return matched
+}
+
+func checkKeywords(keywords []string, vulnPkg string) bool {
+	for _, k := range keywords {
+		if k == vulnPkg {
+			return true
+		}
+	}
+	return false
 }
 
 func format(vulnerability *model.Vulnerability, pkg *dm.Package) {

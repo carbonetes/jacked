@@ -1,10 +1,8 @@
 package engine
 
 import (
-	"fmt"
 	"io"
 	"os"
-	"strings"
 	"time"
 
 	dm "github.com/carbonetes/diggity/pkg/model"
@@ -29,13 +27,15 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		sbom            *dm.SBOM
 		licenses        = new([]model.License)
 		totalPackages   int
-		vulnerabilities = new([]model.Vulnerability)
+		vulnerabilities []model.Vulnerability
+		signatures      = make(map[string]model.Signature)
 	)
 
 	start := time.Now()
 
 	// Check database for any updates
 	db.DBCheck()
+
 	if len(*arguments.SbomFile) > 0 {
 		file, err := os.Open(*arguments.SbomFile)
 		if err != nil {
@@ -50,7 +50,6 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		// Request for sbom through event bus
 		sbom = diggity.Scan(arguments)
 	}
-
 	// Run all parsers and filters for packages
 	diggity.Filter(sbom.Packages, &cfg.Ignore.Package)
 	if cfg.LicenseFinder {
@@ -61,19 +60,20 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 
 	spinner.OnVulnAnalysisStart(totalPackages)
 
-	err := db.Fetch(sbom.Packages, vulnerabilities)
+	diggity.Inspect(sbom.Packages, &signatures)
+
+	err := db.Fetch(sbom.Packages, &vulnerabilities, &signatures)
 	if err != nil {
 		log.Errorf("\nError Fetch Database: %v", err)
 	}
 
-	db.Filter(vulnerabilities, &cfg.Ignore.Vulnerability)
+	db.Filter(&vulnerabilities, &cfg.Ignore.Vulnerability)
 
 	// Begin matching vulnerabilities for each package
 	analysis.WG.Add(totalPackages)
-	for index, _ := range *sbom.Packages {
-		go func(sbom *dm.SBOM, vulnerabilities *[]model.Vulnerability, index int) {
-			(*sbom.Packages)[index].Vulnerabilities = analysis.FindMatch(&(*sbom.Packages)[index], vulnerabilities)
-		}(sbom, vulnerabilities, index)
+	for index, pkg := range *sbom.Packages {
+		signature := signatures[pkg.ID]
+		analysis.FindMatch(&(*sbom.Packages)[index], &vulnerabilities, &signature)
 	}
 	analysis.WG.Wait()
 	spinner.OnStop(nil)
@@ -87,41 +87,4 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		log.Errorf("Error on show latest version: %v", err)
 	}
 	credits.Show()
-}
-
-func failCriteria(pkg *dm.Package, severity *string) {
-	vulns := pkg.Vulnerabilities
-
-	Severities := []string{
-		"unknown",
-		"negligible",
-		"low",
-		"medium",
-		"high",
-		"critical",
-	}
-
-	index := -1
-	for i := 0; i < len(Severities); i++ {
-		if Severities[i] == "low" {
-			index = i
-			break
-		}
-	}
-	var newSeverities []string
-	if index != -1 {
-		newSeverities = Severities[index:]
-	}
-
-	for _, vuln := range *vulns {
-		for _, newSeverity := range newSeverities {
-
-			if strings.EqualFold(vuln.CVSS.Severity, newSeverity) {
-
-				log.Errorf("\n\nFAILED: Found a vulnerability that is equal or higher than %v severity!", strings.ToUpper(*severity))
-				fmt.Printf("Package Reference: %v | CVE: %v | Severity: %v\n", vuln.Package, vuln.CVE, vuln.CVSS.Severity)
-				os.Exit(1)
-			}
-		}
-	}
 }
