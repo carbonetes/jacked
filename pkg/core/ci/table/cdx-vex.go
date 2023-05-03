@@ -2,7 +2,6 @@ package table
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/alexeyco/simpletable"
@@ -26,9 +25,6 @@ func vexHeader(table *simpletable.Table) {
 }
 
 func vexRows(vulnerabilities *[]cyclonedx.Vulnerability, table *simpletable.Table) {
-	sort.SliceStable(*vulnerabilities, func(i, j int) bool {
-		return (*vulnerabilities)[i].ID < (*vulnerabilities)[j].ID
-	})
 	for _, v := range *vulnerabilities {
 		var recommendation string
 		if len(v.Recommendation) > 0 {

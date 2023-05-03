@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/carbonetes/diggity/pkg/convert"
 	dm "github.com/carbonetes/diggity/pkg/model"
@@ -14,16 +15,23 @@ import (
 	"github.com/carbonetes/jacked/pkg/core/ci/table"
 	"github.com/carbonetes/jacked/pkg/core/model"
 	"github.com/logrusorgru/aurora"
+	"golang.org/x/exp/slices"
 )
 
-var log = logger.GetLogger()
+var (
+	log                    = logger.GetLogger()
+	defaultCriteria string = "LOW"
+)
 
 func Analyze(args *model.Arguments) {
 	log.Println(aurora.Blue("Entering CI Mode...\n").String())
-
+	if args.FailCriteria == nil || len(*args.FailCriteria) == 0 || !slices.Contains(assessment.Severities, strings.ToUpper(*args.FailCriteria)) {
+		log.Warnf("Invalid criteria specified : %v\nSet to default criteria : %v", *args.FailCriteria, defaultCriteria)
+		args.FailCriteria = &defaultCriteria
+	}
 	diggityArgs := dm.NewArguments()
 	if len(*args.Image) > 0 {
-		log.Printf("\tImage: %6s", *args.Image)
+		log.Printf("Image: %s", *args.Image)
 		diggityArgs.Image = args.Image
 		diggityArgs.RegistryUsername = args.RegistryUsername
 		diggityArgs.RegistryPassword = args.RegistryPassword
@@ -63,17 +71,25 @@ func Analyze(args *model.Arguments) {
 	log.Println(aurora.Blue("\nExecuting CI Assessment...\n").String())
 
 	log.Println(aurora.Blue("\nAssessment Result:\n").String())
-	if len(*cdx.Vulnerabilities) > 0 {
-		tally := assessment.CheckTally(cdx.Vulnerabilities)
-		table.TallyTable(tally)
-		log.Error(errors.New(aurora.Red(aurora.Bold(fmt.Sprintf("\nFailed: %5v found vulnerabilities\n", len(*cdx.Vulnerabilities))).String()).String()))
-		for _, v := range *cdx.Vulnerabilities {
-			if len(v.Recommendation) > 0 {
-				log.Warning(aurora.Yellow(fmt.Sprintf("[%v]: ", v.ID)).String(), aurora.Yellow(fmt.Sprintf("%4s", v.Recommendation)).String())
-			}
-		}
-	} else {
+	if len(*cdx.Vulnerabilities) == 0 {
 		log.Println(aurora.Green(aurora.Bold(fmt.Sprintf("\nPassed: %5v found components\n", len(*cdx.Components))).String()))
 	}
+
+	result := assessment.Evaluate(args.FailCriteria, cdx)
+
+	table.TallyTable(result.Tally)
+	table.MatchTable(result.Matches)
+	for _, m := range *result.Matches {
+		if len(m.Vulnerability.Recommendation) > 0 {
+			log.Warnf("[%v] : %v", m.Vulnerability.ID, m.Vulnerability.Recommendation)
+		}
+	}
+	totalVulnerabilities := len(*cdx.Vulnerabilities)
+	if result.Passed {
+		log.Println(aurora.Green(aurora.Bold(fmt.Sprintf("\nPassed: %5v out of %v found vulnerabilities passed the assessment\n", totalVulnerabilities, totalVulnerabilities)).String()))
+		os.Exit(0)
+	}
+	log.Error(errors.New(aurora.Red(aurora.Bold(fmt.Sprintf("\nFailed: %5v out of %v found vulnerabilities failed the assessment \n", len(*result.Matches), totalVulnerabilities)).String()).String()))
+
 	os.Exit(0)
 }

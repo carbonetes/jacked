@@ -62,17 +62,15 @@ func run(c *cobra.Command, args []string) {
 		}
 		os.Exit(0)
 	}
-	if ciMode {
-		ci.Analyze(arguments)
-	}
-	// Check user output type is supported
-	if arguments.Output != nil && *arguments.Output != "" {
-		compareOutputToOutputTypes(*arguments.Output)
+
+	if c.Flags().Changed("fail-criteria") {
+		if !ciMode {
+			log.Warn("Fail Criteria : CI Mode is not enabled.")
+		}
 	}
 
-	// Check user failcriteria is supported
-	if arguments.FailCriteria != nil && *arguments.FailCriteria != "" {
-		compareFailCriteriaToSeverities(arguments.FailCriteria)
+	if ciMode {
+		ci.Analyze(arguments)
 	}
 
 	if len(*arguments.Image) != 0 && !strings.Contains(*arguments.Image, tagSeparator) {
@@ -88,41 +86,4 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	engine.Start(arguments, &cfg)
-}
-
-// ValidateOutputArg checks if output types specified are valid
-func compareOutputToOutputTypes(outputs string) {
-	var noMatch bool
-	for _, output := range strings.Split(outputs, ",") {
-		for _, outputType := range OutputTypes {
-			if strings.EqualFold(output, outputType) {
-				noMatch = true
-				break
-			}
-			noMatch = false
-		}
-		if !noMatch {
-			log.Errorf("[warning]: Invalid output type: %+v \nSupported output types: %v", output, OutputTypes)
-			os.Exit(0)
-
-		}
-	}
-
-}
-
-func compareFailCriteriaToSeverities(failCriteria *string) {
-	var noMatch bool
-	for _, severity := range Severities {
-		if strings.EqualFold(*failCriteria, severity) {
-			noMatch = true
-			break
-		}
-		noMatch = false
-	}
-
-	if !noMatch {
-		log.Errorf("[warning]: Invalid output type: %+v \nSupported output types: %v", *failCriteria, Severities)
-		os.Exit(0)
-
-	}
 }

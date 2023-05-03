@@ -1,21 +1,22 @@
 package assessment
 
 import (
-	"sync"
+	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
+	"golang.org/x/exp/slices"
 )
 
 type Assessment struct {
 	Tally        *Tally
-	FailCriteria *string
+	FailCriteria string
 	Matches      *[]Match
-	Passed       *bool
+	Passed       bool
 }
 
 type Match struct {
-	Component       *cyclonedx.Component
-	Vulnerabilities []*cyclonedx.Vulnerability
+	Component     *cyclonedx.Component
+	Vulnerability *cyclonedx.Vulnerability
 }
 
 type Tally struct {
@@ -27,88 +28,82 @@ type Tally struct {
 	Critical   int
 }
 
-func NewAssessment(t *Tally, criteria *string) *Assessment {
-	return &Assessment{
-		Tally:        t,
-		FailCriteria: criteria,
-		Matches:      new([]Match),
-		Passed:       new(bool),
-	}
+var Severities = []string{
+	"UNKNOWN",
+	"NEGLIGIBLE",
+	"LOW",
+	"MEDIUM",
+	"HIGH",
+	"CRITICAL",
 }
 
-func (a *Assessment) Check(cdx *cyclonedx.BOM) {
-	var wg sync.WaitGroup
+func Evaluate(criteria *string, cdx *cyclonedx.BOM) *Assessment {
+	assessment := new(Assessment)
+	if criteria == nil || len(*criteria) == 0 {
+		return nil
+	}
 
-	wg.Add(len(*cdx.Vulnerabilities))
+	if !slices.Contains(Severities, strings.ToUpper(*criteria)) {
+		return nil
+	}
 
-	matches := new([]Match)
-
-	for _, v := range *cdx.Vulnerabilities {
-		if len(*matches) == 0 {
-			match := new(Match)
-			match.Vulnerabilities = append(match.Vulnerabilities, &v)
-			*matches = append(*matches, *match)
-		} else {
-			match := findMatch(&v, matches)
-			if match != nil {
-				match.Vulnerabilities = append(match.Vulnerabilities, &v)
-			} else {
-				match := new(Match)
-				match.Vulnerabilities = append(match.Vulnerabilities, &v)
-				*matches = append(*matches, *match)
-			}
+	var index int
+	for i, severity := range Severities {
+		if severity == strings.ToUpper(*criteria) {
+			index = i
 		}
 	}
 
-}
-
-func CheckTally(vuln *[]cyclonedx.Vulnerability) *Tally {
-	if vuln == nil {
-		return nil
-	}
-
-	if len(*vuln) == 0 {
-		return nil
-	}
-	var t Tally
-	for _, v := range *vuln {
+	severities := Severities[index:]
+	var tally Tally
+	assessment.Matches = new([]Match)
+	for index, v := range *cdx.Vulnerabilities {
 		if v.Ratings == nil {
-			t.Unknown++
+			tally.Unknown++
 			continue
 		}
 		if len(*v.Ratings) == 0 {
-			t.Unknown++
+			tally.Unknown++
 			continue
 		}
 		for _, r := range *v.Ratings {
+			if slices.Contains(severities, strings.ToUpper(string(r.Severity))) {
+				match := newMatch(&(*cdx.Vulnerabilities)[index], cdx.Components)
+				*assessment.Matches = append(*assessment.Matches, *match)
+
+			}
+
 			switch r.Severity {
 			case "NEGLIGIBLE":
-				t.Negligible++
+				tally.Negligible++
 			case "LOW":
-				t.Low++
+				tally.Low++
 			case "MEDIUM":
-				t.Medium++
+				tally.Medium++
 			case "HIGH":
-				t.High++
+				tally.High++
 			case "CRITICAL":
-				t.Critical++
+				tally.Critical++
 			default:
-				t.Unknown++
+				tally.Unknown++
 			}
 		}
 	}
-	return &t
+	assessment.Tally = &tally
+	if len(*assessment.Matches) == 0 {
+		assessment.Passed = true
+	}
+
+	return assessment
 }
 
-func findMatch(vuln *cyclonedx.Vulnerability, matches *[]Match) *Match {
-	for _, m := range *matches {
-		for _, v := range m.Vulnerabilities {
-			if vuln.BOMRef == v.BOMRef {
-				return &m
-			} else {
-				break
-			}
+func newMatch(v *cyclonedx.Vulnerability, comps *[]cyclonedx.Component) *Match {
+	match := new(Match)
+	for index, c := range *comps {
+		if v.BOMRef == c.BOMRef {
+			match.Component = &(*comps)[index]
+			match.Vulnerability = v
 		}
 	}
-	return nil
+	return match
 }

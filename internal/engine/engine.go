@@ -1,10 +1,8 @@
 package engine
 
 import (
-	"fmt"
 	"io"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/carbonetes/jacked/internal/analysis"
@@ -35,8 +33,6 @@ var (
 // Start the scan engine with the given arguments and configurations
 func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	start := time.Now()
-
-	setSecrets(arguments)
 
 	// Check database for any updates
 	db.DBCheck()
@@ -79,10 +75,6 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 			scanresult.Package = p
 			scanresult.Vulnerabilities = *result
 			results = append(results, scanresult)
-			if len(*arguments.FailCriteria) > 0 {
-				severity = arguments.FailCriteria
-				failCriteria(scanresult, severity)
-			}
 		}
 	}
 	analysis.WG.Wait()
@@ -97,50 +89,4 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		log.Errorf("Error on show latest version: %v", err)
 	}
 	credits.Show()
-}
-
-func failCriteria(scanresult model.ScanResult, severity *string) {
-	vulns := scanresult.Vulnerabilities
-
-	Severities := []string {
-		"unknown",
-		"negligible",
-		"low",
-		"medium",
-		"high",
-		"critical",
-	}
-
-	index := -1
-	for i := 0; i < len(Severities); i++ {
-		if Severities[i] == "low" {
-			index = i
-			break
-		}
-	}
-	
-	var newSeverities []string
-	if index != -1 {
-		newSeverities = Severities[index:]
-	}
-
-	for _, vuln := range vulns {
-		for _, newSeverity := range newSeverities {
-
-			if strings.EqualFold(vuln.CVSS.Severity, newSeverity) {
-
-				log.Errorf("\n\nFAILED: Found a vulnerability that is equal or higher than %v severity!", strings.ToUpper(*severity))
-				fmt.Printf("Package Reference: %v | CVE: %v | Severity: %v\n", vuln.Package, vuln.CVE, vuln.CVSS.Severity)
-				os.Exit(1)
-			}
-		}
-	}
-}
-
-func setSecrets(arguments *model.Arguments) {
-
-	secrets.Configuration.Excludes = arguments.ExcludedFilenames
-	secrets.Configuration.Disabled = *arguments.DisableSecretSearch
-	secrets.Configuration.SecretRegex = *arguments.SecretContentRegex
-	secrets.Configuration.MaxFileSize = arguments.SecretMaxFileSize
 }
