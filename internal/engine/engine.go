@@ -27,7 +27,6 @@ var (
 	totalPackages   int
 	log             = logger.GetLogger()
 	sbom            []byte
-	severity        *string
 )
 
 // Start the scan engine with the given arguments and configurations
