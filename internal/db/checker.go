@@ -37,14 +37,14 @@ func DBCheck() {
 	spinner.OnCheckDatabaseUpdateStart()
 	metadataList, err := getGlobalMetadataList()
 	if err != nil {
-		log.Error(err)
+		spinner.OnStop(err)
 	}
 
 	latestMetadata := getLatestMetadata(metadataList)
 	if checkFile(dbFilepath) && checkFile(metadataPath) {
 		localMetadata, err := getMetadata(metadataPath)
 		if err != nil {
-			log.Error(err)
+			spinner.OnStop(err)
 		}
 
 		if localMetadata.Build != latestMetadata.Build {
@@ -55,7 +55,7 @@ func DBCheck() {
 	} else {
 		updateLocalDatabase(latestMetadata)
 	}
-	spinner.OnCheckDatabaseUpdateEnd(nil)
+	spinner.OnStop(nil)
 }
 
 // Updating local database, needs to check its file intergrity by comparing checksum from the local to global metadata.

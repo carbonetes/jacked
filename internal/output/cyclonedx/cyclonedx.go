@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"log"
 
-	"github.com/carbonetes/jacked/internal/parser"
-	"github.com/carbonetes/jacked/pkg/core/model"
+	"github.com/carbonetes/diggity/pkg/convert"
+	dm "github.com/carbonetes/diggity/pkg/model"
+	"github.com/carbonetes/jacked/internal/logger"
 )
 
-func PrintCycloneDXJSON(results *[]model.ScanResult) string{
-	cdx := parser.ConvertToCycloneDX(results)
+var log = logger.GetLogger()
 
+func PrintCycloneDXJSON(sbom *dm.SBOM) string {
+	cdx := convert.ToCDX(sbom.Packages)
 	json, err := json.MarshalIndent(cdx, "", "  ")
 	if err != nil {
 		log.Fatal(err)
@@ -23,9 +24,8 @@ func PrintCycloneDXJSON(results *[]model.ScanResult) string{
 
 }
 
-func PrintCycloneDXXML(results *[]model.ScanResult) string{
-	cdx := parser.ConvertToCycloneDX(results)
-
+func PrintCycloneDXXML(sbom *dm.SBOM) string {
+	cdx := convert.ToCDX(sbom.Packages)
 	xml, err := xml.MarshalIndent(cdx, "", " ")
 	if err != nil {
 		log.Fatal(err)

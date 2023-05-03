@@ -1,15 +1,16 @@
-package parser
+package metadata
 
 import (
-	metadata "github.com/carbonetes/jacked/pkg/core/model/metadata"
+	dm "github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/jacked/pkg/core/model"
+	metadata "github.com/carbonetes/jacked/pkg/core/model/metadata"
+	"golang.org/x/exp/slices"
 
 	"github.com/mitchellh/mapstructure"
-	"golang.org/x/exp/slices"
 )
 
 // Parse package metadata and create keywords
-func parseDebianMetadata(p *model.Package, keywords []string) []string {
+func ParseDebianMetadata(p *dm.Package, signature *model.Signature) {
 	var metadata metadata.DebianMetadata
 	err := mapstructure.Decode(p.Metadata, &metadata)
 	if err != nil {
@@ -17,9 +18,8 @@ func parseDebianMetadata(p *model.Package, keywords []string) []string {
 	}
 	// Create keyword based on the value of source in package metadata if it exist
 	if len(metadata.Source) > 0 {
-		if !slices.Contains(keywords, metadata.Source) {
-			keywords = append(keywords, metadata.Source)
+		if !slices.Contains(signature.Keywords, metadata.Source) {
+			signature.Keywords = append(signature.Keywords, metadata.Source)
 		}
 	}
-	return keywords
 }

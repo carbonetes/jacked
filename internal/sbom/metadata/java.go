@@ -1,17 +1,21 @@
-package parser
+package metadata
 
 import (
 	"strings"
 
-	metadata "github.com/carbonetes/jacked/pkg/core/model/metadata"
+	dm "github.com/carbonetes/diggity/pkg/model"
+	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/carbonetes/jacked/pkg/core/model"
+	metadata "github.com/carbonetes/jacked/pkg/core/model/metadata"
 
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/exp/slices"
 )
 
+var log = logger.GetLogger()
+
 // Parse package metadata and create keywords and possible indicates the exact vendor for the package
-func parseJavaMetadata(p *model.Package) *model.Package {
+func ParseJavaMetadata(p *dm.Package, signature *model.Signature) {
 	var metadata metadata.JavaMetadata
 	err := mapstructure.Decode(p.Metadata, &metadata)
 	if err != nil {
@@ -28,25 +32,25 @@ func parseJavaMetadata(p *model.Package) *model.Package {
 	}
 	if len(groupId) > 0 {
 		if strings.Contains(groupId, "springframework") {
-			p.Vendor = "vmware"
+			signature.Vendor = append(signature.Vendor, "vmware")
 			if p.Name == "spring-core" {
-				p.Keywords = append(p.Keywords, "spring_framework")
+				signature.Keywords = append(signature.Keywords, "spring_framework")
 			}
 		}
 		if strings.Contains(groupId, "amazonaws") {
-			p.Vendor = "amazon"
+			signature.Vendor = append(signature.Vendor, "vmware")
 		}
 		if strings.Contains(groupId, "apache") {
-			p.Vendor = "apache"
+			signature.Vendor = append(signature.Vendor, "vmware")
 		}
 	}
 
 	if strings.Contains(p.Name, "log4j") {
-		p.Keywords = append(p.Keywords, "log4j")
+		signature.Keywords = append(signature.Keywords, "log4j")
 	}
 
 	if strings.Contains(p.Name, "snakeyaml") {
-		p.Vendor = "snakeyaml_project"
+		signature.Vendor = append(signature.Vendor, "snakeyaml_project")
 	}
 
 	//TODO: add more corrections for packages that doesn't have clear vendor for cpe and metadata for keywords.
@@ -60,9 +64,7 @@ func parseJavaMetadata(p *model.Package) *model.Package {
 		packageName = metadata.PomProperties.Name
 	}
 
-	if len(packageName) > 0 && !slices.Contains(p.Keywords, packageName) {
-		p.Keywords = append(p.Keywords, packageName)
+	if len(packageName) > 0 && !slices.Contains(signature.Keywords, packageName) {
+		signature.Keywords = append(signature.Keywords, packageName)
 	}
-
-	return p
 }

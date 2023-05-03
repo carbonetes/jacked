@@ -2,17 +2,14 @@ package table
 
 import (
 	"fmt"
-	"sort"
 	"unicode"
 
-	"github.com/carbonetes/jacked/pkg/core/model"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
 	"github.com/alexeyco/simpletable"
+	dm "github.com/carbonetes/diggity/pkg/model"
 )
-
-var table = simpletable.New()
 
 // Constant variables are use as headers when generating table format result.
 const (
@@ -28,15 +25,22 @@ const (
 )
 
 // Method that generates table header, table rows from the scan result, and displaying the generated table format output.
-func DisplayScanResultTable(results *[]model.ScanResult) string{
-	createTableHeader()
-	createTableRows(*results)
-	return generateTable()
+func DisplayScanResultTable(pkgs *[]dm.Package) string {
+	table := simpletable.New()
+	header(table)
+	total := rows(pkgs, table)
+	if total-1 > 0 {
+		footer(total-1, table)
+		return display(table)
+	} else {
+		log.Println("\nNo vulnerabilities found!")
+		return ""
+	}
+
 }
 
 // Using the constant variable to generate columns from the table.
-func createTableHeader() {
-
+func header(table *simpletable.Table) {
 	table.Header = &simpletable.Header{
 		Cells: []*simpletable.Cell{
 			{Align: simpletable.AlignCenter, Text: Index},
@@ -52,15 +56,18 @@ func createTableHeader() {
 }
 
 // From the scan results, table rows will be generated and apply data on a specified table header.
-func createTableRows(results []model.ScanResult) {
+func rows(pkgs *[]dm.Package, table *simpletable.Table) int {
 
-	sort.SliceStable(results, func(i, j int) bool {
-		return results[i].Package.Name < results[j].Package.Name
-	})
+	// sort.SliceStable(*pkgs, func(i, j int) bool {
+	// 	return (*pkgs)[i].Name < (*pkgs)[j].Name
+	// })
 	var index int = 1
 	caser := cases.Title(language.English)
-	for _, _package := range results {
-		for _, v := range _package.Vulnerabilities {
+	for _, p := range *pkgs {
+		if p.Vulnerabilities == nil {
+			continue
+		}
+		for _, v := range *p.Vulnerabilities {
 			var fix string
 			if v.Remediation != nil {
 				fix = v.Remediation.Fix
@@ -69,9 +76,9 @@ func createTableRows(results []model.ScanResult) {
 			}
 			r := []*simpletable.Cell{
 				{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v", index)},
-				{Text: elliptical(_package.Package.Name, 26)},
-				{Text: elliptical(_package.Package.Version, 18)},
-				{Text: _package.Package.Type},
+				{Text: elliptical(p.Name, 26)},
+				{Text: elliptical(p.Version, 18)},
+				{Text: p.Type},
 				{Text: v.CVE},
 				{Text: caser.String(v.CVSS.Severity)},
 				{Text: elliptical(v.Criteria.Constraint, 15)},
@@ -81,11 +88,11 @@ func createTableRows(results []model.ScanResult) {
 			table.Body.Cells = append(table.Body.Cells, r)
 		}
 	}
-	createTableFooter(index - 1)
+	return index
 }
 
 // Generate a table footer to show the length of the scan result as total of number of vulnerabilities found.
-func createTableFooter(count int) {
+func footer(count int, table *simpletable.Table) {
 	table.Footer = &simpletable.Footer{
 		Cells: []*simpletable.Cell{
 			{
@@ -98,7 +105,7 @@ func createTableFooter(count int) {
 }
 
 // Set style "StyleCompactLite" to make the table style clean and print out the table.
-func generateTable() string{
+func display(table *simpletable.Table) string {
 	// Set Table Style
 	table.SetStyle(simpletable.StyleCompactLite)
 	fmt.Println(table.String())
