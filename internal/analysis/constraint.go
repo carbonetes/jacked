@@ -20,11 +20,10 @@ func MatchConstraint(packageVersion *string, criteria *model.Criteria) bool {
 		return false
 	}
 
-	if err == nil {
-		if c.Check(v) {
-			return true
-		}
+	if c.Check(v) {
+		return true
 	}
+
 	return false
 }
 

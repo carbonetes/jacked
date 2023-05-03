@@ -8,6 +8,7 @@ import (
 	"github.com/carbonetes/jacked/internal/version"
 	"github.com/carbonetes/jacked/pkg/core/model"
 
+	dm "github.com/carbonetes/diggity/pkg/model"
 	"github.com/google/uuid"
 
 	metadata "github.com/carbonetes/jacked/pkg/core/model/metadata"
@@ -65,7 +66,7 @@ func FormatPath(path string) string {
 }
 
 // FormatTagID helper
-func FormatTagID(p *model.Package) string {
+func FormatTagID(p *dm.Package) string {
 	return fmt.Sprintf("%sPackage-%+v-%s-%s", Ref, p.Type, p.Name, p.ID)
 }
 
@@ -76,7 +77,7 @@ func CheckLicense(id string) string {
 }
 
 // DownloadLocation helper
-func DownloadLocation(p *model.Package) string {
+func DownloadLocation(p *dm.Package) string {
 	var url string
 
 	switch m := p.Metadata.(type) {
@@ -106,7 +107,7 @@ func DownloadLocation(p *model.Package) string {
 }
 
 // LicensesDeclared helper
-func LicensesDeclared(p *model.Package) string {
+func LicensesDeclared(p *dm.Package) string {
 	// Check if package has licenses
 	if len(p.Licenses) <= 0 {
 		return None
@@ -130,7 +131,7 @@ func LicensesDeclared(p *model.Package) string {
 }
 
 // ExternalRefs helper
-func ExternalRefs(p *model.Package) (refs []model.ExternalRef) {
+func ExternalRefs(p *dm.Package) (refs []model.ExternalRef) {
 	// Init CPEs
 	for _, cpe := range p.CPEs {
 		var cpeRef model.ExternalRef
@@ -151,7 +152,7 @@ func ExternalRefs(p *model.Package) (refs []model.ExternalRef) {
 }
 
 // Homepage helper
-func Homepage(p *model.Package) string {
+func Homepage(p *dm.Package) string {
 	switch m := p.Metadata.(type) {
 	case metadata.PackageJSON:
 		return m.Homepage
@@ -164,7 +165,7 @@ func Homepage(p *model.Package) string {
 }
 
 // Originator helper
-func Originator(p *model.Package) string {
+func Originator(p *dm.Package) string {
 	var originator string
 
 	switch m := p.Metadata.(type) {
@@ -241,7 +242,7 @@ func FormatAuthor(authorString string) string {
 }
 
 // SourceInfo helper
-func SourceInfo(p *model.Package) string {
+func SourceInfo(p *dm.Package) string {
 	var source string
 	var locations []string
 
