@@ -12,7 +12,7 @@ import (
 
 var log = logger.GetLogger()
 
-func PrintCycloneDXJSON(sbom *dm.SBOM) {
+func PrintCycloneDXJSON(sbom *dm.SBOM) string {
 	cdx := convert.ToCDX(sbom.Packages)
 	json, err := json.MarshalIndent(cdx, "", "  ")
 	if err != nil {
@@ -20,10 +20,11 @@ func PrintCycloneDXJSON(sbom *dm.SBOM) {
 	}
 
 	fmt.Printf("%s\n", string(json))
+	return string(json)
 
 }
 
-func PrintCycloneDXXML(sbom *dm.SBOM) {
+func PrintCycloneDXXML(sbom *dm.SBOM) string {
 	cdx := convert.ToCDX(sbom.Packages)
 	xml, err := xml.MarshalIndent(cdx, "", " ")
 	if err != nil {
@@ -31,4 +32,5 @@ func PrintCycloneDXXML(sbom *dm.SBOM) {
 	}
 
 	fmt.Printf("%+v\n", string(xml))
+	return string(xml)
 }

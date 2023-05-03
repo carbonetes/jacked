@@ -25,15 +25,16 @@ const (
 )
 
 // Method that generates table header, table rows from the scan result, and displaying the generated table format output.
-func DisplayScanResultTable(pkgs *[]dm.Package) {
+func DisplayScanResultTable(pkgs *[]dm.Package) string {
 	table := simpletable.New()
 	header(table)
 	total := rows(pkgs, table)
 	if total-1 > 0 {
 		footer(total-1, table)
-		display(table)
+		return display(table)
 	} else {
 		log.Println("\nNo vulnerabilities found!")
+		return ""
 	}
 
 }
@@ -104,10 +105,11 @@ func footer(count int, table *simpletable.Table) {
 }
 
 // Set style "StyleCompactLite" to make the table style clean and print out the table.
-func display(table *simpletable.Table) {
+func display(table *simpletable.Table) string {
 	// Set Table Style
 	table.SetStyle(simpletable.StyleCompactLite)
 	fmt.Println(table.String())
+	return table.String()
 }
 
 // Handles long text from the table data to generate ellipsis that helps UI table to generated properly.

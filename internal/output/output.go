@@ -7,6 +7,7 @@ import (
 	dm "github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/jacked/internal/config"
 	"github.com/carbonetes/jacked/internal/output/cyclonedx"
+	"github.com/carbonetes/jacked/internal/output/save"
 	"github.com/carbonetes/jacked/internal/ui/table"
 	"github.com/carbonetes/jacked/pkg/core/model"
 )
@@ -25,6 +26,7 @@ func PrintResult(sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configur
 
 func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configuration, licenses *[]model.License) {
 	var source *string
+	var outputText string
 
 	if arguments.Image != nil {
 		source = arguments.Image
@@ -40,7 +42,7 @@ func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments
 	}
 	switch outputType {
 	case "json":
-		printJsonResult(sbom)
+		outputText = printJsonResult(sbom)
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintJsonLicense(licenses)
@@ -56,7 +58,7 @@ func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments
 			}
 		}
 	case "cyclonedx-json":
-		cyclonedx.PrintCycloneDXJSON(sbom)
+		outputText = cyclonedx.PrintCycloneDXJSON(sbom)
 
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
@@ -73,7 +75,7 @@ func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments
 			}
 		}
 	case "spdx-json":
-		PrintSPDX("json", source, sbom)
+		outputText = PrintSPDX("json", source, sbom)
 
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
@@ -90,7 +92,7 @@ func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments
 			}
 		}
 	case "cyclonedx-xml":
-		cyclonedx.PrintCycloneDXXML(sbom)
+		outputText = cyclonedx.PrintCycloneDXXML(sbom)
 
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
@@ -107,7 +109,7 @@ func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments
 			}
 		}
 	case "spdx-xml":
-		PrintSPDX("xml", source, sbom)
+		outputText = PrintSPDX("xml", source, sbom)
 
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
@@ -124,9 +126,9 @@ func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments
 			}
 		}
 	case "spdx-tag-value":
-		PrintSPDX("tag-value", source, sbom)
+		outputText = PrintSPDX("tag-value", source, sbom)
 	default:
-		table.DisplayScanResultTable(sbom.Packages)
+		outputText = table.DisplayScanResultTable(sbom.Packages)
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				table.PrintLicenses(*licenses)
@@ -141,5 +143,9 @@ func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments
 				fmt.Print("\nNo secret has been found!\n")
 			}
 		}
+	}
+
+	if arguments.OutputFile != nil && *arguments.OutputFile != "" {
+		save.SaveOutputAsFile(*arguments.OutputFile, *arguments.Output, outputText)
 	}
 }

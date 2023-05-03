@@ -16,7 +16,7 @@ import (
 
 var log = logger.GetLogger()
 
-func PrintSPDX(formatType string, image *string, sbom *dm.SBOM) {
+func PrintSPDX(formatType string, image *string, sbom *dm.SBOM) string {
 
 	spdx := GetSpdx(image, sbom.Packages)
 
@@ -27,18 +27,24 @@ func PrintSPDX(formatType string, image *string, sbom *dm.SBOM) {
 			log.Errorln(err.Error())
 		}
 		fmt.Printf("%+v\n", string(result))
+		return string(result)
+
 	case "json":
 		result, err := json.MarshalIndent(spdx, "", " ")
 		if err != nil {
 			log.Errorln(err.Error())
 		}
 		fmt.Printf("%+v\n", string(result))
+		return string(result)
+
 	case "tag-value":
-		printSpdxTagValue(image, sbom.Packages)
+		return printSpdxTagValue(image, sbom.Packages)
 	default:
 		log.Error("Format type not found")
 		os.Exit(1)
 	}
+
+	return ""
 }
 
 func GetSpdx(image *string, pkgs *[]dm.Package) model.SpdxDocument {
@@ -65,6 +71,7 @@ func GetSpdx(image *string, pkgs *[]dm.Package) model.SpdxDocument {
 func spdxPackages(pkgs *[]dm.Package) (spdxPkgs []model.SpdxPackage) {
 
 	for _, p := range *pkgs {
+
 		spdxPkgs = append(spdxPkgs, model.SpdxPackage{
 			SpdxID:           spdxutils.Ref + p.ID,
 			Name:             p.Name,
@@ -79,7 +86,7 @@ func spdxPackages(pkgs *[]dm.Package) (spdxPkgs []model.SpdxPackage) {
 			SourceInfo:       spdxutils.SourceInfo(&p),
 			VersionInfo:      p.Version,
 			Copyright:        spdxutils.NoAssertion,
-			Vulnerabilities:  *p.Vulnerabilities,
+			Vulnerabilities:  p.Vulnerabilities,
 		})
 	}
 	return spdxPkgs
@@ -111,8 +118,10 @@ func GetSpdxTagValues(image *string, pkgs *[]dm.Package) (spdxTagValues []string
 	// Parse Package Information to SPDX-TAG-VALUE Format
 	for _, p := range *pkgs {
 		var cves []string
-		for _, v := range *p.Vulnerabilities {
-			cves = append(cves, v.CVE)
+		if p.Vulnerabilities != nil {
+			for _, v := range *p.Vulnerabilities {
+				cves = append(cves, v.CVE)
+			}
 		}
 
 		spdxTagValues = append(spdxTagValues, fmt.Sprintf(
@@ -131,11 +140,11 @@ func GetSpdxTagValues(image *string, pkgs *[]dm.Package) (spdxTagValues []string
 			spdxutils.FormatTagID(&p),      // SPDXID
 			p.Version,                      // PackageVersion
 			spdxutils.DownloadLocation(&p), // PackageDownloadLocation
-			false, // FilesAnalyzed
+			false,                          // FilesAnalyzed
 			spdxutils.LicensesDeclared(&p), // PackageLicenseConcluded
 			spdxutils.LicensesDeclared(&p), // PackageLicenseDeclared
-			spdxutils.NoAssertion,                       // PackageCopyrightText
-			formatCVEList(cves),                         // Vulnerabilities
+			spdxutils.NoAssertion,          // PackageCopyrightText
+			formatCVEList(cves),            // Vulnerabilities
 		))
 
 		for _, ref := range spdxutils.ExternalRefs(&p) {
@@ -152,10 +161,10 @@ func GetSpdxTagValues(image *string, pkgs *[]dm.Package) (spdxTagValues []string
 }
 
 // PrintSpdxTagValue Print Packages in SPDX-TAG_VALUE format
-func printSpdxTagValue(image *string, pkgs *[]dm.Package) {
+func printSpdxTagValue(image *string, pkgs *[]dm.Package) string {
 	spdxTagValues := GetSpdxTagValues(image, pkgs)
 	fmt.Printf("%+v", stringSliceToString(spdxTagValues))
-
+	return stringSliceToString(spdxTagValues)
 }
 
 func formatCVEList(cves []string) string {
