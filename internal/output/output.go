@@ -2,15 +2,28 @@ package output
 
 import (
 	"fmt"
+	"strings"
 
+	dm "github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/jacked/internal/config"
 	"github.com/carbonetes/jacked/internal/output/cyclonedx"
 	"github.com/carbonetes/jacked/internal/ui/table"
 	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
-func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *config.Configuration, secrets *model.SecretResults, licenses *[]model.License) {
+func PrintResult(sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configuration, licenses *[]model.License) {
 
+	if strings.Contains(*arguments.Output, ",") {
+		for _, _type := range strings.Split(*arguments.Output, ",") {
+			ShowScanResult(_type, sbom, arguments, cfg, licenses)
+		}
+	} else {
+		ShowScanResult(*arguments.Output, sbom, arguments, cfg, licenses)
+	}
+
+}
+
+func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configuration, licenses *[]model.License) {
 	var source *string
 
 	if arguments.Image != nil {
@@ -25,96 +38,107 @@ func PrintResult(results *[]model.ScanResult, arguments *model.Arguments, cfg *c
 	if arguments.SbomFile != nil {
 		source = arguments.SbomFile
 	}
-
-	if len(*results) == 0 {
-		fmt.Print("\nNo vulnerability has been found!")
-	}
-
-	if !*arguments.DisableSecretSearch {
-		if len(secrets.Secrets) == 0 {
-			fmt.Print("\nNo secret has been found!")
-		}
-	}
-
-	if cfg.LicenseFinder {
-		if len(*licenses) == 0 {
-			fmt.Print("\nNo license has been found!")
-		}
-	}
-
-	switch *arguments.Output {
+	switch outputType {
 	case "json":
-		printJsonResult(results)
-		if !*arguments.DisableSecretSearch {
-			if len(secrets.Secrets) > 0 {
-				printJsonSecret(secrets)
-			}
-		}
+		printJsonResult(sbom)
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintJsonLicense(licenses)
+			} else {
+				fmt.Print("\nNo license has been found!\n")
+			}
+		}
+		if !*arguments.DisableSecretSearch {
+			if len(sbom.Secret.Secrets) > 0 {
+				PrintJsonSecret(sbom.Secret)
+			} else {
+				fmt.Print("\nNo secret has been found!\n")
 			}
 		}
 	case "cyclonedx-json":
-		cyclonedx.PrintCycloneDXJSON(results)
-		if !*arguments.DisableSecretSearch {
-			if len(secrets.Secrets) > 0 {
-				printJsonSecret(secrets)
-			}
-		}
+		cyclonedx.PrintCycloneDXJSON(sbom)
+
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintJsonLicense(licenses)
+			} else {
+				fmt.Print("\nNo license has been found!\n")
+			}
+		}
+		if !*arguments.DisableSecretSearch {
+			if len(sbom.Secret.Secrets) > 0 {
+				PrintJsonSecret(sbom.Secret)
+			} else {
+				fmt.Print("\nNo secret has been found!\n")
 			}
 		}
 	case "spdx-json":
-		PrintSPDX("json", source, *results)
-		if !*arguments.DisableSecretSearch {
-			if len(secrets.Secrets) > 0 {
-				printJsonSecret(secrets)
-			}
-		}
+		PrintSPDX("json", source, sbom)
+
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintJsonLicense(licenses)
+			} else {
+				fmt.Print("\nNo license has been found!\n")
+			}
+		}
+		if !*arguments.DisableSecretSearch {
+			if len(sbom.Secret.Secrets) > 0 {
+				PrintJsonSecret(sbom.Secret)
+			} else {
+				fmt.Print("\nNo secret has been found!\n")
 			}
 		}
 	case "cyclonedx-xml":
-		cyclonedx.PrintCycloneDXXML(results)
-		if !*arguments.DisableSecretSearch {
-			if len(secrets.Secrets) > 0 {
-				PrintXMLSecret(secrets)
-			}
-		}
+		cyclonedx.PrintCycloneDXXML(sbom)
+
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintXMLLicense(licenses)
+			} else {
+				fmt.Print("\nNo license has been found!\n")
+			}
+		}
+		if !*arguments.DisableSecretSearch {
+			if len(sbom.Secret.Secrets) > 0 {
+				PrintXMLSecret(sbom.Secret)
+			} else {
+				fmt.Print("\nNo secret has been found!\n")
 			}
 		}
 	case "spdx-xml":
-		PrintSPDX("xml", source, *results)
-		if !*arguments.DisableSecretSearch {
-			if len(secrets.Secrets) > 0 {
-				PrintXMLSecret(secrets)
-			}
-		}
+		PrintSPDX("xml", source, sbom)
+
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				PrintXMLLicense(licenses)
+			} else {
+				fmt.Print("\nNo license has been found!\n")
+			}
+		}
+		if !*arguments.DisableSecretSearch {
+			if len(sbom.Secret.Secrets) > 0 {
+				PrintXMLSecret(sbom.Secret)
+			} else {
+				fmt.Print("\nNo secret has been found!\n")
 			}
 		}
 	case "spdx-tag-value":
-		PrintSPDX("tag-value", source, *results)
+		PrintSPDX("tag-value", source, sbom)
 	default:
-		table.DisplayScanResultTable(results)
-		if !*arguments.DisableSecretSearch {
-			if len(secrets.Secrets) > 0 {
-				table.PrintSecrets(secrets)
-			}
-		}
+		table.DisplayScanResultTable(sbom.Packages)
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
 				table.PrintLicenses(*licenses)
+			} else {
+				fmt.Print("\nNo license has been found!\n")
+			}
+		}
+		if !*arguments.DisableSecretSearch {
+			if len(sbom.Secret.Secrets) > 0 {
+				table.PrintSecrets(sbom.Secret)
+			} else {
+				fmt.Print("\nNo secret has been found!\n")
 			}
 		}
 	}

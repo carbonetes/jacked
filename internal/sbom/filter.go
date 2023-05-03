@@ -1,10 +1,10 @@
-package parser
+package sbom
 
 import (
 	"strings"
 
+	dm "github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/jacked/internal/config"
-	"github.com/carbonetes/jacked/pkg/core/model"
 
 	"golang.org/x/exp/slices"
 )
@@ -18,7 +18,7 @@ var (
 )
 
 // Check and locate and remove all of elements that matches the values based ignore policy in configuration
-func Filter(packages *[]model.Package, ignore *config.Package) {
+func Filter(packages *[]dm.Package, ignore *config.Package) {
 
 	enabledFilterName = len(ignore.Name) > 0
 	enabledFilterType = len(ignore.Type) > 0
@@ -38,28 +38,28 @@ func Filter(packages *[]model.Package, ignore *config.Package) {
 	}
 }
 
-func filterPackage(packages *[]model.Package, ignore *config.Package) {
-	for index, _package := range *packages {
+func filterPackage(packages *[]dm.Package, ignore *config.Package) {
+	for index, p := range *packages {
 
 		// Filter By Name
 		if enabledFilterName {
-			filterName(index, _package, ignore)
+			filterName(index, &p, ignore)
 		}
 
 		// Filter By Type
 		if enabledFilterType {
-			filterType(index, _package, ignore)
+			filterType(index, &p, ignore)
 		}
 
 		// Filter By Version
 		if enabledFilterVersion {
-			filterVersion(index, _package, ignore)
+			filterVersion(index, &p, ignore)
 		}
 	}
 }
 
 // Filter all package names listed in package ignore list
-func filterName(index int, _package model.Package, ignore *config.Package) {
+func filterName(index int, _package *dm.Package, ignore *config.Package) {
 	for _, name := range ignore.Name {
 		if strings.Contains(name, ":") {
 			parts := strings.Split(name, ":")
@@ -81,7 +81,7 @@ func filterName(index int, _package model.Package, ignore *config.Package) {
 }
 
 // Filter all package types listed in package ignore list
-func filterType(index int, _package model.Package, ignore *config.Package) {
+func filterType(index int, _package *dm.Package, ignore *config.Package) {
 	for _, _type := range ignore.Type {
 		if strings.EqualFold(_package.Type, _type) {
 			if !slices.Contains(indexes, index) {
@@ -92,7 +92,7 @@ func filterType(index int, _package model.Package, ignore *config.Package) {
 }
 
 // Filter all package versions listed in package ignore list
-func filterVersion(index int, _package model.Package, ignore *config.Package) {
+func filterVersion(index int, _package *dm.Package, ignore *config.Package) {
 	for _, version := range ignore.Version {
 		if strings.EqualFold(_package.Version, version) {
 			if !slices.Contains(indexes, index) {

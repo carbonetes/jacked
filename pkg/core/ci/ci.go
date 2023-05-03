@@ -47,7 +47,7 @@ func Analyze(args *model.Arguments) {
 		log.Fatalf("No valid scan target specified!")
 	}
 	log.Println(aurora.Blue("\nGenerating CDX BOM...\n"))
-	sbom := diggity.Scan(diggityArgs)
+	sbom, _ := diggity.Scan(diggityArgs)
 
 	if sbom.Packages == nil {
 		log.Error("No package found to analyze!")

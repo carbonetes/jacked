@@ -9,6 +9,7 @@ import (
 	"github.com/carbonetes/jacked/internal/ui/spinner"
 	"github.com/carbonetes/jacked/internal/version"
 	"github.com/carbonetes/jacked/pkg/core/ci"
+	"golang.org/x/exp/slices"
 
 	"github.com/spf13/cobra"
 )
@@ -72,6 +73,16 @@ func run(c *cobra.Command, args []string) {
 	if ciMode {
 		ci.Analyze(arguments)
 	}
+	
+	// Check user output type is supported
+	if arguments.Output != nil && *arguments.Output != "" {
+		acceptedArgs := ValidateOutputArg(*arguments.Output)
+		if len(acceptedArgs) > 0 {
+			*arguments.Output = strings.Join(acceptedArgs, ",")
+		} else {
+			*arguments.Output = acceptedArgs[0]
+		}
+	}
 
 	if len(*arguments.Image) != 0 && !strings.Contains(*arguments.Image, tagSeparator) {
 		log.Print("Using default tag:", defaultTag)
@@ -86,4 +97,22 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	engine.Start(arguments, &cfg)
+}
+
+// ValidateOutputArg checks if output types specified are valid
+func ValidateOutputArg(outputArg string) []string {
+	var acceptedArgs []string
+
+	if strings.Contains(outputArg, ",") {
+		for _, o := range strings.Split(outputArg, ",") {
+			if slices.Contains(OutputTypes, strings.ToLower(o)) {
+				acceptedArgs = append(acceptedArgs, strings.ToLower(o))
+			}
+		}
+	} else {
+		if slices.Contains(OutputTypes, strings.ToLower(outputArg)) {
+			acceptedArgs = append(acceptedArgs, strings.ToLower(outputArg))
+		}
+	}
+	return acceptedArgs
 }

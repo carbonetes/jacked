@@ -3,9 +3,8 @@ package table
 import (
 	"fmt"
 
-	"github.com/carbonetes/jacked/pkg/core/model"
-
 	"github.com/alexeyco/simpletable"
+	dm "github.com/carbonetes/diggity/pkg/model"
 )
 
 var (
@@ -15,7 +14,7 @@ var (
 func secretHeader() {
 	secretTable.Header = &simpletable.Header{
 		Cells: []*simpletable.Cell{
-			{Align: simpletable.AlignCenter, Text: Index},
+			{Align: simpletable.AlignCenter, Text: "#"},
 			{Align: simpletable.AlignCenter, Text: "Content Regex"},
 			{Align: simpletable.AlignCenter, Text: "File Name"},
 			{Align: simpletable.AlignCenter, Text: "File Path"},
@@ -24,7 +23,7 @@ func secretHeader() {
 	}
 }
 
-func secretRows(secrets *model.SecretResults) {
+func secretRows(secrets *dm.SecretResults) {
 	var index int = 1
 	for _, secret := range secrets.Secrets {
 		r := []*simpletable.Cell{
@@ -52,7 +51,7 @@ func secretFooter(count int) {
 	}
 }
 
-func PrintSecrets(secrets *model.SecretResults) {
+func PrintSecrets(secrets *dm.SecretResults) {
 	secretHeader()
 	secretRows(secrets)
 	secretTable.SetStyle(simpletable.StyleCompactLite)
