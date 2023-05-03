@@ -8,6 +8,7 @@ require (
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-version v1.6.0
+	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mutecomm/go-sqlcipher/v4 v4.4.2
 	github.com/savioxavier/termlink v1.2.1

@@ -18,6 +18,7 @@ import (
 	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
+
 var log = logger.GetLogger()
 
 // Start the scan engine with the given arguments and configurations

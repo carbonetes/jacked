@@ -9,6 +9,7 @@ import (
 
 var (
 	cfg = yacspin.Config{
+		TerminalMode:      yacspin.AutomaticMode,
 		Frequency:         80 * time.Millisecond,
 		Colors:            []string{"fgYellow"},
 		StopCharacter:     "✓",

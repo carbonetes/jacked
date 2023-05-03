@@ -8,6 +8,7 @@ import (
 	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/carbonetes/jacked/internal/ui/spinner"
 	"github.com/carbonetes/jacked/internal/version"
+	"github.com/carbonetes/jacked/pkg/core/ci"
 	"golang.org/x/exp/slices"
 
 	"github.com/spf13/cobra"
@@ -63,6 +64,16 @@ func run(c *cobra.Command, args []string) {
 		os.Exit(0)
 	}
 
+	if c.Flags().Changed("fail-criteria") {
+		if !ciMode {
+			log.Warn("Fail Criteria : CI Mode is not enabled.")
+		}
+	}
+
+	if ciMode {
+		ci.Analyze(arguments)
+	}
+	
 	// Check user output type is supported
 	if arguments.Output != nil && *arguments.Output != "" {
 		acceptedArgs := ValidateOutputArg(*arguments.Output)
@@ -77,9 +88,15 @@ func run(c *cobra.Command, args []string) {
 		log.Print("Using default tag:", defaultTag)
 		modifiedTag := *arguments.Image + tagSeparator + defaultTag
 		arguments.Image = &modifiedTag
+	} else if len(*arguments.Tar) != 0 {
+		log.Printf("Scanning Tar File: %v", *arguments.Tar)
+	} else if len(*arguments.Dir) != 0 {
+		log.Printf("Scanning Directory: %v", *arguments.Dir)
+	} else if len(*arguments.SbomFile) != 0 {
+		log.Printf("Scanning SBOM JSON: %v", *arguments.SbomFile)
 	}
 
-	engine.Start(&arguments, &cfg)
+	engine.Start(arguments, &cfg)
 }
 
 // ValidateOutputArg checks if output types specified are valid
