@@ -32,28 +32,26 @@ func TestAddFileExtension(t *testing.T) {
 func TestSaveOutputAsFile(t *testing.T) {
 	filename := "result"
 	outputType := "txt"
-	outputText := `Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures.`
+	fileContent := `Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures.`
 	filenameWithExtension := filename + "." + outputType
 
-	SaveOutputAsFile(filename, outputType,outputText)
+	SaveOutputAsFile(filename, outputType,fileContent)
 	stat , err := os.Stat(filenameWithExtension)
 	if os.IsNotExist(err) {
 		t.Fatalf("file %s was not created", filenameWithExtension)
 	}
 
-	t.Log(stat.Name())
 	data , err := os.ReadFile(stat.Name())
 	if err != nil {
 		t.Fatal("Error reading File")
 	}
 
-	if string(data) != outputText {
+	if string(data) != fileContent {
 		t.Fatal("The File has incorrect content")
 	}
  
-
-	error := os.Remove(stat.Name())
-	if error != nil{
+	err = os.Remove(stat.Name())
+	if err != nil{
 		t.Fatal(err.Error())
 	}
 }
