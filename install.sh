@@ -77,10 +77,14 @@ get_os() {
   esac
   echo "$os"
 }
+
 check_shasum() {
-  if ! command -v shasum >/dev/null; then
-    echo "Error: shasum is not installed on your system. Please install shasum first before installing jacked"
-    exit 1
+  os=$(get_os)
+  if [ "$os" != "windows" ]; then
+    if ! command -v shasum >/dev/null; then
+      echo "Error: shasum is not installed on your system. Please install shasum first before installing jacked"
+      exit 1
+    fi
   fi
 }
 
