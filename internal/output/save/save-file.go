@@ -2,8 +2,8 @@ package save
 
 import (
 	"fmt"
-	"os"
 	"log"
+	"os"
 )
 
 
@@ -13,6 +13,7 @@ func SaveOutputAsFile(filename string, outputType string, outputText string){
 	if err != nil{
 		log.Fatal()
 	}
+	defer file.Close()
 	error := os.WriteFile(file.Name(), []byte(outputText), 0644)
 	if error != nil{
 		log.Fatal()
