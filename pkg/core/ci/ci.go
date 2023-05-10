@@ -91,5 +91,5 @@ func Analyze(args *model.Arguments) {
 	}
 	log.Error(errors.New(aurora.Red(aurora.Bold(fmt.Sprintf("\nFailed: %5v out of %v found vulnerabilities failed the assessment \n", len(*result.Matches), totalVulnerabilities)).String()).String()))
 
-	os.Exit(0)
+	os.Exit(1)
 }
