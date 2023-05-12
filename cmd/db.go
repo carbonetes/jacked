@@ -23,7 +23,7 @@ func init() {
 
 	dbCmd.Flags().BoolP("build", "b", false, "Print database current build")
 	dbCmd.Flags().BoolP("info", "i", false, "Print database metadata information")
-	dbCmd.Flags().BoolP("update", "u", false, "Update the vulnerability database without scanning")
+	dbCmd.Flags().BoolP("update-db", "u", false, "Update the vulnerability database without scanning")
 }
 
 func dbRun(c *cobra.Command, _ []string) {
@@ -39,7 +39,7 @@ func dbRun(c *cobra.Command, _ []string) {
 		log.Infof("%v", string(metadata))
 		os.Exit(0)
 	}
-	if c.Flags().Changed("update"){
+	if c.Flags().Changed("update-db"){
 		db.DBCheck()
 		fmt.Println(" Database Updated!")
 	} else {
