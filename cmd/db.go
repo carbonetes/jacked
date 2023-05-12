@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/carbonetes/jacked/internal/db"
@@ -22,6 +23,7 @@ func init() {
 
 	dbCmd.Flags().BoolP("build", "b", false, "Print database current build")
 	dbCmd.Flags().BoolP("info", "i", false, "Print database metadata information")
+	dbCmd.Flags().BoolP("update", "u", false, "Update the vulnerability database without scanning")
 }
 
 func dbRun(c *cobra.Command, _ []string) {
@@ -36,6 +38,10 @@ func dbRun(c *cobra.Command, _ []string) {
 		}
 		log.Infof("%v", string(metadata))
 		os.Exit(0)
+	}
+	if c.Flags().Changed("update"){
+		db.DBCheck()
+		fmt.Println(" Database Updated!")
 	} else {
 		err := c.Help()
 		if err != nil {
