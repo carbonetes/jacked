@@ -9,6 +9,7 @@ import (
 	"github.com/carbonetes/diggity/pkg/convert"
 	dm "github.com/carbonetes/diggity/pkg/model"
 	diggity "github.com/carbonetes/diggity/pkg/scanner"
+	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/internal/logger"
 	jacked "github.com/carbonetes/jacked/pkg/core/analysis"
 	"github.com/carbonetes/jacked/pkg/core/ci/assessment"
@@ -24,6 +25,11 @@ var (
 )
 
 func Analyze(args *model.Arguments) {
+	// Check database for any updates
+	if !*args.SkipDbUpdate {
+		db.DBCheck()
+	}
+	
 	log.Println(aurora.Blue("Entering CI Mode...\n").String())
 	if args.FailCriteria == nil || len(*args.FailCriteria) == 0 || !slices.Contains(assessment.Severities, strings.ToUpper(*args.FailCriteria)) {
 		log.Warnf("Invalid criteria specified : %v\nSet to default criteria : %v", *args.FailCriteria, defaultCriteria)

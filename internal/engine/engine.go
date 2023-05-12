@@ -35,7 +35,10 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	start := time.Now()
 
 	// Check database for any updates
-	db.DBCheck()
+	if !*arguments.SkipDbUpdate {
+		db.DBCheck()
+	}
+	
 
 	if len(*arguments.SbomFile) > 0 {
 		file, err := os.Open(*arguments.SbomFile)
