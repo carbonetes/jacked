@@ -140,6 +140,7 @@ jacked [flag]
 | `--secret-max-file-size int`             | Maximum file size that the secret will search -- each file (default 10485760)                                              |
 | `-v`, `--version`                        | Print application version                                                                                                  |
 | `--ignore-package-names`                 | Specify package names to be whitelisted on the result                                                                      |
+| `--ignore-vuln-cves`                     | Specify CVEs to be whitelisted on the result                                                                               |
 
 ```
 jacked config [flag]
