@@ -19,4 +19,5 @@ type Arguments struct {
 	Tar                 *string
 	ExcludedFilenames   *[]string
 	FailCriteria        *string
+	IgnorePackageNames  *string
 }

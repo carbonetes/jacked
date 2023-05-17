@@ -19,5 +19,6 @@ func NewArguments() *Arguments {
 		Tar:                 new(string),
 		ExcludedFilenames:   &[]string{},
 		FailCriteria:        new(string),
+		IgnorePackageNames:  new(string),
 	}
 }
