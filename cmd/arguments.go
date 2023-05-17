@@ -89,6 +89,7 @@ func init() {
 	rootCmd.Flags().StringVarP(arguments.RegistryToken, "registry-token", "", cfg.Registry.Token, "Access token for private registry access")
 
 	rootCmd.Flags().StringVarP(arguments.IgnorePackageNames, "ignore-package-names", "", "", "Specify package names to be whitelisted on the result")
+	rootCmd.Flags().StringVarP(arguments.IgnoreVulnCVEs, "ignore-vuln-cves", "", "", "Specify CVEs to be whitelisted on the result")
 
 	rootCmd.PersistentFlags().BoolP("help", "h", false, "")
 	rootCmd.PersistentFlags().Lookup("help").Hidden = true
