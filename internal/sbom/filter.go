@@ -60,24 +60,15 @@ func filterPackage(packages *[]dm.Package, ignore *config.Package) {
 
 // Filter all package names listed in package ignore list
 func filterName(index int, _package *dm.Package, ignore *config.Package) {
+
 	for _, name := range ignore.Name {
-		if strings.Contains(name, ":") {
-			parts := strings.Split(name, ":")
-			if len(parts) > 1 {
-				if strings.EqualFold(_package.Name, parts[0]) && strings.EqualFold(_package.Version, parts[1]) {
-					if !slices.Contains(indexes, index) {
-						indexes = append(indexes, index)
-					}
-				}
-			}
-		} else {
-			if strings.EqualFold(_package.Name, name) {
-				if !slices.Contains(indexes, index) {
-					indexes = append(indexes, index)
-				}
+		if strings.EqualFold(_package.Name, name) {
+			if !slices.Contains(indexes, index) {
+				indexes = append(indexes, index)
 			}
 		}
 	}
+
 }
 
 // Filter all package types listed in package ignore list
