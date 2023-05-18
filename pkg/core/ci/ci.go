@@ -26,7 +26,7 @@ var (
 
 func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	var outputText string
-	log.Println("Entering CI Mode...\n")
+	log.Println("Entering CI Mode...")
 	if args.FailCriteria == nil || len(*args.FailCriteria) == 0 || !slices.Contains(assessment.Severities, strings.ToUpper(*args.FailCriteria)) {
 		warningMessage := fmt.Sprintf("\nInvalid criteria specified : %v\nSet to default criteria : %v", *args.FailCriteria, defaultCriteria)
 		log.Warnf(warningMessage)
@@ -35,7 +35,7 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	}
 	diggityArgs := dm.NewArguments()
 	if len(*args.Image) > 0 {
-		imageInfo := fmt.Sprintf("\n\nImage: %s", *args.Image)
+		imageInfo := fmt.Sprintf("\nImage: %s", *args.Image)
 		log.Printf(imageInfo)
 		outputText += imageInfo + "\n\n"
 		diggityArgs.Image = args.Image
@@ -85,7 +85,7 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	outputText += "\n\nWhitelist / Ignore List\n"
 	outputText += "\n" + table.WhitelistTable(&cfg.Ignore)
 
-	log.Println("\nExecuting CI Assessment...\n")
+	log.Println("\nExecuting CI Assessment...")
 
 	log.Println("\nAssessment Result:\n")
 	outputText += "\n\nAssessment Result:\n"
