@@ -24,7 +24,6 @@ import (
 var (
 	log                    = logger.GetLogger()
 	defaultCriteria string = "LOW"
-	vuln *[]model.Vulnerability
 )
 
 func Analyze(args *model.Arguments, cfg *config.Configuration) {
