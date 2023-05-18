@@ -67,8 +67,7 @@ func init() {
 
 	rootCmd.Flags().StringVar(arguments.SbomFile, "sbom", "", "Input sbom file from diggity to scan (Only read from json file)")
 	rootCmd.Flags().StringVarP(arguments.Output, "output", "o", cfg.Output, fmt.Sprintf("Show scan results in (%v) format", OutputTypes))
-	rootCmd.Flags().StringVarP(arguments.OutputFile, "file","f","","Save the sbom result to the output file instead of writing to standard output")
-	rootCmd.Flags().BoolVarP(arguments.SkipDbUpdate, "skip-db-update", "" ,false, "Skip Database Update on Scanning")
+	rootCmd.Flags().StringVarP(arguments.OutputFile, "file", "f", "", "Save the sbom result to the output file instead of writing to standard output")
 	rootCmd.Flags().BoolVarP(&secrets, "secrets", "s", !cfg.SecretConfig.Disabled, "Enable scanning for secrets")
 	rootCmd.Flags().BoolVarP(&license, "licenses", "l", cfg.LicenseFinder, "Enable scanning for package licenses")
 	rootCmd.Flags().BoolVarP(&quiet, "quiet", "q", cfg.Quiet, "Disable all logging statements")
@@ -89,6 +88,10 @@ func init() {
 	rootCmd.Flags().StringVarP(arguments.RegistryPassword, "registry-password", "", cfg.Registry.Password, "Password credential for private registry access")
 	rootCmd.Flags().StringVarP(arguments.RegistryToken, "registry-token", "", cfg.Registry.Token, "Access token for private registry access")
 
+	rootCmd.Flags().StringVarP(arguments.IgnorePackageNames, "ignore-package-names", "", "", "Specify package names to be whitelisted on the result")
+	rootCmd.Flags().StringVarP(arguments.IgnoreVulnCVEs, "ignore-vuln-cves", "", "", "Specify CVEs to be whitelisted on the result")
+	rootCmd.Flags().BoolVarP(arguments.SkipDbUpdate, "skip-db-update", "" ,false, "Skip Database Update on Scanning")
+	
 	rootCmd.PersistentFlags().BoolP("help", "h", false, "")
 	rootCmd.PersistentFlags().Lookup("help").Hidden = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})

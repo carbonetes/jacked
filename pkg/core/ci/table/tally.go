@@ -7,11 +7,12 @@ import (
 	"github.com/carbonetes/jacked/pkg/core/ci/assessment"
 )
 
-func TallyTable(tally *assessment.Tally) {
+func TallyTable(tally *assessment.Tally) string{
 	var table = simpletable.New()
 	tallyHeader(table)
 	tallyRows(tally, table)
 	fmt.Println(table.String())
+	return table.String()
 }
 
 func tallyHeader(table *simpletable.Table) {

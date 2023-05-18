@@ -34,6 +34,8 @@ func preRun(_ *cobra.Command, args []string) {
 		arguments.Quiet = &quiet
 		cfg.Output = *arguments.Output
 		cfg.LicenseFinder = license
+		cfg.Ignore.Package.Name = SplitInput(*arguments.IgnorePackageNames)
+		cfg.Ignore.Vulnerability.CVE = SplitInput(*arguments.IgnoreVulnCVEs)
 
 		if *arguments.Quiet {
 			logger.SetQuietMode()
@@ -71,9 +73,9 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	if ciMode {
-		ci.Analyze(arguments)
+		ci.Analyze(arguments, &cfg)
 	}
-	
+
 	// Check user output type is supported
 	if arguments.Output != nil && *arguments.Output != "" {
 		acceptedArgs := ValidateOutputArg(*arguments.Output)
@@ -115,4 +117,16 @@ func ValidateOutputArg(outputArg string) []string {
 		}
 	}
 	return acceptedArgs
+}
+
+func SplitInput(input string) []string {
+	var inputs []string
+	if strings.Contains(input, ",") {
+		for _, o := range strings.Split(input, ",") {
+			inputs = append(inputs, strings.ToLower(o))
+		}
+	} else {
+		inputs = append(inputs, strings.ToLower(input))
+	}
+	return inputs
 }

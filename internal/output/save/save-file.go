@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 )
 
 
@@ -18,10 +19,11 @@ func SaveOutputAsFile(filename string, outputType string, outputText string){
 	if error != nil{
 		log.Fatal()
 	}
-	fmt.Printf("\n ✔️ File Saved As : [ %v ]\n",fileNameWithExtension)
+	fmt.Printf("\n File Saved As : [ %v ]\n",fileNameWithExtension)
 }
 
 func addFileExtension(filename string, outputType string) string {
+	removeExistingFileExtension(&filename)
 	switch outputType{
 	case "json" , "cyclonedx-json", "spdx-json" :
 		return filename + ".json"
@@ -31,5 +33,15 @@ func addFileExtension(filename string, outputType string) string {
 		return filename + ".spdx"
 	default :
 		return filename + ".txt"
+	}
+}
+
+// check if the filename has an existing extension
+func removeExistingFileExtension(filename *string){
+	currentFilename := *filename
+	lastDotIndex := strings.LastIndex(currentFilename,".")
+
+	if lastDotIndex != -1 {
+		*filename = currentFilename[:lastDotIndex]
 	}
 }
