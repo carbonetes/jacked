@@ -5,8 +5,8 @@ import (
 	"strconv"
 )
 
-func OnCheckDatabaseUpdateStart() {
-	SetMessage("Checking Database Update")
+func OnCheckDatabaseStart() {
+	SetMessage("Checking Database")
 	Start()
 }
 

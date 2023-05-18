@@ -21,5 +21,6 @@ func NewArguments() *Arguments {
 		FailCriteria:        new(string),
 		IgnorePackageNames:  new(string),
 		IgnoreVulnCVEs:      new(string),
+		SkipDbUpdate:        new(bool),
 	}
 }

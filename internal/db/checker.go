@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -33,26 +34,41 @@ var (
 /* Check if database file and metadata is exist from the local path,
  * when files are existing, it will check the latest version from the global metadata and it will compare from the local version to determine if needed to update.
  */
-func DBCheck() {
-	spinner.OnCheckDatabaseUpdateStart()
+func DBCheck(skipDbUpdate bool) {
+	spinner.OnCheckDatabaseStart()
 	metadataList, err := getGlobalMetadataList()
 	if err != nil {
 		spinner.OnStop(err)
 	}
 
+	dbFileExists := checkFile(dbFilepath)
+	metadataFileExists := checkFile(metadataPath)
+
 	latestMetadata := getLatestMetadata(metadataList)
-	if checkFile(dbFilepath) && checkFile(metadataPath) {
+	if metadataFileExists {
+		if !dbFileExists {
+			if skipDbUpdate {
+				spinner.OnStop(errors.New("No database found on local!"))
+			}
+			updateLocalDatabase(latestMetadata)
+			spinner.OnStop(nil)
+			return
+		}
 		localMetadata, err := getMetadata(metadataPath)
 		if err != nil {
 			spinner.OnStop(err)
 		}
-
 		if localMetadata.Build != latestMetadata.Build {
-			updateLocalDatabase(latestMetadata)
+			if !skipDbUpdate {
+				updateLocalDatabase(latestMetadata)
+			}
 		} else {
 			schema = localMetadata.Schema
 		}
 	} else {
+		if skipDbUpdate {
+			spinner.OnStop(errors.New("No database metadata found on local!"))
+		}
 		updateLocalDatabase(latestMetadata)
 	}
 	spinner.OnStop(nil)
@@ -258,3 +274,4 @@ func moveFile(source, destination string) error {
 	os.Remove(source)
 	return nil
 }
+

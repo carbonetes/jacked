@@ -40,7 +40,8 @@ func dbRun(c *cobra.Command, _ []string) {
 		os.Exit(0)
 	}
 	if c.Flags().Changed("update-db"){
-		db.DBCheck()
+		skipDBUpdate := false
+		db.DBCheck(skipDBUpdate)
 		fmt.Println(" Database Updated!")
 	} else {
 		err := c.Help()
@@ -48,6 +49,5 @@ func dbRun(c *cobra.Command, _ []string) {
 			log.Errorln(err.Error())
 		}
 		os.Exit(0)
-
 	}
 }

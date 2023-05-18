@@ -21,4 +21,5 @@ type Arguments struct {
 	FailCriteria        *string
 	IgnorePackageNames  *string
 	IgnoreVulnCVEs      *string
+	SkipDbUpdate        *bool
 }

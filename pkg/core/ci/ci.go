@@ -11,6 +11,7 @@ import (
 	diggity "github.com/carbonetes/diggity/pkg/scanner"
 	"github.com/carbonetes/jacked/internal/config"
 	"github.com/carbonetes/jacked/internal/logger"
+	"github.com/carbonetes/jacked/internal/db"
 	bomUtil "github.com/carbonetes/jacked/internal/sbom"
 	save "github.com/carbonetes/jacked/internal/output/save"
 	jacked "github.com/carbonetes/jacked/pkg/core/analysis"
@@ -28,6 +29,9 @@ var (
 
 func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	var outputText string
+	// Check database for any updates
+    db.DBCheck(*args.SkipDbUpdate)
+
 	log.Println("Entering CI Mode...")
 	if args.FailCriteria == nil || len(*args.FailCriteria) == 0 || !slices.Contains(assessment.Severities, strings.ToUpper(*args.FailCriteria)) {
 		warningMessage := fmt.Sprintf("\nInvalid criteria specified : %v\nSet to default criteria : %v", *args.FailCriteria, defaultCriteria)
