@@ -9,9 +9,12 @@ import (
 	"github.com/carbonetes/diggity/pkg/convert"
 	dm "github.com/carbonetes/diggity/pkg/model"
 	diggity "github.com/carbonetes/diggity/pkg/scanner"
+	"github.com/carbonetes/jacked/internal/config"
 	"github.com/carbonetes/jacked/internal/logger"
+	bomUtil "github.com/carbonetes/jacked/internal/sbom"
 	jacked "github.com/carbonetes/jacked/pkg/core/analysis"
 	"github.com/carbonetes/jacked/pkg/core/ci/assessment"
+	filter "github.com/carbonetes/jacked/pkg/core/ci/filter"
 	"github.com/carbonetes/jacked/pkg/core/ci/table"
 	"github.com/carbonetes/jacked/pkg/core/model"
 	"github.com/logrusorgru/aurora"
@@ -21,9 +24,10 @@ import (
 var (
 	log                    = logger.GetLogger()
 	defaultCriteria string = "LOW"
+	vuln *[]model.Vulnerability
 )
 
-func Analyze(args *model.Arguments) {
+func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	log.Println(aurora.Blue("Entering CI Mode...\n").String())
 	if args.FailCriteria == nil || len(*args.FailCriteria) == 0 || !slices.Contains(assessment.Severities, strings.ToUpper(*args.FailCriteria)) {
 		log.Warnf("Invalid criteria specified : %v\nSet to default criteria : %v", *args.FailCriteria, defaultCriteria)
@@ -49,6 +53,8 @@ func Analyze(args *model.Arguments) {
 	log.Println(aurora.Blue("\nGenerating CDX BOM...\n"))
 	sbom, _ := diggity.Scan(diggityArgs)
 
+	bomUtil.Filter(sbom.Packages, &cfg.Ignore.Package)
+
 	if sbom.Packages == nil {
 		log.Error("No package found to analyze!")
 	}
@@ -59,7 +65,8 @@ func Analyze(args *model.Arguments) {
 
 	log.Println(aurora.Blue("\nAnalyzing CDX BOM...\n").String())
 	jacked.AnalyzeCDX(cdx)
-
+	
+	filter.IgnoreVuln(cdx.Vulnerabilities, &cfg.Ignore.Vulnerability)
 	if len(*cdx.Vulnerabilities) == 0 {
 		fmt.Println("No vulnerabilities found!")
 	} else {
