@@ -9,6 +9,7 @@ import (
 	"github.com/carbonetes/diggity/pkg/convert"
 	dm "github.com/carbonetes/diggity/pkg/model"
 	diggity "github.com/carbonetes/diggity/pkg/scanner"
+	"github.com/carbonetes/jacked/internal/config"
 	"github.com/carbonetes/jacked/internal/logger"
 	save "github.com/carbonetes/jacked/internal/output/save"
 	jacked "github.com/carbonetes/jacked/pkg/core/analysis"
@@ -24,7 +25,7 @@ var (
 	defaultCriteria string = "LOW"
 )
 
-func Analyze(args *model.Arguments) {
+func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	var outputText string
 	log.Println(aurora.Blue("Entering CI Mode...\n").String())
 	if args.FailCriteria == nil || len(*args.FailCriteria) == 0 || !slices.Contains(assessment.Severities, strings.ToUpper(*args.FailCriteria)) {
@@ -80,6 +81,11 @@ func Analyze(args *model.Arguments) {
 	stats := fmt.Sprintf("\nPackages: %9v\nVulnerabilities: %v", len(*cdx.Components), len(*cdx.Vulnerabilities))
 	outputText += "\n" + stats
 	log.Println(aurora.Cyan(stats).String())
+
+	log.Println(aurora.Blue("\nShowing Whitelist...\n").String())
+	outputText += "\n\nWhitelist / Ignore List\n"
+	outputText += "\n" + table.WhitelistTable(&cfg.Ignore)
+
 	log.Println(aurora.Blue("\nExecuting CI Assessment...\n").String())
 
 	log.Println(aurora.Blue("\nAssessment Result:\n").String())

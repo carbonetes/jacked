@@ -71,7 +71,7 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	if ciMode {
-		ci.Analyze(arguments)
+		ci.Analyze(arguments,&cfg)
 	}
 	
 	// Check user output type is supported
