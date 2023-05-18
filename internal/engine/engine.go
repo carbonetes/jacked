@@ -18,7 +18,6 @@ import (
 	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
-
 var log = logger.GetLogger()
 
 // Start the scan engine with the given arguments and configurations
@@ -52,6 +51,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		sbom = diggity.Scan(arguments)
 	}
 	// Run all parsers and filters for packages
+
 	diggity.Filter(sbom.Packages, &cfg.Ignore.Package)
 	if cfg.LicenseFinder {
 		diggity.GetLicense(sbom.Packages, licenses)
