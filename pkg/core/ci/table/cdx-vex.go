@@ -7,11 +7,12 @@ import (
 	"github.com/alexeyco/simpletable"
 )
 
-func CDXVexTable(cdx *cyclonedx.BOM) {
+func CDXVexTable(cdx *cyclonedx.BOM) string{
 	var table = simpletable.New()
 	vexHeader(table)
 	vexRows(cdx.Vulnerabilities, table)
 	fmt.Println(table.String())
+	return table.String()
 }
 
 func vexHeader(table *simpletable.Table) {

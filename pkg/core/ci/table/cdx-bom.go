@@ -7,11 +7,12 @@ import (
 	"github.com/alexeyco/simpletable"
 )
 
-func CDXBomTable(cdx *cyclonedx.BOM) {
+func CDXBomTable(cdx *cyclonedx.BOM) string{
 	var table = simpletable.New()
 	bomHeader(table)
 	bomRows(cdx.Components, table)
 	fmt.Println(table.String())
+	return table.String()
 }
 
 func bomHeader(table *simpletable.Table) {
