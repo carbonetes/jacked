@@ -16,7 +16,6 @@ import (
 	"github.com/carbonetes/jacked/pkg/core/ci/assessment"
 	"github.com/carbonetes/jacked/pkg/core/ci/table"
 	"github.com/carbonetes/jacked/pkg/core/model"
-	"github.com/logrusorgru/aurora"
 	"golang.org/x/exp/slices"
 )
 
@@ -27,9 +26,9 @@ var (
 
 func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	var outputText string
-	log.Println(aurora.Blue("Entering CI Mode...\n").String())
+	log.Println("Entering CI Mode...\n")
 	if args.FailCriteria == nil || len(*args.FailCriteria) == 0 || !slices.Contains(assessment.Severities, strings.ToUpper(*args.FailCriteria)) {
-		warningMessage := fmt.Sprintf("Invalid criteria specified : %v\nSet to default criteria : %v", *args.FailCriteria, defaultCriteria)
+		warningMessage := fmt.Sprintf("\nInvalid criteria specified : %v\nSet to default criteria : %v", *args.FailCriteria, defaultCriteria)
 		log.Warnf(warningMessage)
 		outputText = warningMessage
 		args.FailCriteria = &defaultCriteria
@@ -57,7 +56,7 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	} else {
 		log.Fatalf("No valid scan target specified!")
 	}
-	log.Println(aurora.Blue("\nGenerating CDX BOM...\n"))
+	log.Println("\nGenerating CDX BOM...\n")
 	sbom, _ := diggity.Scan(diggityArgs)
 
 	if sbom.Packages == nil {
@@ -68,7 +67,7 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 
 	outputText += "Generated CDX BOM\n\n" + table.CDXBomTable(cdx)
 
-	log.Println(aurora.Blue("\nAnalyzing CDX BOM...\n").String())
+	log.Println("\nAnalyzing CDX BOM...\n")
 	jacked.AnalyzeCDX(cdx)
 
 	if len(*cdx.Vulnerabilities) == 0 {
@@ -80,20 +79,20 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 
 	stats := fmt.Sprintf("\nPackages: %9v\nVulnerabilities: %v", len(*cdx.Components), len(*cdx.Vulnerabilities))
 	outputText += "\n" + stats
-	log.Println(aurora.Cyan(stats).String())
+	log.Println(stats)
 
-	log.Println(aurora.Blue("\nShowing Whitelist...\n").String())
+	log.Println("\nShowing Whitelist...\n")
 	outputText += "\n\nWhitelist / Ignore List\n"
 	outputText += "\n" + table.WhitelistTable(&cfg.Ignore)
 
-	log.Println(aurora.Blue("\nExecuting CI Assessment...\n").String())
+	log.Println("\nExecuting CI Assessment...\n")
 
-	log.Println(aurora.Blue("\nAssessment Result:\n").String())
+	log.Println("\nAssessment Result:\n")
 	outputText += "\n\nAssessment Result:\n"
 	if len(*cdx.Vulnerabilities) == 0 {
 		message := fmt.Sprintf("\nPassed: %5v found components\n", len(*cdx.Components))
 		outputText += message
-		log.Println(aurora.Green(aurora.Bold(message).String()))
+		log.Println(message)
 	}
 
 	result := assessment.Evaluate(args.FailCriteria, cdx)
@@ -111,18 +110,17 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	if result.Passed {
 		passedMessage := fmt.Sprintf("\nPassed: %5v out of %v found vulnerabilities passed the assessment\n", totalVulnerabilities, totalVulnerabilities)
 		outputText += "\n" + passedMessage
-		log.Println(aurora.Green(aurora.Bold(passedMessage).String()))
+		log.Println(passedMessage)
 		os.Exit(0)
 	}
 	failedMessage := fmt.Sprintf("\nFailed: %5v out of %v found vulnerabilities failed the assessment \n", len(*result.Matches), totalVulnerabilities)
 	outputText += "\n" + failedMessage
-	log.Error(errors.New(aurora.Red(aurora.Bold(failedMessage).String()).String()))
+	log.Error(errors.New(failedMessage))
 	
 	if args.OutputFile != nil && *args.OutputFile != ""{
 		// we can use the *args.Output for the second args on the parameter, for now it only supports table/txt output
 		save.SaveOutputAsFile(*args.OutputFile,"table", outputText )
 		
 	}
-	
 	os.Exit(1)
 }
