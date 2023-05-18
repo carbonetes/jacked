@@ -25,10 +25,9 @@ var (
 )
 
 func Analyze(args *model.Arguments) {
+	
 	// Check database for any updates
-	if !*args.SkipDbUpdate {
-		db.DBCheck()
-	}
+	db.DBCheck(*args.SkipDbUpdate)
 	
 	log.Println(aurora.Blue("Entering CI Mode...\n").String())
 	if args.FailCriteria == nil || len(*args.FailCriteria) == 0 || !slices.Contains(assessment.Severities, strings.ToUpper(*args.FailCriteria)) {

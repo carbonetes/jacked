@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"errors"
 
 	"github.com/carbonetes/jacked/internal/ui/spinner"
 
@@ -33,7 +34,7 @@ var (
 /* Check if database file and metadata is exist from the local path,
  * when files are existing, it will check the latest version from the global metadata and it will compare from the local version to determine if needed to update.
  */
-func DBCheck() {
+func DBCheck(skipDbUpdate bool) {
 	spinner.OnCheckDatabaseUpdateStart()
 	metadataList, err := getGlobalMetadataList()
 	if err != nil {
@@ -46,13 +47,18 @@ func DBCheck() {
 		if err != nil {
 			spinner.OnStop(err)
 		}
-
 		if localMetadata.Build != latestMetadata.Build {
+			if skipDbUpdate {
+			spinner.OnStop(errors.New("No Database Metadata Found on Local"))
+		}
 			updateLocalDatabase(latestMetadata)
 		} else {
 			schema = localMetadata.Schema
 		}
 	} else {
+		if skipDbUpdate {
+			spinner.OnStop(errors.New("No Database Found on Local"))
+		}
 		updateLocalDatabase(latestMetadata)
 	}
 	spinner.OnStop(nil)
