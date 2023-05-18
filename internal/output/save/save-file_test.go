@@ -13,6 +13,8 @@ type validateFilenameExtension struct{
 
 func TestAddFileExtension(t *testing.T) {
 	tests:= []validateFilenameExtension{
+		{"result.file.json","json", "result.file.json"},
+		{"result.json","json", "result.json"},
 		{"result","json", "result.json"},
 		{"result","cyclonedx-json", "result.json"},
 		{"result","spdx-json", "result.json"},
