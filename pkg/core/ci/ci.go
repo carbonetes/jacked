@@ -11,9 +11,11 @@ import (
 	diggity "github.com/carbonetes/diggity/pkg/scanner"
 	"github.com/carbonetes/jacked/internal/config"
 	"github.com/carbonetes/jacked/internal/logger"
+	bomUtil "github.com/carbonetes/jacked/internal/sbom"
 	save "github.com/carbonetes/jacked/internal/output/save"
 	jacked "github.com/carbonetes/jacked/pkg/core/analysis"
 	"github.com/carbonetes/jacked/pkg/core/ci/assessment"
+	filter "github.com/carbonetes/jacked/pkg/core/ci/filter"
 	"github.com/carbonetes/jacked/pkg/core/ci/table"
 	"github.com/carbonetes/jacked/pkg/core/model"
 	"golang.org/x/exp/slices"
@@ -59,6 +61,8 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	log.Println("\nGenerating CDX BOM...\n")
 	sbom, _ := diggity.Scan(diggityArgs)
 
+	bomUtil.Filter(sbom.Packages, &cfg.Ignore.Package)
+
 	if sbom.Packages == nil {
 		log.Error("No package found to analyze!")
 	}
@@ -69,7 +73,8 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 
 	log.Println("\nAnalyzing CDX BOM...\n")
 	jacked.AnalyzeCDX(cdx)
-
+	
+	filter.IgnoreVuln(cdx.Vulnerabilities, &cfg.Ignore.Vulnerability)
 	if len(*cdx.Vulnerabilities) == 0 {
 		fmt.Println("No vulnerabilities found!")
 		outputText += "\nNo vulnerabilities found! \n"
@@ -111,16 +116,19 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 		passedMessage := fmt.Sprintf("\nPassed: %5v out of %v found vulnerabilities passed the assessment\n", totalVulnerabilities, totalVulnerabilities)
 		outputText += "\n" + passedMessage
 		log.Println(passedMessage)
+		saveOutputFile(args,outputText)
 		os.Exit(0)
 	}
 	failedMessage := fmt.Sprintf("\nFailed: %5v out of %v found vulnerabilities failed the assessment \n", len(*result.Matches), totalVulnerabilities)
 	outputText += "\n" + failedMessage
 	log.Error(errors.New(failedMessage))
-	
+	saveOutputFile(args,outputText)
+	os.Exit(1)
+}
+
+func saveOutputFile(args *model.Arguments, outputText string){
 	if args.OutputFile != nil && *args.OutputFile != ""{
 		// we can use the *args.Output for the second args on the parameter, for now it only supports table/txt output
 		save.SaveOutputAsFile(*args.OutputFile,"table", outputText )
-		
 	}
-	os.Exit(1)
 }
