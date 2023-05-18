@@ -4,12 +4,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"os"
 	"path"
 	"strings"
-	"errors"
 
 	"github.com/carbonetes/jacked/internal/ui/spinner"
 
@@ -35,29 +35,39 @@ var (
  * when files are existing, it will check the latest version from the global metadata and it will compare from the local version to determine if needed to update.
  */
 func DBCheck(skipDbUpdate bool) {
-	spinner.OnCheckDatabaseUpdateStart()
+	spinner.OnCheckDatabaseStart()
 	metadataList, err := getGlobalMetadataList()
 	if err != nil {
 		spinner.OnStop(err)
 	}
 
+	dbFileExists := checkFile(dbFilepath)
+	metadataFileExists := checkFile(metadataPath)
+
 	latestMetadata := getLatestMetadata(metadataList)
-	if checkFile(dbFilepath) && checkFile(metadataPath) {
+	if metadataFileExists {
+		if !dbFileExists {
+			if skipDbUpdate {
+				spinner.OnStop(errors.New("No database found on local!"))
+			}
+			updateLocalDatabase(latestMetadata)
+			spinner.OnStop(nil)
+			return
+		}
 		localMetadata, err := getMetadata(metadataPath)
 		if err != nil {
 			spinner.OnStop(err)
 		}
 		if localMetadata.Build != latestMetadata.Build {
-			if skipDbUpdate {
-			spinner.OnStop(errors.New("No Database Metadata Found on Local"))
-		}
-			updateLocalDatabase(latestMetadata)
+			if !skipDbUpdate {
+				updateLocalDatabase(latestMetadata)
+			}
 		} else {
 			schema = localMetadata.Schema
 		}
 	} else {
 		if skipDbUpdate {
-			spinner.OnStop(errors.New("No Database Found on Local"))
+			spinner.OnStop(errors.New("No database metadata found on local!"))
 		}
 		updateLocalDatabase(latestMetadata)
 	}
@@ -264,3 +274,4 @@ func moveFile(source, destination string) error {
 	os.Remove(source)
 	return nil
 }
+
