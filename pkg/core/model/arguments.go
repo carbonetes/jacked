@@ -20,6 +20,6 @@ type Arguments struct {
 	ExcludedFilenames   *[]string
 	FailCriteria        *string
 	IgnorePackageNames  *string
-	IgnoreVulnCVEs      *string
+	IgnoreCVEs          *string
 	SkipDbUpdate        *bool
 }
