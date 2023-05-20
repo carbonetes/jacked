@@ -34,7 +34,7 @@ func preRun(_ *cobra.Command, args []string) {
 		arguments.Quiet = &quiet
 		cfg.Output = *arguments.Output
 		cfg.LicenseFinder = license
-		cfg.Ignore.Package.Name = SplitInput(*arguments.IgnorePackageNames)
+		ciCfg.FailCriteria.Package.Name = SplitInput(*arguments.IgnorePackageNames)
 		ciCfg.FailCriteria.Vulnerability.CVE = SplitInput(*arguments.IgnoreCVEs)
 
 		if *arguments.Quiet {
