@@ -90,9 +90,9 @@ func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration) {
 	outputText += "\n" + stats
 	log.Println(stats)
 
-	log.Println("\nShowing Whitelist...\n")
-	outputText += "\n\nWhitelist / Ignore List\n"
-	outputText += "\n" + table.WhitelistTable(&ciCfg.FailCriteria)
+	log.Println("\nShowing Ignore List...\n")
+	outputText += "\n\nIgnore List\n"
+	outputText += "\n" + table.IgnoreListTable(&ciCfg.FailCriteria)
 
 	log.Println("\nExecuting CI Assessment...")
 

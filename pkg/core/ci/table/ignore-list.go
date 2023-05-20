@@ -7,15 +7,15 @@ import (
 	"github.com/carbonetes/jacked/internal/config"
 )
 
-func WhitelistTable (ignore *config.FailCriteria) string {
+func IgnoreListTable (ignore *config.FailCriteria) string {
 	table := simpleTable.New()
-	whitelistHeader(table)
-	whitelistRows(ignore,table)
+	ignoreListHeader(table)
+	ignoreListRows(ignore,table)
 	fmt.Println(table.String())
 	return table.String()
 }
 
-func whitelistHeader(table *simpleTable.Table) {
+func ignoreListHeader(table *simpleTable.Table) {
 	table.Header = &simpleTable.Header{
 		Cells: []*simpleTable.Cell{
 			{Align: simpleTable.AlignCenter, Text: "Ignore"},
@@ -24,7 +24,7 @@ func whitelistHeader(table *simpleTable.Table) {
 	}
 }
 
-func whitelistRows(ignore *config.FailCriteria,table *simpleTable.Table) {
+func ignoreListRows(ignore *config.FailCriteria,table *simpleTable.Table) {
 	const arraySize = 5
     ignoreLabels := [arraySize]string{"CVE", "Severity", "Name", "Type", "Version"}
 	ignoreList := [arraySize]string{strings.Join(ignore.Vulnerability.CVE,","), strings.Join(ignore.Vulnerability.Severity,","), strings.Join(ignore.Package.Name,","), strings.Join(ignore.Package.Type,","), strings.Join(ignore.Package.Version,",")}
