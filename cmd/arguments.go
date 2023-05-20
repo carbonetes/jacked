@@ -12,6 +12,7 @@ import (
 var (
 	arguments   = model.NewArguments()
 	cfg         config.Configuration
+	ciCfg       config.CIConfiguration
 	quiet       bool
 	license     bool
 	secrets     bool
@@ -52,6 +53,7 @@ func init() {
 
 	// Configuration set Flags Arguments
 	cfg.Load()
+	ciCfg.CILoad()
 
 	arguments.DisableSecretSearch = &cfg.SecretConfig.Disabled
 	arguments.SecretContentRegex = &cfg.SecretConfig.SecretRegex

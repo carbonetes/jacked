@@ -73,7 +73,7 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	if ciMode {
-		ci.Analyze(arguments, &cfg)
+		ci.Analyze(arguments, &ciCfg)
 	}
 
 	// Check user output type is supported
@@ -98,7 +98,7 @@ func run(c *cobra.Command, args []string) {
 		log.Printf("Scanning SBOM JSON: %v", *arguments.SbomFile)
 	}
 
-	engine.Start(arguments, &cfg)
+	engine.Start(arguments, &cfg, &ciCfg)
 }
 
 // ValidateOutputArg checks if output types specified are valid

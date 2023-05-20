@@ -27,7 +27,7 @@ var (
 	defaultCriteria string = "LOW"
 )
 
-func Analyze(args *model.Arguments, cfg *config.Configuration) {
+func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration) {
 	var outputText string
 	// Check database for any updates
     db.DBCheck(*args.SkipDbUpdate)
@@ -65,7 +65,7 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	log.Println("\nGenerating CDX BOM...\n")
 	sbom, _ := diggity.Scan(diggityArgs)
 
-	bomUtil.Filter(sbom.Packages, &cfg.Ignore.Package)
+	bomUtil.Filter(sbom.Packages, &ciCfg.FailCriteria.Package)
 
 	if sbom.Packages == nil {
 		log.Error("No package found to analyze!")
@@ -78,7 +78,7 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	log.Println("\nAnalyzing CDX BOM...\n")
 	jacked.AnalyzeCDX(cdx)
 	
-	filter.IgnoreVuln(cdx.Vulnerabilities, &cfg.Ignore.Vulnerability)
+	filter.IgnoreVuln(cdx.Vulnerabilities, &ciCfg.FailCriteria.Vulnerability)
 	if len(*cdx.Vulnerabilities) == 0 {
 		fmt.Println("No vulnerabilities found!")
 		outputText += "\nNo vulnerabilities found! \n"
@@ -92,7 +92,7 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 
 	log.Println("\nShowing Whitelist...\n")
 	outputText += "\n\nWhitelist / Ignore List\n"
-	outputText += "\n" + table.WhitelistTable(&cfg.Ignore)
+	outputText += "\n" + table.WhitelistTable(&ciCfg.FailCriteria)
 
 	log.Println("\nExecuting CI Assessment...")
 
