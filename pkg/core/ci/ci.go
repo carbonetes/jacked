@@ -90,12 +90,13 @@ func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration) {
 	outputText += "\n" + stats
 	log.Println(stats)
 
-	log.Println("\nShowing Ignore List...\n")
-	outputText += "\n\nIgnore List\n"
-	outputText += "\n" + table.IgnoreListTable(&ciCfg.FailCriteria)
+	if !ignoreListIsEmpty(&ciCfg.FailCriteria){
+		log.Println("\nShowing Ignore List...\n")
+		outputText += "\n\nIgnore List\n"
+		outputText += "\n" + table.IgnoreListTable(&ciCfg.FailCriteria)
+	}
 
 	log.Println("\nExecuting CI Assessment...")
-
 	log.Println("\nAssessment Result:\n")
 	outputText += "\n\nAssessment Result:\n"
 	if len(*cdx.Vulnerabilities) == 0 {
@@ -135,4 +136,21 @@ func saveOutputFile(args *model.Arguments, outputText string){
 		// we can use the *args.Output for the second args on the parameter, for now it only supports table/txt output
 		save.SaveOutputAsFile(*args.OutputFile,"table", outputText )
 	}
+}
+
+func ignoreListIsEmpty(ciCfg *config.FailCriteria) bool{
+	 var ignoreList = []bool{
+						len(ciCfg.Vulnerability.CVE) == 0,
+						len(ciCfg.Vulnerability.Severity) == 0,
+						len(ciCfg.Package.Name) == 0,
+						len(ciCfg.Package.Type) == 0,
+						len(ciCfg.Package.Version) == 0,
+					   } 
+	
+    for _, empty := range ignoreList{
+		if !empty {
+			return false
+		}
+	}
+	return true
 }

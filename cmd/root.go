@@ -126,7 +126,9 @@ func SplitInput(input string) []string {
 			inputs = append(inputs, strings.ToLower(o))
 		}
 	} else {
-		inputs = append(inputs, strings.ToLower(input))
+		if len(input) > 0 {
+			inputs = append(inputs, strings.ToLower(input))
+		}
 	}
 	return inputs
 }
