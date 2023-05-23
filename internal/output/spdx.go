@@ -1,7 +1,6 @@
 package output
 
 import (
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"os"
@@ -11,6 +10,7 @@ import (
 	dm "github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/jacked/internal/logger"
 	spdxutils "github.com/carbonetes/jacked/internal/output/spdx-utils"
+	"github.com/carbonetes/jacked/internal/utils"
 	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
@@ -30,7 +30,7 @@ func PrintSPDX(formatType string, image *string, sbom *dm.SBOM) string {
 		return string(result)
 
 	case "json":
-		result, err := json.MarshalIndent(spdx, "", " ")
+		result, err := utils.ToJSON(spdx)
 		if err != nil {
 			log.Errorln(err.Error())
 		}

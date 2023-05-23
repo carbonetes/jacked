@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/carbonetes/jacked/internal/db"
+	"github.com/carbonetes/jacked/internal/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -32,14 +32,14 @@ func dbRun(c *cobra.Command, _ []string) {
 		os.Exit(0)
 	}
 	if c.Flags().Changed("info") {
-		metadata, err := json.MarshalIndent(db.GetLocalMetadata(), "", "  ")
+		metadata, err := utils.ToJSON(db.GetLocalMetadata())
 		if err != nil {
 			log.Printf("Error marshalling: %v", err.Error())
 		}
 		log.Infof("%v", string(metadata))
 		os.Exit(0)
 	}
-	if c.Flags().Changed("update-db"){
+	if c.Flags().Changed("update-db") {
 		skipDBUpdate := false
 		db.DBCheck(skipDBUpdate)
 		fmt.Println(" Database Updated!")
