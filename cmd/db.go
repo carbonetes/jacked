@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 
 	"github.com/carbonetes/jacked/internal/db"
@@ -41,8 +40,8 @@ func dbRun(c *cobra.Command, _ []string) {
 	}
 	if c.Flags().Changed("update-db"){
 		skipDBUpdate := false
-		db.DBCheck(skipDBUpdate)
-		fmt.Println(" Database Updated!")
+		forceDBUpdate := true
+		db.DBCheck(skipDBUpdate, forceDBUpdate)
 	} else {
 		err := c.Help()
 		if err != nil {

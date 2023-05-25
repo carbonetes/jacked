@@ -22,4 +22,5 @@ type Arguments struct {
 	IgnorePackageNames  *string
 	IgnoreVulnCVEs      *string
 	SkipDbUpdate        *bool
+	ForceDbUpdate       *bool
 }
