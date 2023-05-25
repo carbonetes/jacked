@@ -10,10 +10,10 @@ import (
 	dm "github.com/carbonetes/diggity/pkg/model"
 	diggity "github.com/carbonetes/diggity/pkg/scanner"
 	"github.com/carbonetes/jacked/internal/config"
-	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/carbonetes/jacked/internal/db"
-	bomUtil "github.com/carbonetes/jacked/internal/sbom"
+	"github.com/carbonetes/jacked/internal/logger"
 	save "github.com/carbonetes/jacked/internal/output/save"
+	bomUtil "github.com/carbonetes/jacked/internal/sbom"
 	jacked "github.com/carbonetes/jacked/pkg/core/analysis"
 	"github.com/carbonetes/jacked/pkg/core/ci/assessment"
 	filter "github.com/carbonetes/jacked/pkg/core/ci/filter"
@@ -62,7 +62,7 @@ func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration) {
 	} else {
 		log.Fatalf("No valid scan target specified!")
 	}
-	log.Println("\nGenerating CDX BOM...\n")
+	log.Println("\nGenerating CDX BOM...")
 	sbom, _ := diggity.Scan(diggityArgs)
 
 	bomUtil.Filter(sbom.Packages, &ciCfg.FailCriteria.Package)
@@ -75,7 +75,7 @@ func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration) {
 
 	outputText += "Generated CDX BOM\n\n" + table.CDXBomTable(cdx)
 
-	log.Println("\nAnalyzing CDX BOM...\n")
+	log.Println("\nAnalyzing CDX BOM...")
 	jacked.AnalyzeCDX(cdx)
 	
 	filter.IgnoreVuln(cdx.Vulnerabilities, &ciCfg.FailCriteria.Vulnerability)
@@ -97,7 +97,7 @@ func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration) {
 	}
 
 	log.Println("\nExecuting CI Assessment...")
-	log.Println("\nAssessment Result:\n")
+	log.Println("\nAssessment Result:")
 	outputText += "\n\nAssessment Result:\n"
 	if len(*cdx.Vulnerabilities) == 0 {
 		message := fmt.Sprintf("\nPassed: %5v found components\n", len(*cdx.Components))
