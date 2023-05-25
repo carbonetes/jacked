@@ -10,10 +10,10 @@ import (
 	dm "github.com/carbonetes/diggity/pkg/model"
 	diggity "github.com/carbonetes/diggity/pkg/scanner"
 	"github.com/carbonetes/jacked/internal/config"
-	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/carbonetes/jacked/internal/db"
-	bomUtil "github.com/carbonetes/jacked/internal/sbom"
+	"github.com/carbonetes/jacked/internal/logger"
 	save "github.com/carbonetes/jacked/internal/output/save"
+	bomUtil "github.com/carbonetes/jacked/internal/sbom"
 	jacked "github.com/carbonetes/jacked/pkg/core/analysis"
 	"github.com/carbonetes/jacked/pkg/core/ci/assessment"
 	filter "github.com/carbonetes/jacked/pkg/core/ci/filter"
@@ -62,7 +62,7 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	} else {
 		log.Fatalf("No valid scan target specified!")
 	}
-	log.Println("\nGenerating CDX BOM...\n")
+	log.Println("\nGenerating CDX BOM...")
 	sbom, _ := diggity.Scan(diggityArgs)
 
 	bomUtil.Filter(sbom.Packages, &cfg.Ignore.Package)
@@ -75,7 +75,7 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 
 	outputText += "Generated CDX BOM\n\n" + table.CDXBomTable(cdx)
 
-	log.Println("\nAnalyzing CDX BOM...\n")
+	log.Println("\nAnalyzing CDX BOM...")
 	jacked.AnalyzeCDX(cdx)
 	
 	filter.IgnoreVuln(cdx.Vulnerabilities, &cfg.Ignore.Vulnerability)
@@ -90,7 +90,7 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	outputText += "\n" + stats
 	log.Println(stats)
 
-	log.Println("\nShowing Whitelist...\n")
+	log.Println("\nShowing Whitelist...")
 	outputText += "\n\nWhitelist / Ignore List\n"
 	outputText += "\n" + table.WhitelistTable(&cfg.Ignore)
 
