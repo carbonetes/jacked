@@ -34,8 +34,12 @@ func preRun(_ *cobra.Command, args []string) {
 		arguments.Quiet = &quiet
 		cfg.Output = *arguments.Output
 		cfg.LicenseFinder = license
-		ciCfg.FailCriteria.Package.Name = SplitInput(*arguments.IgnorePackageNames)
-		ciCfg.FailCriteria.Vulnerability.CVE = SplitInput(*arguments.IgnoreCVEs)
+		//arguments for CI Mode
+		ciCfg.FailCriteria.Package.Name = appendIgnoreList(ciCfg.FailCriteria.Package.Name,*arguments.IgnorePackageNames)
+		ciCfg.FailCriteria.Vulnerability.CVE = appendIgnoreList(ciCfg.FailCriteria.Vulnerability.CVE,*arguments.IgnoreCVEs)
+		//arguments for normal scan
+		cfg.Ignore.Package.Name = appendIgnoreList(cfg.Ignore.Package.Name,*arguments.IgnorePackageNames)
+		cfg.Ignore.Vulnerability.CVE = appendIgnoreList(cfg.Ignore.Vulnerability.CVE,*arguments.IgnoreCVEs)
 
 		if *arguments.Quiet {
 			logger.SetQuietMode()
@@ -98,7 +102,7 @@ func run(c *cobra.Command, args []string) {
 		log.Printf("Scanning SBOM JSON: %v", *arguments.SbomFile)
 	}
 
-	engine.Start(arguments, &cfg, &ciCfg)
+	engine.Start(arguments, &cfg)
 }
 
 // ValidateOutputArg checks if output types specified are valid
@@ -119,16 +123,29 @@ func ValidateOutputArg(outputArg string) []string {
 	return acceptedArgs
 }
 
-func SplitInput(input string) []string {
-	var inputs []string
+func appendIgnoreList(currentList []string, input string) []string{
+	if len(input) == 0 {
+	  return removeDuplicates(currentList)
+	}
+	var newList []string
 	if strings.Contains(input, ",") {
-		for _, o := range strings.Split(input, ",") {
-			inputs = append(inputs, strings.ToLower(o))
-		}
+		newList = append(newList, strings.Split(input, ",")...)
 	} else {
-		if len(input) > 0 {
-			inputs = append(inputs, strings.ToLower(input))
+		newList = append(newList, input)
+	}
+	return removeDuplicates(newList)
+}
+
+func removeDuplicates(slice []string) []string {
+	encountered := map[string]bool{}
+	result := []string{}
+
+	for _, str := range slice {
+		strLowerCase := strings.ToLower(str)
+		if !encountered[strLowerCase] {
+			encountered[strLowerCase] = true
+			result = append(result, strLowerCase)
 		}
 	}
-	return inputs
+	return result
 }

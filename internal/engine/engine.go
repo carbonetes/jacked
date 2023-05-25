@@ -21,7 +21,7 @@ import (
 var log = logger.GetLogger()
 
 // Start the scan engine with the given arguments and configurations
-func Start(arguments *model.Arguments, cfg *config.Configuration, ciCfg *config.CIConfiguration) {
+func Start(arguments *model.Arguments, cfg *config.Configuration) {
 
 	var (
 		sbom            *dm.SBOM
@@ -52,7 +52,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration, ciCfg *config.
 	}
 	// Run all parsers and filters for packages
 
-	diggity.Filter(sbom.Packages, &ciCfg.FailCriteria.Package)
+	diggity.Filter(sbom.Packages, &cfg.Ignore.Package)
 	if cfg.LicenseFinder {
 		diggity.GetLicense(sbom.Packages, licenses)
 	}
@@ -68,7 +68,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration, ciCfg *config.
 		log.Errorf("\nError Fetch Database: %v", err)
 	}
 
-	db.Filter(&vulnerabilities,  &ciCfg.FailCriteria.Vulnerability)
+	db.Filter(&vulnerabilities,  &cfg.Ignore.Vulnerability)
 
 	// Begin matching vulnerabilities for each package
 	analysis.WG.Add(totalPackages)
