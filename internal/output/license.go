@@ -1,15 +1,15 @@
 package output
 
 import (
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
 
+	"github.com/carbonetes/jacked/internal/utils"
 	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
 func PrintJsonLicense(licenses *[]model.License) {
-	json, err := json.MarshalIndent(licenses, "", "  ")
+	json, err := utils.ToJSON(licenses)
 	if err != nil {
 		log.Fatal(err)
 	}
