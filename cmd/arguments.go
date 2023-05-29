@@ -12,6 +12,7 @@ import (
 var (
 	arguments   = model.NewArguments()
 	cfg         config.Configuration
+	ciCfg       config.CIConfiguration
 	quiet       bool
 	license     bool
 	secrets     bool
@@ -52,6 +53,7 @@ func init() {
 
 	// Configuration set Flags Arguments
 	cfg.Load()
+	ciCfg.CILoad()
 
 	arguments.DisableSecretSearch = &cfg.SecretConfig.Disabled
 	arguments.SecretContentRegex = &cfg.SecretConfig.SecretRegex
@@ -89,7 +91,7 @@ func init() {
 	rootCmd.Flags().StringVarP(arguments.RegistryToken, "registry-token", "", cfg.Registry.Token, "Access token for private registry access")
 
 	rootCmd.Flags().StringVarP(arguments.IgnorePackageNames, "ignore-package-names", "", "", "Specify package names to be whitelisted on the result")
-	rootCmd.Flags().StringVarP(arguments.IgnoreVulnCVEs, "ignore-vuln-cves", "", "", "Specify CVEs to be whitelisted on the result")
+	rootCmd.Flags().StringVarP(arguments.IgnoreCVEs, "ignore-cves", "", "", "Specify CVEs to be whitelisted on the result")
 	rootCmd.Flags().BoolVarP(arguments.SkipDbUpdate, "skip-db-update", "" ,false, "Skip Database Update on Scanning")
 	
 	rootCmd.PersistentFlags().BoolP("help", "h", false, "")
