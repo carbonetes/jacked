@@ -20,7 +20,7 @@ func NewArguments() *Arguments {
 		ExcludedFilenames:   &[]string{},
 		FailCriteria:        new(string),
 		IgnorePackageNames:  new(string),
-		IgnoreVulnCVEs:      new(string),
+		IgnoreCVEs:          new(string),
 		SkipDbUpdate:        new(bool),
 		ForceDbUpdate:       new(bool),
 	}

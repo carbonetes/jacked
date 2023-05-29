@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"encoding/json"
 	"os"
 
+	"github.com/carbonetes/jacked/internal/utils"
 	"github.com/carbonetes/jacked/internal/version"
 
 	"github.com/spf13/cobra"
@@ -27,7 +27,7 @@ func init() {
 func versionRun(c *cobra.Command, _ []string) {
 	info := version.GetBuild()
 	if format == "json" {
-		output, err := json.MarshalIndent(info, "", " ")
+		output, err := utils.ToJSON(info)
 		if err != nil {
 			log.Fatalf("Error marshalling version info: %v", err)
 		}

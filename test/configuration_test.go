@@ -13,7 +13,7 @@ func TestConfiguration(t *testing.T) {
 
 	t.Log("Generating test configuration")
 
-	config.Filename = "jacked-test"
+	config.File = "jacked-test"
 
 	testConfig.Generate()
 

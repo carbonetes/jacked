@@ -27,7 +27,7 @@ var (
 	defaultCriteria string = "LOW"
 )
 
-func Analyze(args *model.Arguments, cfg *config.Configuration) {
+func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration) {
 	var outputText string
 	// Check database for any updates
     db.DBCheck(*args.SkipDbUpdate, *args.ForceDbUpdate)
@@ -65,7 +65,7 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	log.Println("\nGenerating CDX BOM...")
 	sbom, _ := diggity.Scan(diggityArgs)
 
-	bomUtil.Filter(sbom.Packages, &cfg.Ignore.Package)
+	bomUtil.Filter(sbom.Packages, &ciCfg.FailCriteria.Package)
 
 	if sbom.Packages == nil {
 		log.Error("No package found to analyze!")
@@ -78,7 +78,7 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	log.Println("\nAnalyzing CDX BOM...")
 	jacked.AnalyzeCDX(cdx)
 	
-	filter.IgnoreVuln(cdx.Vulnerabilities, &cfg.Ignore.Vulnerability)
+	filter.IgnoreVuln(cdx.Vulnerabilities, &ciCfg.FailCriteria.Vulnerability)
 	if len(*cdx.Vulnerabilities) == 0 {
 		fmt.Println("No vulnerabilities found!")
 		outputText += "\nNo vulnerabilities found! \n"
@@ -90,13 +90,14 @@ func Analyze(args *model.Arguments, cfg *config.Configuration) {
 	outputText += "\n" + stats
 	log.Println(stats)
 
-	log.Println("\nShowing Whitelist...")
-	outputText += "\n\nWhitelist / Ignore List\n"
-	outputText += "\n" + table.WhitelistTable(&cfg.Ignore)
+	if !ignoreListIsEmpty(&ciCfg.FailCriteria){
+		log.Println("\nShowing Ignore List...\n")
+		outputText += "\n\nIgnore List\n"
+		outputText += "\n" + table.IgnoreListTable(&ciCfg.FailCriteria)
+	}
 
 	log.Println("\nExecuting CI Assessment...")
-
-	log.Println("\nAssessment Result:\n")
+	log.Println("\nAssessment Result:")
 	outputText += "\n\nAssessment Result:\n"
 	if len(*cdx.Vulnerabilities) == 0 {
 		message := fmt.Sprintf("\nPassed: %5v found components\n", len(*cdx.Components))
@@ -135,4 +136,21 @@ func saveOutputFile(args *model.Arguments, outputText string){
 		// we can use the *args.Output for the second args on the parameter, for now it only supports table/txt output
 		save.SaveOutputAsFile(*args.OutputFile,"table", outputText )
 	}
+}
+
+func ignoreListIsEmpty(ciCfg *config.FailCriteria) bool{
+	 var ignoreList = []bool{
+						len(ciCfg.Vulnerability.CVE) == 0,
+						len(ciCfg.Vulnerability.Severity) == 0,
+						len(ciCfg.Package.Name) == 0,
+						len(ciCfg.Package.Type) == 0,
+						len(ciCfg.Package.Version) == 0,
+					   } 
+	
+    for _, empty := range ignoreList{
+		if !empty {
+			return false
+		}
+	}
+	return true
 }
