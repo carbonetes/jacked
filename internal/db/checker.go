@@ -45,6 +45,8 @@ func DBCheck(skipDbUpdate bool, forceDbUpdate bool) {
     latestMetadata := getLatestMetadata(metadataList)
 	if forceDbUpdate && !skipDbUpdate{
 		updateLocalDatabase(latestMetadata)
+		spinner.OnStop(nil)
+		return
 	}
 
 	dbFileExists := checkFile(dbFilepath)
