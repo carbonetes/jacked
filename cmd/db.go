@@ -39,9 +39,7 @@ func dbRun(c *cobra.Command, _ []string) {
 		os.Exit(0)
 	}
 	if c.Flags().Changed("update-db"){
-		skipDBUpdate := false
-		forceDBUpdate := true
-		db.DBCheck(skipDBUpdate, forceDBUpdate)
+		db.DBCheck(false, true)
 	} else {
 		err := c.Help()
 		if err != nil {
