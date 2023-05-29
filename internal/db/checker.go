@@ -34,17 +34,24 @@ var (
 /* Check if database file and metadata is exist from the local path,
  * when files are existing, it will check the latest version from the global metadata and it will compare from the local version to determine if needed to update.
  */
-func DBCheck(skipDbUpdate bool) {
+func DBCheck(skipDbUpdate bool, forceDbUpdate bool) {
+	
 	spinner.OnCheckDatabaseStart()
 	metadataList, err := getGlobalMetadataList()
 	if err != nil {
 		spinner.OnStop(err)
 	}
 
+    latestMetadata := getLatestMetadata(metadataList)
+	if forceDbUpdate && !skipDbUpdate{
+		updateLocalDatabase(latestMetadata)
+		spinner.OnStop(nil)
+		return
+	}
+
 	dbFileExists := checkFile(dbFilepath)
 	metadataFileExists := checkFile(metadataPath)
 
-	latestMetadata := getLatestMetadata(metadataList)
 	if metadataFileExists {
 		if !dbFileExists {
 			if skipDbUpdate {
@@ -76,6 +83,7 @@ func DBCheck(skipDbUpdate bool) {
 
 // Updating local database, needs to check its file intergrity by comparing checksum from the local to global metadata.
 func updateLocalDatabase(metadata Metadata) {
+	
 	schema = metadata.Schema
 
 	// download tar file using the url from the latest version from the global metadata and generate its checksum to be compare with the global metadata checksum

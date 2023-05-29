@@ -30,7 +30,7 @@ var (
 func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration) {
 	var outputText string
 	// Check database for any updates
-    db.DBCheck(*args.SkipDbUpdate)
+    db.DBCheck(*args.SkipDbUpdate, *args.ForceDbUpdate)
 
 	log.Println("Entering CI Mode...")
 	if args.FailCriteria == nil || len(*args.FailCriteria) == 0 || !slices.Contains(assessment.Severities, strings.ToUpper(*args.FailCriteria)) {
