@@ -50,6 +50,8 @@ func download(url string) string {
 	return tempFile
 }
 
+// TODO: implement safe copy to extract temporary files
+
 // Read tar file, extract all files.
 func extractTarGz(target, extractionPath string) error {
 	reader, err := os.Open(target)
@@ -94,12 +96,12 @@ func extractTarGz(target, extractionPath string) error {
 				return err
 			}
 		case tar.TypeReg:
-			_filepath := path.Join(extractionPath, header.Name)
-			err := os.MkdirAll(filepath.Dir(_filepath), 0700)
+			path := path.Join(extractionPath, header.Name)
+			err := os.MkdirAll(filepath.Dir(path), 0700)
 			if err != nil {
 				return err
 			}
-			out, err := os.Create(_filepath)
+			out, err := os.Create(path)
 			if err != nil {
 				return err
 			}
