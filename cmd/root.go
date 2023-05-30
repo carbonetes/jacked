@@ -9,6 +9,7 @@ import (
 	"github.com/carbonetes/jacked/internal/ui/spinner"
 	"github.com/carbonetes/jacked/internal/version"
 	"github.com/carbonetes/jacked/pkg/core/ci"
+	"github.com/carbonetes/jacked/pkg/core/model"
 	"golang.org/x/exp/slices"
 
 	"github.com/spf13/cobra"
@@ -35,11 +36,11 @@ func preRun(_ *cobra.Command, args []string) {
 		cfg.Output = *arguments.Output
 		cfg.LicenseFinder = license
 		//arguments for CI Mode
-		ciCfg.FailCriteria.Package.Name = appendIgnoreList(ciCfg.FailCriteria.Package.Name,*arguments.IgnorePackageNames)
-		ciCfg.FailCriteria.Vulnerability.CVE = appendIgnoreList(ciCfg.FailCriteria.Vulnerability.CVE,*arguments.IgnoreCVEs)
+		ciCfg.FailCriteria.Package.Name = appendIgnoreList(ciCfg.FailCriteria.Package.Name, *arguments.IgnorePackageNames)
+		ciCfg.FailCriteria.Vulnerability.CVE = appendIgnoreList(ciCfg.FailCriteria.Vulnerability.CVE, *arguments.IgnoreCVEs)
 		//arguments for normal scan
-		cfg.Ignore.Package.Name = appendIgnoreList(cfg.Ignore.Package.Name,*arguments.IgnorePackageNames)
-		cfg.Ignore.Vulnerability.CVE = appendIgnoreList(cfg.Ignore.Vulnerability.CVE,*arguments.IgnoreCVEs)
+		cfg.Ignore.Package.Name = appendIgnoreList(cfg.Ignore.Package.Name, *arguments.IgnorePackageNames)
+		cfg.Ignore.Vulnerability.CVE = appendIgnoreList(cfg.Ignore.Vulnerability.CVE, *arguments.IgnoreCVEs)
 
 		if *arguments.Quiet {
 			logger.SetQuietMode()
@@ -56,10 +57,8 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	if c.Flags().Changed("secrets") {
-		if secrets {
-			*arguments.DisableSecretSearch = false
-			cfg.SecretConfig.Disabled = false
-		}
+		*arguments.DisableSecretSearch = false
+		cfg.SecretConfig.Disabled = false
 	}
 
 	if len(args) == 0 && len(*arguments.Image) == 0 && len(*arguments.Dir) == 0 && len(*arguments.Tar) == 0 && len(*arguments.SbomFile) == 0 {
@@ -80,6 +79,11 @@ func run(c *cobra.Command, args []string) {
 		ci.Analyze(arguments, &ciCfg)
 	}
 
+	checkDefinedArguments(arguments)
+	engine.Start(arguments, &cfg)
+}
+
+func checkDefinedArguments(arguments *model.Arguments) {
 	// Check user output type is supported
 	if arguments.Output != nil && *arguments.Output != "" {
 		acceptedArgs := ValidateOutputArg(*arguments.Output)
@@ -94,15 +98,7 @@ func run(c *cobra.Command, args []string) {
 		log.Print("Using default tag:", defaultTag)
 		modifiedTag := *arguments.Image + tagSeparator + defaultTag
 		arguments.Image = &modifiedTag
-	} else if len(*arguments.Tar) != 0 {
-		log.Printf("Scanning Tar File: %v", *arguments.Tar)
-	} else if len(*arguments.Dir) != 0 {
-		log.Printf("Scanning Directory: %v", *arguments.Dir)
-	} else if len(*arguments.SbomFile) != 0 {
-		log.Printf("Scanning SBOM JSON: %v", *arguments.SbomFile)
 	}
-
-	engine.Start(arguments, &cfg)
 }
 
 // ValidateOutputArg checks if output types specified are valid
@@ -123,9 +119,9 @@ func ValidateOutputArg(outputArg string) []string {
 	return acceptedArgs
 }
 
-func appendIgnoreList(currentList []string, input string) []string{
+func appendIgnoreList(currentList []string, input string) []string {
 	if len(input) == 0 {
-	  return removeDuplicates(currentList)
+		return removeDuplicates(currentList)
 	}
 	var newList []string
 	if strings.Contains(input, ",") {
