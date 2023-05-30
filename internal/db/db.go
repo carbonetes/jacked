@@ -17,7 +17,6 @@ import (
 
 const (
 	driver        = "sqlite"
-	defaultSchema = "v1"
 	filename      = "jacked"
 	filetype      = "db"
 )
@@ -25,9 +24,8 @@ const (
 var (
 	userCache, _ = os.UserCacheDir()
 	log          = logger.GetLogger()
-	schema       = defaultSchema
 	db           *bun.DB
-	dbDirectory  = path.Join(userCache, "jacked", schema)
+	dbDirectory  = path.Join(userCache, filename)
 	dbFile       = filename + "." + filetype
 	dbFilepath   = path.Join(dbDirectory, dbFile)
 )

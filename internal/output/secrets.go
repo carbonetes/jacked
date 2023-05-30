@@ -1,15 +1,15 @@
 package output
 
 import (
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
 
 	dm "github.com/carbonetes/diggity/pkg/model"
+	"github.com/carbonetes/jacked/internal/utils"
 )
 
 func PrintJsonSecret(secrets *dm.SecretResults) {
-	json, err := json.MarshalIndent(secrets, "", "  ")
+	json, err := utils.ToJSON(secrets)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -34,7 +34,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	start := time.Now()
 
 	// Check database for any updates
-	db.DBCheck(*arguments.SkipDbUpdate)
+	db.DBCheck(*arguments.SkipDbUpdate, *arguments.ForceDbUpdate)
 	
 	if len(*arguments.SbomFile) > 0 {
 		file, err := os.Open(*arguments.SbomFile)
@@ -68,7 +68,7 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 		log.Errorf("\nError Fetch Database: %v", err)
 	}
 
-	db.Filter(&vulnerabilities, &cfg.Ignore.Vulnerability)
+	db.Filter(&vulnerabilities,  &cfg.Ignore.Vulnerability)
 
 	// Begin matching vulnerabilities for each package
 	analysis.WG.Add(totalPackages)

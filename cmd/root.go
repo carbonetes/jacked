@@ -34,8 +34,12 @@ func preRun(_ *cobra.Command, args []string) {
 		arguments.Quiet = &quiet
 		cfg.Output = *arguments.Output
 		cfg.LicenseFinder = license
-		cfg.Ignore.Package.Name = SplitInput(*arguments.IgnorePackageNames)
-		cfg.Ignore.Vulnerability.CVE = SplitInput(*arguments.IgnoreVulnCVEs)
+		//arguments for CI Mode
+		ciCfg.FailCriteria.Package.Name = appendIgnoreList(ciCfg.FailCriteria.Package.Name,*arguments.IgnorePackageNames)
+		ciCfg.FailCriteria.Vulnerability.CVE = appendIgnoreList(ciCfg.FailCriteria.Vulnerability.CVE,*arguments.IgnoreCVEs)
+		//arguments for normal scan
+		cfg.Ignore.Package.Name = appendIgnoreList(cfg.Ignore.Package.Name,*arguments.IgnorePackageNames)
+		cfg.Ignore.Vulnerability.CVE = appendIgnoreList(cfg.Ignore.Vulnerability.CVE,*arguments.IgnoreCVEs)
 
 		if *arguments.Quiet {
 			logger.SetQuietMode()
@@ -73,7 +77,7 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	if ciMode {
-		ci.Analyze(arguments, &cfg)
+		ci.Analyze(arguments, &ciCfg)
 	}
 
 	// Check user output type is supported
@@ -119,14 +123,29 @@ func ValidateOutputArg(outputArg string) []string {
 	return acceptedArgs
 }
 
-func SplitInput(input string) []string {
-	var inputs []string
-	if strings.Contains(input, ",") {
-		for _, o := range strings.Split(input, ",") {
-			inputs = append(inputs, strings.ToLower(o))
-		}
-	} else {
-		inputs = append(inputs, strings.ToLower(input))
+func appendIgnoreList(currentList []string, input string) []string{
+	if len(input) == 0 {
+	  return removeDuplicates(currentList)
 	}
-	return inputs
+	var newList []string
+	if strings.Contains(input, ",") {
+		newList = append(newList, strings.Split(input, ",")...)
+	} else {
+		newList = append(newList, input)
+	}
+	return removeDuplicates(newList)
+}
+
+func removeDuplicates(slice []string) []string {
+	encountered := map[string]bool{}
+	result := []string{}
+
+	for _, str := range slice {
+		strLowerCase := strings.ToLower(str)
+		if !encountered[strLowerCase] {
+			encountered[strLowerCase] = true
+			result = append(result, strLowerCase)
+		}
+	}
+	return result
 }

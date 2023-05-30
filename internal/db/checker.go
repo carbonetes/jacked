@@ -33,21 +33,39 @@ var (
 /* Check if database file and metadata is exist from the local path,
  * when files are existing, it will check the latest version from the global metadata and it will compare from the local version to determine if needed to update.
  */
-func DBCheck(skipDbUpdate bool) {
+func DBCheck(skipDbUpdate bool, forceDbUpdate bool) {
+
 	spinner.OnCheckDatabaseStart()
 	metadataList, err := getGlobalMetadataList()
 	if err != nil {
 		spinner.OnStop(err)
 	}
 
+	latestMetadata := getLatestMetadata(metadataList)
+	if forceDbUpdate && !skipDbUpdate {
+		err := updateLocalDatabase(latestMetadata)
+		spinner.OnStop(err)
+		return
+	}
+
 	dbFileExists := checkFile(dbFilepath)
 	metadataFileExists := checkFile(metadataPath)
 
-	latestMetadata := getLatestMetadata(metadataList)
+	if !dbFileExists && skipDbUpdate {
+		spinner.OnStop(errors.New("No database found on local!"))
+	}
+
+	if !metadataFileExists && skipDbUpdate {
+		spinner.OnStop(errors.New("No database metadata found on local!"))
+	}
+
 	if !metadataFileExists {
-		if skipDbUpdate {
-			spinner.OnStop(errors.New("No database metadata found on local!"))
-		}
+		err := updateLocalDatabase(latestMetadata)
+		spinner.OnStop(err)
+		return
+	}
+
+	if !dbFileExists {
 		err := updateLocalDatabase(latestMetadata)
 		spinner.OnStop(err)
 		return
@@ -58,23 +76,10 @@ func DBCheck(skipDbUpdate bool) {
 		spinner.OnStop(err)
 	}
 
-	if !dbFileExists {
-		if skipDbUpdate {
-			spinner.OnStop(errors.New("No database found on local!"))
-		}
+	if localMetadata.Build != latestMetadata.Build && !skipDbUpdate {
 		err := updateLocalDatabase(latestMetadata)
 		spinner.OnStop(err)
 		return
-	}
-
-	if localMetadata.Build != latestMetadata.Build {
-		if !skipDbUpdate {
-			err := updateLocalDatabase(latestMetadata)
-			spinner.OnStop(err)
-			return
-		}
-	} else {
-		schema = localMetadata.Schema
 	}
 
 	spinner.OnStop(nil)
@@ -82,8 +87,6 @@ func DBCheck(skipDbUpdate bool) {
 
 // Download and extract latest database files.
 func updateLocalDatabase(metadata Metadata) error {
-	schema = metadata.Schema
-
 	tmpFilepath := download(metadata.URL)
 	checksum, err := generateChecksum(tmpFilepath)
 	if err != nil {
@@ -269,6 +272,7 @@ func GetLocalMetadata() Metadata {
 	}
 	return metadata
 }
+
 // Move a file from source to destination.
 func moveFile(source, destination string) error {
 	src, err := os.Open(source)
