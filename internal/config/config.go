@@ -79,7 +79,10 @@ func (cfg *Configuration) SetDefault() *Configuration {
 // Generate the configuration file with default values
 func (cfg *Configuration) Generate() {
 	cfg.SetDefault()
-	GenerateConfigFile(File, cfg)
+	err := GenerateConfigFile(File, cfg)
+	if err != nil {
+		log.Error("Error generating config file")
+	}
 }
 
 // Read the configuration file and parse it
@@ -88,11 +91,17 @@ func (cfg *Configuration) Load() *Configuration {
 		cfg.Generate()
 		cfg.Load()
 	} else {
-		LoadConfiguration(File, cfg)
+		err = LoadConfiguration(File, cfg)
+		if err != nil {
+			log.Error("Error loading config file")
+		}
 	}
 
 	if cfg.SecretConfig.Excludes == nil {
-		cfg.ResetDefault(false)
+		err = cfg.ResetDefault(false)
+		if err != nil {
+			log.Error("Error resetting config file")
+		}
 	}
 
 	return cfg

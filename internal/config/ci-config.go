@@ -42,7 +42,10 @@ func (cfg *CIConfiguration) CISetDefault() *CIConfiguration {
 // Generate the configuration file with default values
 func (cfg *CIConfiguration) CIGenerate() {
 	cfg.CISetDefault()
-	GenerateConfigFile(CIFile, cfg)
+	err := GenerateConfigFile(CIFile, cfg)
+	if err != nil {
+		log.Error("Error Generating CIConfig file")
+	}
 }
 
 // Read the configuration file and parse it
@@ -51,7 +54,10 @@ func (cfg *CIConfiguration) CILoad() *CIConfiguration {
 		cfg.CIGenerate()
 		cfg.CILoad()
 	} else {
-		LoadConfiguration(CIFile, cfg)
+		err = LoadConfiguration(CIFile, cfg)
+		if err != nil {
+			log.Error("Error loading ci config file")
+		}
 	}
 	return cfg
 }
