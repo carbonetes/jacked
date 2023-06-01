@@ -91,7 +91,7 @@ func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration) {
 	log.Println(stats)
 
 	if !ignoreListIsEmpty(&ciCfg.FailCriteria){
-		log.Println("\nShowing Ignore List...\n")
+		log.Println("\nShowing Ignore List..")
 		outputText += "\n\nIgnore List\n"
 		outputText += "\n" + table.IgnoreListTable(&ciCfg.FailCriteria)
 	}
