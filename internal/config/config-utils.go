@@ -31,7 +31,7 @@ func FileSetter (filename string) string{
 	return home + string(os.PathSeparator) + "." + filename + "." + configType
 }
 
-func GenerateConfigFile (filename string , cfg interface{}){
+func GenerateConfigFile (filename string , cfg interface{}) error{
 	err := os.MkdirAll(filepath.Dir(filename), 0700)
 	if err != nil {
 		log.Fatalf("Cannot create directory %v", err.Error())
@@ -47,9 +47,10 @@ func GenerateConfigFile (filename string , cfg interface{}){
 	if err != nil {
 		log.Fatalf("error encoding: %v", err)
 	}
+	return err
 }
 
-func LoadConfiguration(filename string, cfg interface{}) {
+func LoadConfiguration(filename string, cfg interface{}) error{
 	configFile, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatalf("Error reading configuration file: %v", err)
@@ -59,20 +60,27 @@ func LoadConfiguration(filename string, cfg interface{}) {
 	if err != nil {
 		log.Fatalf("Error loading configurations: %v", err)
 	}
+	return err
 }
 
-func UpdateConfiguration (filename string){
-	log.Info("Updating configuration...")
+func UpdateConfiguration (filename string, test bool) error{
+	if !test{
+		log.Info("Updating configuration...")
+	}
 	err := os.Remove(filename)
 	if err != nil {
 		log.Fatalf("Error deleting old configuration File: %v", err)
 	}
+	return err
 }
 
-func ResetDefaultConfiguration (filename string){
-	log.Info("Resetting to default configurations...")
+func ResetDefaultConfiguration (filename string, test bool)error{
+	if !test{
+		log.Info("Resetting to default configurations...")
+	}
 	err := os.Remove(filename)
 	if err != nil {
 		log.Fatalf("Error deleting temp File: %v", err)
 	}
+	return err
 }

@@ -92,22 +92,28 @@ func (cfg *Configuration) Load() *Configuration {
 	}
 
 	if cfg.SecretConfig.Excludes == nil {
-		cfg.ResetDefault()
+		cfg.ResetDefault(false)
 	}
 
 	return cfg
 }
 
 // Update the current configuration file
-func (cfg *Configuration) Update() {
-	UpdateConfiguration(File)
+func (cfg *Configuration) Update(test bool) error{
+	err := UpdateConfiguration(File, test)
 	cfg.Load()
-	log.Info("Done!")
+	if !test {
+		log.Info("Done!")
+	}
+	return err
 }
 
 // Resets the configuration to default values
-func (cfg *Configuration) ResetDefault() {
-	ResetDefaultConfiguration(File)
+func (cfg *Configuration) ResetDefault(test bool) error{
+	err:= ResetDefaultConfiguration(File, test)
 	cfg.Load()
-	log.Info("Done!")
+	if !test{
+		log.Info("Done!")
+	}
+	return err
 }
