@@ -98,7 +98,7 @@ func (cfg *Configuration) Load() *Configuration {
 	}
 
 	if cfg.SecretConfig.Excludes == nil {
-		err = cfg.ResetDefault(false)
+		err := cfg.ResetDefault(false)
 		if err != nil {
 			log.Error("Error resetting config file")
 		}
