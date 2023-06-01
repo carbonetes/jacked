@@ -30,18 +30,19 @@ func licenseHeader() {
 	}
 }
 
-func licenseRows(licenses []model.License) {
-	var index int = 1
+func licenseRows(licenses []model.License) int{
+	var count int = 1
 	for _, license := range licenses {
 		r := []*simpletable.Cell{
-			{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v", index)},
+			{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v", count)},
 			{Text: license.Package},
 			{Text: license.License},
 		}
-		index++
+		count++
 		licenseTable.Body.Cells = append(licenseTable.Body.Cells, r)
 	}
-	licenseFooter(index - 1)
+	licenseFooter(count - 1)
+	return count -1
 }
 
 func licenseFooter(count int) {
@@ -56,10 +57,13 @@ func licenseFooter(count int) {
 	}
 }
 
-func PrintLicenses(licenses []model.License) {
+func PrintLicenses(licenses []model.License, test bool) int{
 	licenseHeader()
-	licenseRows(licenses)
+    totalRows := licenseRows(licenses)
 	licenseTable.SetStyle(simpletable.StyleCompactLite)
-	log.Println("\nLicenses")
-	log.Println(licenseTable.String())
+	if !test{
+		log.Println("\nLicenses")
+		log.Println(licenseTable.String())
+	}
+	return totalRows
 }

@@ -1,6 +1,7 @@
 package credits
 
 import (
+	"fmt"
 	log "github.com/carbonetes/jacked/internal/logger"
 
 	"github.com/savioxavier/termlink"
@@ -13,10 +14,14 @@ const (
 	credits       = "Made by: Carbonetes"
 )
 
-func Show() {
+func Show(test bool) int{
 	log := log.GetLogger()
 	link := termlink.ColorLink("Jacked", githubLink, "green")
-	log.Println()
-	log.Println(footerMessage + link)
-	log.Println(credits)
+	fullMessage := fmt.Sprintf(footerMessage + link)
+	if !test {
+		log.Println()
+		log.Println(fullMessage)
+		log.Println(credits)
+	}
+	return len(fullMessage)
 }
