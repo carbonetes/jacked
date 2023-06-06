@@ -7,11 +7,13 @@ import (
 	"github.com/carbonetes/jacked/pkg/core/ci/assessment"
 )
 
-func MatchTable(matches *[]assessment.Match) string{
+func MatchTable(matches *[]assessment.Match, test bool) string{
 	var table = simpletable.New()
 	matchHeader(table)
 	matchRows(matches, table)
-	fmt.Println(table.String())
+	if !test{
+		fmt.Println(table.String())
+	}
 	return table.String()
 }
 

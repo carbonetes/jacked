@@ -76,7 +76,7 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	if ciMode {
-		ci.Analyze(arguments, &ciCfg)
+		ci.Analyze(arguments, &ciCfg, false)
 	}
 
 	checkDefinedArguments(arguments)

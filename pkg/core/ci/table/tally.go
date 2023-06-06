@@ -7,11 +7,13 @@ import (
 	"github.com/carbonetes/jacked/pkg/core/ci/assessment"
 )
 
-func TallyTable(tally *assessment.Tally) string{
+func TallyTable(tally *assessment.Tally, test bool) string{
 	var table = simpletable.New()
 	tallyHeader(table)
 	tallyRows(tally, table)
-	fmt.Println(table.String())
+	if !test{
+		fmt.Println(table.String())
+	}
 	return table.String()
 }
 

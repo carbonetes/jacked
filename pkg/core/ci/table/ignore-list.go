@@ -7,11 +7,13 @@ import (
 	"github.com/carbonetes/jacked/internal/config"
 )
 
-func IgnoreListTable (ignore *config.FailCriteria) string {
+func IgnoreListTable (ignore *config.FailCriteria, test bool) string {
 	table := simpleTable.New()
 	ignoreListHeader(table)
 	ignoreListRows(ignore,table)
-	fmt.Println(table.String())
+	if !test {
+		fmt.Println(table.String())
+	}
 	return table.String()
 }
 
