@@ -58,7 +58,7 @@ func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments
 			}
 		}
 	case "cyclonedx-json":
-		outputText = cyclonedx.PrintCycloneDXJSON(sbom)
+		outputText = cyclonedx.PrintCycloneDXJSON(sbom, false)
 
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
@@ -75,7 +75,7 @@ func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments
 			}
 		}
 	case "spdx-json":
-		outputText = PrintSPDX("json", source, sbom)
+		outputText = PrintSPDX("json", source, sbom, false)
 
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
@@ -92,7 +92,7 @@ func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments
 			}
 		}
 	case "cyclonedx-xml":
-		outputText = cyclonedx.PrintCycloneDXXML(sbom)
+		outputText = cyclonedx.PrintCycloneDXXML(sbom, false)
 
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
@@ -109,7 +109,7 @@ func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments
 			}
 		}
 	case "spdx-xml":
-		outputText = PrintSPDX("xml", source, sbom)
+		outputText = PrintSPDX("xml", source, sbom, false)
 
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
@@ -126,7 +126,7 @@ func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments
 			}
 		}
 	case "spdx-tag-value":
-		outputText = PrintSPDX("tag-value", source, sbom)
+		outputText = PrintSPDX("tag-value", source, sbom, false)
 	default:
 		outputText = table.DisplayScanResultTable(sbom.Packages)
 		if cfg.LicenseFinder {
