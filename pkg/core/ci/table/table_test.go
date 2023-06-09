@@ -32,7 +32,7 @@ func TestCDXBomTable(t *testing.T) {
 		d.Image = &test.image
 		sbom, _ := diggity.Scan(d)
 		cdx := convert.ToCDX(sbom.Packages)
-		if result := CDXBomTable(cdx, true); len(result) < test.expected{
+		if result := CDXBomTable(cdx); len(result) < test.expected{
 			t.Error("Test Failed: CDXBom table is not working properly")
 		}
 	}
@@ -45,7 +45,7 @@ func TestCDXVexTable(t *testing.T) {
 		sbom, _ := diggity.Scan(d)
 		cdx := convert.ToCDX(sbom.Packages)
 		jacked.AnalyzeCDX(cdx)
-		if result := CDXVexTable(cdx, true); len(result) < test.expected{
+		if result := CDXVexTable(cdx); len(result) < test.expected{
 			t.Error("Test Failed: CDXVextable is not working properly")
 		}
 	}
@@ -54,7 +54,7 @@ func TestCDXVexTable(t *testing.T) {
 func TestIgnoreListTable(t *testing.T) {
 
 	for _, test := range tests {
-		if result := IgnoreListTable(&cfg.FailCriteria, true); len(result) < test.expected{
+		if result := IgnoreListTable(&cfg.FailCriteria); len(result) < test.expected{
 			t.Error("Test Failed: Ignore List table is not working properly")
 		}
 	}
@@ -66,7 +66,7 @@ func TestMatchTable(t *testing.T) {
 	}
 
     matches := asses.Matches
-	if result := len(MatchTable(matches, true)); result < 1 {
+	if result := len(MatchTable(matches)); result < 1 {
 		t.Error("Test Failed: Match table is not working properly")
 	}
 }
@@ -77,7 +77,7 @@ func TestTallyTable(t *testing.T) {
 	}
 
     tally := asses.Tally
-	if result := len(TallyTable(tally, true)); result < 1 {
+	if result := len(TallyTable(tally)); result < 1 {
 		t.Error("Test Failed: Tally table is not working properly")
 	}
 }

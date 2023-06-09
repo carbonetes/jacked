@@ -3,8 +3,8 @@ package ci
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
+    "os"
 
 	"github.com/carbonetes/diggity/pkg/convert"
 	dm "github.com/carbonetes/diggity/pkg/model"
@@ -27,29 +27,24 @@ var (
 	defaultCriteria string = "LOW"
 )
 
-func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration, test bool) int{
+func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration){
 	var outputText string
-	if !test{
-		// Check database for any updates
-		db.DBCheck(*args.SkipDbUpdate, *args.ForceDbUpdate)
-	}
-    if !test {
-		log.Println("Entering CI Mode...")
-	}
+
+	// Check database for any updates
+	db.DBCheck(*args.SkipDbUpdate, *args.ForceDbUpdate)
+	
+	log.Println("Entering CI Mode...")
+	
 	if args.FailCriteria == nil || len(*args.FailCriteria) == 0 || !slices.Contains(assessment.Severities, strings.ToUpper(*args.FailCriteria)) {
 		warningMessage := fmt.Sprintf("\nInvalid criteria specified : %v\nSet to default criteria : %v", *args.FailCriteria, defaultCriteria)
-		if !test{
-			log.Warnf(warningMessage)
-		}
+		log.Warnf(warningMessage)
 		outputText = warningMessage
 		args.FailCriteria = &defaultCriteria
 	}
 	diggityArgs := dm.NewArguments()
 	if len(*args.Image) > 0 {
 		imageInfo := fmt.Sprintf("\nImage: %s", *args.Image)
-		if !test{
-			log.Printf(imageInfo)
-		}
+		log.Printf(imageInfo)
 		outputText += imageInfo + "\n\n"
 		diggityArgs.Image = args.Image
 		diggityArgs.RegistryUsername = args.RegistryUsername
@@ -67,15 +62,10 @@ func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration, test bool) in
 		outputText += tarInfo + "\n\n"
 		diggityArgs.Tar = args.Tar
 	} else {
-		if !test{
-			log.Fatalf("No valid scan target specified!")
-		}
-		
-		return -1
+		log.Fatalf("No valid scan target specified!")
 	}
-	if !test{
-		log.Println("\nGenerating CDX BOM...")
-	}
+
+	log.Println("\nGenerating CDX BOM...")
 	sbom, _ := diggity.Scan(diggityArgs)
 
 	bomUtil.Filter(sbom.Packages, &ciCfg.FailCriteria.Package)
@@ -85,78 +75,61 @@ func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration, test bool) in
 	}
 
 	cdx := convert.ToCDX(sbom.Packages)
-    if !test{
-		outputText += "Generated CDX BOM\n\n" + table.CDXBomTable(cdx, test)
-		log.Println("\nAnalyzing CDX BOM...")
-	}
+	outputText += "Generated CDX BOM\n\n" + table.CDXBomTable(cdx)
+	log.Println("\nAnalyzing CDX BOM...")
 	jacked.AnalyzeCDX(cdx)
 	
 	filter.IgnoreVuln(cdx.Vulnerabilities, &ciCfg.FailCriteria.Vulnerability)
-	if !test{
-		if len(*cdx.Vulnerabilities) == 0 {
-			fmt.Println("No vulnerabilities found!")
-			outputText += "\nNo vulnerabilities found! \n"
-		} else {
-			outputText += "\n\nAnalyzed CDX BOM \n\n" + table.CDXVexTable(cdx,test)
-		}
-	}
-    if !test{
-		stats := fmt.Sprintf("\nPackages: %9v\nVulnerabilities: %v", len(*cdx.Components), len(*cdx.Vulnerabilities))
-		outputText += "\n" + stats
-		log.Println(stats)
+	if len(*cdx.Vulnerabilities) == 0 {
+		fmt.Println("No vulnerabilities found!")
+		outputText += "\nNo vulnerabilities found! \n"
+	} else {
+		outputText += "\n\nAnalyzed CDX BOM \n\n" + table.CDXVexTable(cdx)
 	}
 
-	if !ignoreListIsEmpty(&ciCfg.FailCriteria) && !test{
+	stats := fmt.Sprintf("\nPackages: %9v\nVulnerabilities: %v", len(*cdx.Components), len(*cdx.Vulnerabilities))
+	outputText += "\n" + stats
+	log.Println(stats)
+
+	if !ignoreListIsEmpty(&ciCfg.FailCriteria){
 		log.Println("\nShowing Ignore List...")
 		outputText += "\n\nIgnore List\n"
-		outputText += "\n" + table.IgnoreListTable(&ciCfg.FailCriteria, test)
+		outputText += "\n" + table.IgnoreListTable(&ciCfg.FailCriteria)
 	}
-    if !test{
-		log.Println("\nExecuting CI Assessment...")
-		log.Println("\nAssessment Result:")
-	}
+	log.Println("\nExecuting CI Assessment...")
+	log.Println("\nAssessment Result:")
 	outputText += "\n\nAssessment Result:\n"
-	if len(*cdx.Vulnerabilities) == 0 && !test{
+	if len(*cdx.Vulnerabilities) == 0{
 		message := fmt.Sprintf("\nPassed: %5v found components\n", len(*cdx.Components))
 		outputText += message
 		log.Println(message)
 	}
 
 	result := assessment.Evaluate(args.FailCriteria, cdx)
-    if !test{
-		outputText += "\n"+table.TallyTable(result.Tally, test)
-		outputText += "\n"+table.MatchTable(result.Matches, test)
-	}
+	outputText += "\n"+table.TallyTable(result.Tally)
+	outputText += "\n"+table.MatchTable(result.Matches)
 	for _, m := range *result.Matches {
 		if len(m.Vulnerability.Recommendation) > 0 {
 			recMessage := fmt.Sprintf("[%v] : %v", m.Vulnerability.ID, m.Vulnerability.Recommendation)
 			outputText += "\n" + recMessage
-			if !test{
-				log.Warnf(recMessage)
-			}
+			log.Warnf(recMessage)
 		}
 	}
 	totalVulnerabilities := len(*cdx.Vulnerabilities)
-	if result.Passed && !test{
+	if result.Passed{
 		passedMessage := fmt.Sprintf("\nPassed: %5v out of %v found vulnerabilities passed the assessment\n", totalVulnerabilities, totalVulnerabilities)
 		outputText += "\n" + passedMessage
 		log.Println(passedMessage)
 		saveOutputFile(args,outputText)
-		if !test{
-			os.Exit(0)
-		}
-		return 0
+		os.Exit(0)
 	}
 	
-	if !test{
-		failedMessage := fmt.Sprintf("\nFailed: %5v out of %v found vulnerabilities failed the assessment \n", len(*result.Matches), totalVulnerabilities)
-		outputText += "\n" + failedMessage
-		log.Error(errors.New(failedMessage))
-		saveOutputFile(args,outputText)
-		os.Exit(1)
-
-	}
-	return 1
+	
+	failedMessage := fmt.Sprintf("\nFailed: %5v out of %v found vulnerabilities failed the assessment \n", len(*result.Matches), totalVulnerabilities)
+	outputText += "\n" + failedMessage
+	log.Error(errors.New(failedMessage))
+	saveOutputFile(args,outputText)
+	os.Exit(1)
 }
 
 func saveOutputFile(args *model.Arguments, outputText string){

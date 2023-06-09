@@ -7,13 +7,11 @@ import (
 	"github.com/alexeyco/simpletable"
 )
 
-func CDXBomTable(cdx *cyclonedx.BOM, test bool) string{
+func CDXBomTable(cdx *cyclonedx.BOM) string{
 	var table = simpletable.New()
 	bomHeader(table)
 	bomRows(cdx.Components, table)
-	if !test{
-		fmt.Println(table.String())
-	}
+	fmt.Println(table.String())
 	return table.String()
 }
 
