@@ -3,7 +3,6 @@ package output
 import (
 	"encoding/xml"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -27,6 +26,7 @@ func PrintSPDX(formatType string, image *string, sbom *dm.SBOM) string {
 			log.Errorln(err.Error())
 		}
 		fmt.Printf("%+v\n", string(result))
+
 		return string(result)
 
 	case "json":
@@ -41,9 +41,7 @@ func PrintSPDX(formatType string, image *string, sbom *dm.SBOM) string {
 		return printSpdxTagValue(image, sbom.Packages)
 	default:
 		log.Error("Format type not found")
-		os.Exit(1)
 	}
-
 	return ""
 }
 

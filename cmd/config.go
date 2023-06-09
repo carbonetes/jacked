@@ -62,11 +62,17 @@ func cfgRun(c *cobra.Command, _ []string) {
 	}
 	if c.Flags().Changed("reset") {
 		var newCfg config.Configuration
-		newCfg.ResetDefault()
+		err := newCfg.ResetDefault()
+		if err != nil {
+			log.Error("Error resetting config file")
+		}
 	}
 	if c.Flags().Changed("ci-reset") {
 		var newCiCfg config.CIConfiguration
-		newCiCfg.CIResetDefault()
+		err := newCiCfg.CIResetDefault()
+		if err != nil {
+			log.Error("Error resetting ci config file")
+		}
 	}else {
 		err := c.Help()
 		if err != nil {

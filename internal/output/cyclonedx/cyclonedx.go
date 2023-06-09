@@ -18,8 +18,7 @@ func PrintCycloneDXJSON(sbom *dm.SBOM) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Printf("%s\n", string(json))
+    fmt.Printf("%s\n", string(json))
 	return string(json)
 
 }
@@ -30,7 +29,6 @@ func PrintCycloneDXXML(sbom *dm.SBOM) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	fmt.Printf("%+v\n", string(xml))
 	return string(xml)
 }

@@ -87,5 +87,6 @@ func Start(arguments *model.Arguments, cfg *config.Configuration) {
 	if err != nil {
 		log.Errorf("Error on show latest version: %v", err)
 	}
+	// the argument in show function is to check if it is for testing or not
 	credits.Show()
 }
