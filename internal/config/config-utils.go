@@ -63,10 +63,8 @@ func LoadConfiguration(filename string, cfg interface{}) error{
 	return err
 }
 
-func UpdateConfiguration (filename string, test bool) error{
-	if !test{
-		log.Info("Updating configuration...")
-	}
+func UpdateConfiguration (filename string) error{
+	log.Info("Updating configuration...")
 	err := os.Remove(filename)
 	if err != nil {
 		log.Fatalf("Error deleting old configuration File: %v", err)
@@ -74,10 +72,8 @@ func UpdateConfiguration (filename string, test bool) error{
 	return err
 }
 
-func ResetDefaultConfiguration (filename string, test bool)error{
-	if !test{
-		log.Info("Resetting to default configurations...")
-	}
+func ResetDefaultConfiguration (filename string) error{
+	log.Info("Resetting to default configurations...")
 	err := os.Remove(filename)
 	if err != nil {
 		log.Fatalf("Error deleting temp File: %v", err)

@@ -38,24 +38,24 @@ func TestLoadConfiguration(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	err := cfg.Update(true)
+	err := cfg.Update()
 	if err != nil{
 		t.Error("Failed: Error on updating config file")
 	}
 
-	err = ciCfg.CIUpdate(true)
+	err = ciCfg.CIUpdate()
 	if err != nil{
 		t.Error("Failed: Error on updating CI config file")
 	}
 }
 
 func TestResetDefault(t *testing.T) {
-	err := cfg.ResetDefault(true)
+	err := cfg.ResetDefault()
 	if err != nil{
 		t.Error("Failed: Error on resetting config file")
 	}
 
-	err = ciCfg.CIResetDefault(true)
+	err = ciCfg.CIResetDefault()
 	if err != nil{
 		t.Error("Failed: Error on resetting CI config file")
 	}

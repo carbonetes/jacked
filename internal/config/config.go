@@ -98,7 +98,7 @@ func (cfg *Configuration) Load() *Configuration {
 	}
 
 	if cfg.SecretConfig.Excludes == nil {
-		err := cfg.ResetDefault(false)
+		err := cfg.ResetDefault()
 		if err != nil {
 			log.Error("Error resetting config file")
 		}
@@ -108,21 +108,17 @@ func (cfg *Configuration) Load() *Configuration {
 }
 
 // Update the current configuration file
-func (cfg *Configuration) Update(test bool) error{
-	err := UpdateConfiguration(File, test)
+func (cfg *Configuration) Update() error{
+	err := UpdateConfiguration(File)
 	cfg.Load()
-	if !test {
-		log.Info("Done!")
-	}
+	log.Info("Done!")
 	return err
 }
 
 // Resets the configuration to default values
-func (cfg *Configuration) ResetDefault(test bool) error{
-	err:= ResetDefaultConfiguration(File, test)
+func (cfg *Configuration) ResetDefault() error{
+	err:= ResetDefaultConfiguration(File)
 	cfg.Load()
-	if !test{
-		log.Info("Done!")
-	}
+	log.Info("Done!")
 	return err
 }

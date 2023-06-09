@@ -63,21 +63,17 @@ func (cfg *CIConfiguration) CILoad() *CIConfiguration {
 }
 
 // Update the current configuration file
-func (cfg *CIConfiguration) CIUpdate(test bool) error{
-	err:= UpdateConfiguration(CIFile, test)
+func (cfg *CIConfiguration) CIUpdate() error{
+	err:= UpdateConfiguration(CIFile)
 	cfg.CILoad()
-	if !test {
-		log.Info("Done!")
-	}
+	log.Info("Done!")
 	return err
 }
 
 // Resets the configuration to default values
-func (cfg *CIConfiguration) CIResetDefault(test bool) error{
-	err:= ResetDefaultConfiguration(CIFile, test)
+func (cfg *CIConfiguration) CIResetDefault() error{
+	err:= ResetDefaultConfiguration(CIFile)
 	cfg.CILoad()
-	if !test{
-		log.Info("Done!")
-	}
+	log.Info("Done!")
 	return err
 }
