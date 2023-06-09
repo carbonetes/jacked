@@ -57,13 +57,11 @@ func licenseFooter(count int) {
 	}
 }
 
-func PrintLicenses(licenses []model.License, test bool) int{
+func PrintLicenses(licenses []model.License) int{
 	licenseHeader()
     totalRows := licenseRows(licenses)
 	licenseTable.SetStyle(simpletable.StyleCompactLite)
-	if !test{
-		log.Println("\nLicenses")
-		log.Println(licenseTable.String())
-	}
+	log.Println("\nLicenses")
+	log.Println(licenseTable.String())
 	return totalRows
 }

@@ -52,13 +52,11 @@ func secretFooter(count int) {
 	}
 }
 
-func PrintSecrets(secrets *dm.SecretResults, test bool) int{
+func PrintSecrets(secrets *dm.SecretResults) int{
 	secretHeader()
 	totalRows := secretRows(secrets)
 	secretTable.SetStyle(simpletable.StyleCompactLite)
-	if !test{
-		log.Println("\nSecrets")
-		log.Println(secretTable.String())
-	}
+	log.Println("\nSecrets")
+	log.Println(secretTable.String())
 	return totalRows
 }

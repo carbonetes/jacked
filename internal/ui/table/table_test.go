@@ -82,7 +82,7 @@ func TestDisplayScanResultTable(t *testing.T){
 	}
 
 	for _, test := range tests{
-		if result := DisplayScanResultTable(&test.packages,true); len(result) > 0 != test.expected{
+		if result := DisplayScanResultTable(&test.packages); len(result) > 0 != test.expected{
 			t.Errorf(" Test Failed: There was an error on the display table");
 		}
 	}
@@ -116,7 +116,7 @@ func TestPrintSecrets(t *testing.T) {
 	}
 
 	for _, test := range tests{
-		if result := PrintSecrets(&test.secrets,true); result > 0 != test.expected{
+		if result := PrintSecrets(&test.secrets); result > 0 != test.expected{
 			t.Errorf(" Test Failed: There was an error on the display secret table");
 		}
 	}
@@ -150,7 +150,7 @@ func TestPrintLicense(t *testing.T) {
 	}
  
 	for _, test := range tests{
-		if result := PrintLicenses(test.licenses, true); result > 0 != test.expected{
+		if result := PrintLicenses(test.licenses); result > 0 != test.expected{
 			t.Errorf(" Test Failed: There was an error on the display license table");
 		}
 	}

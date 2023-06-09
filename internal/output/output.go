@@ -128,17 +128,17 @@ func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments
 	case "spdx-tag-value":
 		outputText = PrintSPDX("tag-value", source, sbom)
 	default:
-		outputText = table.DisplayScanResultTable(sbom.Packages, false)
+		outputText = table.DisplayScanResultTable(sbom.Packages)
 		if cfg.LicenseFinder {
 			if len(*licenses) > 0 {
-				table.PrintLicenses(*licenses, false)
+				table.PrintLicenses(*licenses)
 			} else {
 				fmt.Print("\nNo license has been found!\n")
 			}
 		}
 		if !*arguments.DisableSecretSearch {
 			if len(sbom.Secret.Secrets) > 0 {
-				table.PrintSecrets(sbom.Secret, false)
+				table.PrintSecrets(sbom.Secret)
 			} else {
 				fmt.Print("\nNo secret has been found!\n")
 			}

@@ -25,17 +25,15 @@ const (
 )
 
 // Method that generates table header, table rows from the scan result, and displaying the generated table format output.
-func DisplayScanResultTable(pkgs *[]dm.Package, test bool) string {
+func DisplayScanResultTable(pkgs *[]dm.Package) string {
 	table := simpletable.New()
 	header(table)
 	total := rows(pkgs, table)
 	if total-1 > 0 {
 		footer(total-1, table)
-		return display(table, test)
+		return display(table)
 	} else {
-		if !test{
-			log.Println("\nNo vulnerabilities found!")
-		}
+		log.Println("\nNo vulnerabilities found!")
 		return ""
 	}
 
@@ -107,12 +105,10 @@ func footer(count int, table *simpletable.Table) {
 }
 
 // Set style "StyleCompactLite" to make the table style clean and print out the table.
-func display(table *simpletable.Table, test bool) string {
+func display(table *simpletable.Table) string {
 	// Set Table Style
 	table.SetStyle(simpletable.StyleCompactLite)
-	if !test{
-		fmt.Println(table.String())
-	}
+	fmt.Println(table.String())
 	return table.String()
 }
 
