@@ -3,7 +3,6 @@ package output
 import (
 	"encoding/xml"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -16,7 +15,7 @@ import (
 
 var log = logger.GetLogger()
 
-func PrintSPDX(formatType string, image *string, sbom *dm.SBOM, test bool) string {
+func PrintSPDX(formatType string, image *string, sbom *dm.SBOM) string {
 
 	spdx := GetSpdx(image, sbom.Packages)
 
@@ -26,9 +25,8 @@ func PrintSPDX(formatType string, image *string, sbom *dm.SBOM, test bool) strin
 		if err != nil {
 			log.Errorln(err.Error())
 		}
-		if !test{
-			fmt.Printf("%+v\n", string(result))
-		}
+		fmt.Printf("%+v\n", string(result))
+
 		return string(result)
 
 	case "json":
@@ -36,18 +34,13 @@ func PrintSPDX(formatType string, image *string, sbom *dm.SBOM, test bool) strin
 		if err != nil {
 			log.Errorln(err.Error())
 		}
-		if !test{
-			fmt.Printf("%+v\n", string(result))
-		}
+		fmt.Printf("%+v\n", string(result))
 		return string(result)
 
 	case "tag-value":
-		return printSpdxTagValue(image, sbom.Packages, test)
+		return printSpdxTagValue(image, sbom.Packages)
 	default:
-		if !test{
-			log.Error("Format type not found")
-			os.Exit(1)
-		}
+		log.Error("Format type not found")
 	}
 	return ""
 }
@@ -166,11 +159,9 @@ func GetSpdxTagValues(image *string, pkgs *[]dm.Package) (spdxTagValues []string
 }
 
 // PrintSpdxTagValue Print Packages in SPDX-TAG_VALUE format
-func printSpdxTagValue(image *string, pkgs *[]dm.Package, test bool) string {
+func printSpdxTagValue(image *string, pkgs *[]dm.Package) string {
 	spdxTagValues := GetSpdxTagValues(image, pkgs)
-	if !test{
-		fmt.Printf("%+v", stringSliceToString(spdxTagValues))
-	}
+	fmt.Printf("%+v", stringSliceToString(spdxTagValues))
 	return stringSliceToString(spdxTagValues)
 }
 

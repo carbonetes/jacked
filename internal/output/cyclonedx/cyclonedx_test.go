@@ -28,7 +28,7 @@ func TestPrintCycloneDXJSON(t *testing.T) {
 		args.Image = &test.image
 		sbom = diggity.Scan(args)
 		
-		if result := len(PrintCycloneDXJSON(sbom, true)); result < test.expected{
+		if result := len(PrintCycloneDXJSON(sbom)); result < test.expected{
 			t.Error("Test Failed: CyclonedDXJSON output is not working properly")
 		}
 	}
@@ -40,7 +40,7 @@ func TestPrintCycloneDXXML(t *testing.T) {
 		args.Image = &test.image
 		sbom = diggity.Scan(args)
 		
-		if result := len(PrintCycloneDXXML(sbom, true)); result < test.expected{
+		if result := len(PrintCycloneDXXML(sbom)); result < test.expected{
 			t.Error("Test Failed: CyclonedDXXML output is not working properly")
 		}
 	}

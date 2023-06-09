@@ -52,7 +52,7 @@ func TestPrintSPDX(t *testing.T) {
 		sbom = diggity.Scan(args)
 		
 		for _, formatType := range formatTypes{
-			if result := len(PrintSPDX(formatType.name, &test.image, sbom, true)); result < formatType.expected{
+			if result := len(PrintSPDX(formatType.name, &test.image, sbom)); result < formatType.expected{
 				t.Errorf("Test Failed: SPDX output is not working properly: format type : [%v]",formatType.name)
 			}
 		}
