@@ -12,6 +12,7 @@ func TallyTable(tally *assessment.Tally) string{
 	tallyHeader(table)
 	tallyRows(tally, table)
 	fmt.Println(table.String())
+
 	return table.String()
 }
 
