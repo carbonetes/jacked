@@ -23,20 +23,21 @@ func secretHeader() {
 	}
 }
 
-func secretRows(secrets *dm.SecretResults) {
-	var index int = 1
+func secretRows(secrets *dm.SecretResults) int{
+	var count int = 1
 	for _, secret := range secrets.Secrets {
 		r := []*simpletable.Cell{
-			{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v", index)},
+			{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v", count)},
 			{Text: secret.ContentRegexName},
 			{Text: secret.FileName},
 			{Text: secret.FilePath},
 			{Text: secret.LineNumber},
 		}
-		index++
+		count++
 		secretTable.Body.Cells = append(secretTable.Body.Cells, r)
 	}
-	secretFooter(index - 1)
+	secretFooter(count - 1)
+	return count -1
 }
 
 func secretFooter(count int) {
@@ -51,10 +52,11 @@ func secretFooter(count int) {
 	}
 }
 
-func PrintSecrets(secrets *dm.SecretResults) {
+func PrintSecrets(secrets *dm.SecretResults) int{
 	secretHeader()
-	secretRows(secrets)
+	totalRows := secretRows(secrets)
 	secretTable.SetStyle(simpletable.StyleCompactLite)
 	log.Println("\nSecrets")
 	log.Println(secretTable.String())
+	return totalRows
 }
