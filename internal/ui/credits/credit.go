@@ -14,14 +14,11 @@ const (
 	credits       = "Made by: Carbonetes"
 )
 
-func Show(test bool) int{
+func Show(){
 	log := log.GetLogger()
 	link := termlink.ColorLink("Jacked", githubLink, "green")
 	fullMessage := fmt.Sprintf(footerMessage + link)
-	if !test {
-		log.Println()
-		log.Println(fullMessage)
-		log.Println(credits)
-	}
-	return len(fullMessage)
+	log.Println()
+	log.Println(fullMessage)
+	log.Println(credits)
 }
