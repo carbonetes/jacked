@@ -6,6 +6,7 @@ import (
 
 	"github.com/carbonetes/jacked/internal/engine"
 	"github.com/carbonetes/jacked/internal/logger"
+	"github.com/carbonetes/jacked/internal/ui/bar"
 	"github.com/carbonetes/jacked/internal/ui/spinner"
 	"github.com/carbonetes/jacked/internal/version"
 	"github.com/carbonetes/jacked/pkg/core/ci"
@@ -42,9 +43,11 @@ func preRun(_ *cobra.Command, args []string) {
 		cfg.Ignore.Package.Name = appendIgnoreList(cfg.Ignore.Package.Name, *arguments.IgnorePackageNames)
 		cfg.Ignore.Vulnerability.CVE = appendIgnoreList(cfg.Ignore.Vulnerability.CVE, *arguments.IgnoreCVEs)
 
-		if *arguments.Quiet {
+		if !*arguments.Quiet {
+			spinner.Enable()
+			bar.Enable()
+		} else {
 			logger.SetQuietMode()
-			spinner.Disable()
 		}
 	}
 }
