@@ -14,15 +14,26 @@ var (
 		progressbar.OptionShowBytes(true),
 		progressbar.OptionSetWidth(20),
 		progressbar.OptionSpinnerType(14))
+	disable = true
 )
 
 func SetDescription(description string) {
+	if disable {
+		return
+	}
 	bar.Describe(description)
 }
 
 func SetSize(size int64) {
+	if disable {
+		return
+	}
 	bar.ChangeMax64(size)
 
+}
+
+func Enable() {
+	disable = false
 }
 
 func GetBar() *progressbar.ProgressBar {

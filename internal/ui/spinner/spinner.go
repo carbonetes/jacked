@@ -19,8 +19,8 @@ var (
 		CharSet:           yacspin.CharSets[14],
 	}
 	spin    *yacspin.Spinner
-	_switch bool = true
-	log          = logger.GetLogger()
+	disable = true
+	log     = logger.GetLogger()
 	err     error
 )
 
@@ -32,38 +32,46 @@ func init() {
 }
 
 func Start() {
-	if _switch {
-		err = spin.Start()
-		if err != nil {
-			log.Errorln(err.Error())
-		}
+	if disable {
+		return
 	}
+	err = spin.Start()
+	if err != nil {
+		log.Errorln(err.Error())
+	}
+
 }
 
 func SetMessage(str string) {
-	if _switch {
-		spin.Suffix(" " + str)
+	if disable {
+		return
 	}
+	spin.Suffix(" " + str)
+
 }
 
 func Stop() {
-	if _switch {
-		err = spin.Stop()
-		if err != nil {
-			log.Errorln(err.Error())
-		}
+	if disable {
+		return
 	}
+	err = spin.Stop()
+	if err != nil {
+		log.Errorln(err.Error())
+	}
+
 }
 
 func StopFail() {
-	if _switch {
-		err = spin.StopFail()
-		if err != nil {
-			log.Errorln(err.Error())
-		}
+	if disable {
+		return
 	}
+	err = spin.StopFail()
+	if err != nil {
+		log.Errorln(err.Error())
+	}
+
 }
 
-func Disable() {
-	_switch = false
+func Enable() {
+	disable = false
 }
