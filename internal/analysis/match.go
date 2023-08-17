@@ -54,11 +54,11 @@ func filter(vulnerabilities *[]model.Vulnerability, keywords *[]string) *[]model
 func match(pkg *dm.Package, vulnerability *model.Vulnerability, signature *model.Signature) bool {
 	var matched bool
 
-	if pkg.Type == "deb" {
-		if vulnerability.Criteria.VersionFormat != "debian" {
-			return false
-		}
-	}
+	// if pkg.Type == "deb" {
+	// 	if vulnerability.Criteria.VersionFormat != "debian" {
+	// 		return false
+	// 	}
+	// }
 
 	switch pkg.Type {
 	case "go-module":
