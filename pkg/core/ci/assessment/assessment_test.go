@@ -27,7 +27,7 @@ func TestEvaluate(t *testing.T) {
 		d.Image = &test.image
     
 		sbom, _ := diggity.Scan(d)
-		cdx := convert.ToCDX(sbom.Packages)
+		cdx := convert.ToCDX(sbom)
 		if result := Evaluate(m.FailCriteria, cdx); result != test.expected{
 			t.Error("Test Failed: Error on the Evaluate function")
 		}

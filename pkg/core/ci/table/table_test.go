@@ -31,7 +31,7 @@ func TestCDXBomTable(t *testing.T) {
 	for _, test := range tests {
 		d.Image = &test.image
 		sbom, _ := diggity.Scan(d)
-		cdx := convert.ToCDX(sbom.Packages)
+		cdx := convert.ToCDX(sbom)
 		if result := CDXBomTable(cdx); len(result) < test.expected{
 			t.Error("Test Failed: CDXBom table is not working properly")
 		}
@@ -43,7 +43,7 @@ func TestCDXVexTable(t *testing.T) {
 	for _, test := range tests {
 		d.Image = &test.image
 		sbom, _ := diggity.Scan(d)
-		cdx := convert.ToCDX(sbom.Packages)
+		cdx := convert.ToCDX(sbom)
 		jacked.AnalyzeCDX(cdx)
 		if result := CDXVexTable(cdx); len(result) < test.expected{
 			t.Error("Test Failed: CDXVextable is not working properly")

@@ -74,7 +74,7 @@ func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration){
 		log.Error("No package found to analyze!")
 	}
 
-	cdx := convert.ToCDX(sbom.Packages)
+	cdx := convert.ToCDX(sbom)
 	outputText += "Generated CDX BOM\n\n" + table.CDXBomTable(cdx)
 	log.Println("\nAnalyzing CDX BOM...")
 	jacked.AnalyzeCDX(cdx)
