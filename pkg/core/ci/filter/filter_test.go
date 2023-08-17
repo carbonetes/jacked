@@ -29,7 +29,7 @@ func TestIgnoreVuln(t *testing.T) {
 		d.Image = &test.image
     
 		sbom, _ := diggity.Scan(d)
-		cdx := convert.ToCDX(sbom.Packages)
+		cdx := convert.ToCDX(sbom)
 		jacked.AnalyzeCDX(cdx)
 		
 		IgnoreVuln(cdx.Vulnerabilities, &cfg.FailCriteria.Vulnerability)
