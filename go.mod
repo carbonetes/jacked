@@ -74,7 +74,7 @@ require (
 
 require (
 	github.com/alexeyco/simpletable v1.0.0
-	github.com/carbonetes/diggity v1.4.0
+	github.com/carbonetes/diggity v1.5.2
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/schollz/progressbar/v3 v3.13.0
 	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0

@@ -79,6 +79,8 @@ github.com/carbonetes/diggity v1.3.3 h1:KhV1U7k3zgl0C7tRPLvu/qfGw4Zr2pi4K4/AjsGe
 github.com/carbonetes/diggity v1.3.3/go.mod h1:Op+q1fvWNU/H9oTf9K454Hk4I/0ViKgWGBRMs3LkyYQ=
 github.com/carbonetes/diggity v1.4.0 h1:lDfEtAf49KIcUcsmhFF0ahUbcvRiXhIT3NPDr02vaFc=
 github.com/carbonetes/diggity v1.4.0/go.mod h1:Op+q1fvWNU/H9oTf9K454Hk4I/0ViKgWGBRMs3LkyYQ=
+github.com/carbonetes/diggity v1.5.2 h1:Pna3nLIcf1jlBg7usCvGOHQV30ciZqYIV01/E0PlY7A=
+github.com/carbonetes/diggity v1.5.2/go.mod h1:sUmwKeYchvd3/vDqdOBl+b2X8z1WRBoYYb7H/Ggg284=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/census-instrumentation/opencensus-proto v0.3.0/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
