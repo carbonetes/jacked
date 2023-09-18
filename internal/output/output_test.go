@@ -13,11 +13,6 @@ type Validator struct{
 	expected	int
 }
 
-type FormatTypes struct{
-	name		string
-	expected	int
-}
-
 var (
 	sbom            *dm.SBOM
 	args =          model.NewArguments()

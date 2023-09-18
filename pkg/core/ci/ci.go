@@ -135,7 +135,10 @@ func Analyze(args *model.Arguments, ciCfg *config.CIConfiguration){
 func saveOutputFile(args *model.Arguments, outputText string){
 	if args.OutputFile != nil && *args.OutputFile != ""{
 		// we can use the *args.Output for the second args on the parameter, for now it only supports table/txt output
-		save.SaveOutputAsFile(*args.OutputFile,"table", outputText )
+		err := save.SaveOutputAsFile(*args.OutputFile,"table", outputText )
+		if err != nil {
+			log.Error(err)
+		}
 	}
 }
 
