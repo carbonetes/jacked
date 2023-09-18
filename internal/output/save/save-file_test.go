@@ -17,10 +17,7 @@ func TestAddFileExtension(t *testing.T) {
 		{"result.json","json", "result.json"},
 		{"result","json", "result.json"},
 		{"result","cyclonedx-json", "result.json"},
-		{"result","spdx-json", "result.json"},
-		{"result","cyclonedx-xml", "result.xml"},
-		{"result","spdx-xml", "result.xml"},
-		{"result","spdx-tag-value", "result.spdx"},
+		{"result","cyclonedx", "result.xml"},
 		{"result","table", "result.txt"},
 	}
  

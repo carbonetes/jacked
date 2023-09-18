@@ -40,7 +40,7 @@ func TestPrintCycloneDXXML(t *testing.T) {
 		args.Image = &test.image
 		sbom = diggity.Scan(args)
 		
-		if result := len(PrintCycloneDXXML(sbom)); result < test.expected{
+		if result := len(PrintCycloneDX(sbom)); result < test.expected{
 			t.Error("Test Failed: CyclonedDXXML output is not working properly")
 		}
 	}

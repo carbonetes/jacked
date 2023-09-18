@@ -1,157 +1,100 @@
 package table
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/alexeyco/simpletable"
 	dm "github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
-type Validator struct{
-    packages 	[]dm.Package
-	expected    bool
-}
+func TestHeader(t *testing.T) {
+	table := simpletable.New()
+	header(table)
 
-type SecretValidator struct{
-    secrets		dm.SecretResults
-	expected    bool
-}
+	expectedHeader := []string{Index, Package, CurrentVersion, Type, Cve, Severity, VersionRange, Fix}
 
-type LicenseValidator struct{
-    licenses	[]model.License
-	expected    bool
-}
-
-//for table go
-func TestDisplayScanResultTable(t *testing.T){
-
-	tests := []Validator{
-		{
-			[]dm.Package{
-			   {
-				Name : " busybox1",
-				Version : "1.35.0-r28",
-				Type : "apk",
-				Vulnerabilities : &[]model.Vulnerability{
-				   {
-					   CVE : "CVE-2022-28391",
-					   CVSS : model.CVSS {
-						   Severity: "High",
-					   },
-					   Criteria : model.Criteria{
-						   Constraint : "1.35.0",
-					   },
-				   },
-				},
-			   },
-		   },
-		   true,
-		},
-		{
-			[]dm.Package{
-			   {
-				Name : " busybox2",
-				Version : "1.35.0-r28",
-				Type : "apk",
-				Vulnerabilities : nil,
-			   },
-		   },
-		   false,
-		},
-		{
-			[]dm.Package{
-			   {
-				Name : " busybox3",
-				Version : "1.35.0-r28",
-				Type : "apk",
-				Vulnerabilities : &[]model.Vulnerability{
-				   {
-					   CVE : "CVE-2022-28391",
-					   CVSS : model.CVSS {
-						   Severity: "Medium",
-					   },
-					   Criteria : model.Criteria{
-						   Constraint : "1.35.0",
-					   },
-				   },
-				},
-			   },
-		   },
-		   true,
-		},
+	if len(table.Header.Cells) != len(expectedHeader) {
+		t.Errorf("Header length doesn't match, expected %d, got %d", len(expectedHeader), len(table.Header.Cells))
+		return
 	}
 
-	for _, test := range tests{
-		if result := DisplayScanResultTable(&test.packages); len(result) > 0 != test.expected{
-			t.Errorf(" Test Failed: There was an error on the display table");
+	for i, cell := range table.Header.Cells {
+		if cell.Text != expectedHeader[i] {
+			t.Errorf("Header cell %d doesn't match, expected '%s', got '%s'", i, expectedHeader[i], cell.Text)
 		}
 	}
 }
 
-// for secrects table
-func TestPrintSecrets(t *testing.T) {
-	tests := []SecretValidator{
-		{
-			dm.SecretResults{
-				   Secrets : nil,
-		   },false,
-		},
-		{
-			dm.SecretResults{
-					Secrets : []dm.Secret{
-						{
-							ContentRegexName : "Regex name",
-							FileName : "File Name",
-							FilePath : "../../File/Path",
-							LineNumber : "10",
-						},
-				},
-			}, true,
-		},
-		{
-			dm.SecretResults{
-				   Secrets : nil,
-		   },false,
-		},
+func TestElliptical(t *testing.T) {
+	tests := []struct {
+		input    string
+		maxLen   int
+		expected string
+	}{
+		{"This is a long text", 10, "This is a..."},
+		{"Short", 10, "Short"},
+		{"Another long text with spaces", 20, "Another long text..."},
 	}
 
-	for _, test := range tests{
-		if result := PrintSecrets(&test.secrets); result > 0 != test.expected{
-			t.Errorf(" Test Failed: There was an error on the display secret table");
+	for _, test := range tests {
+		result := elliptical(test.input, test.maxLen)
+		if result != test.expected {
+			t.Errorf("Elliptical(%s, %d) => expected '%s', got '%s'", test.input, test.maxLen, test.expected, result)
 		}
 	}
 }
 
-// for license
-func TestPrintLicense(t *testing.T) {
-	tests := []LicenseValidator{
+func TestRows(t *testing.T) {
+	table := simpletable.New()
+	pkgs := &[]dm.Package{
 		{
-			[]model.License{
-			   {
-				Package : "Package 1",
-				License : "License 1",
-			   },
-		   },
-		   true,
-		},
-		{
-			[]model.License{
-			   {
-				Package : "Package 2",
-				License : "License 2",
-			   },
-		   },
-		   true,
-		},
-		{
-		   nil,
-		   false,
+			Name:    "Package1",
+			Version: "1.0.0",
+			Type:    "Library",
+			Vulnerabilities: &[]model.Vulnerability{
+				{
+					CVE: "CVE-2021-1234",
+					CVSS: model.CVSS{
+						Severity: "High",
+					},
+					Criteria: model.Criteria{
+						Constraint: ">=1.0.0",
+					},
+					Remediation: &model.Remediation{
+						Fix: "Upgrade to 1.0.1",
+					},
+				},
+			},
 		},
 	}
- 
-	for _, test := range tests{
-		if result := PrintLicenses(test.licenses); result > 0 != test.expected{
-			t.Errorf(" Test Failed: There was an error on the display license table");
+
+	total := rows(pkgs, table)
+
+	expectedTotal := 2 // Header + 1 vulnerability
+	if total != expectedTotal {
+		t.Errorf("Rows generated %d rows, expected %d", total, expectedTotal)
+	}
+
+	expectedFirstRow := []string{"1", "Package1", "1.0.0", "Library", "CVE-2021-1234", "High", ">=1.0.0", "Upgrade to 1.0.1"}
+	actualFirstRow := table.Body.Cells[0]
+
+	for i, cell := range actualFirstRow {
+		if cell.Text != expectedFirstRow[i] {
+			t.Errorf("Row cell %d doesn't match, expected '%s', got '%s'", i, expectedFirstRow[i], cell.Text)
 		}
+	}
+}
+
+func TestFooter(t *testing.T) {
+	table := simpletable.New()
+	count := 5
+
+	footer(count, table)
+
+	expectedFooterText := fmt.Sprintf("%s: %v", Total, count)
+	if len(table.Footer.Cells) != 1 || table.Footer.Cells[0].Text != expectedFooterText {
+		t.Errorf("Footer doesn't match, expected '%s', got '%s'", expectedFooterText, table.Footer.Cells[0].Text)
 	}
 }

@@ -34,10 +34,7 @@ var (
 		"table",
 		"json",
 		"cyclonedx-json",
-		"cyclonedx-xml",
-		"spdx-json",
-		"spdx-xml",
-		"spdx-tag-value",
+		"cyclonedx",
 	}
 	Severities = []string{
 		"unknown",
@@ -92,9 +89,9 @@ func init() {
 
 	rootCmd.Flags().StringVarP(arguments.IgnorePackageNames, "ignore-package-names", "", "", "Specify package names to be whitelisted on the result")
 	rootCmd.Flags().StringVarP(arguments.IgnoreCVEs, "ignore-cves", "", "", "Specify CVEs to be whitelisted on the result")
-	rootCmd.Flags().BoolVarP(arguments.SkipDbUpdate, "skip-db-update", "" ,false, "Skip Database Update on Scanning")
-	rootCmd.Flags().BoolVarP(arguments.ForceDbUpdate, "force-db-update", "" ,false, "Enables immediate implementation of database updates")
-	
+	rootCmd.Flags().BoolVarP(arguments.SkipDbUpdate, "skip-db-update", "", false, "Skip Database Update on Scanning")
+	rootCmd.Flags().BoolVarP(arguments.ForceDbUpdate, "force-db-update", "", false, "Enables immediate implementation of database updates")
+
 	rootCmd.PersistentFlags().BoolP("help", "h", false, "")
 	rootCmd.PersistentFlags().Lookup("help").Hidden = true
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})

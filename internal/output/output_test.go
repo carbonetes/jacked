@@ -38,23 +38,3 @@ func TestPrintJsonResult(t *testing.T) {
 		}
 	}
 }
-
-func TestPrintSPDX(t *testing.T) {
-	formatTypes := []FormatTypes{
-		{"xml",1},
-		{"json",1},
-		{"tag-value",1},
-		{"unknown",0},
-	}
-	
-	for _, test := range tests{
-		args.Image = &test.image
-		sbom = diggity.Scan(args)
-		
-		for _, formatType := range formatTypes{
-			if result := len(PrintSPDX(formatType.name, &test.image, sbom)); result < formatType.expected{
-				t.Errorf("Test Failed: SPDX output is not working properly: format type : [%v]",formatType.name)
-			}
-		}
-	}
-}
