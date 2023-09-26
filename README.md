@@ -102,6 +102,12 @@ To scan a tarball, use the following command:
 jacked --tar <tarball-path>
 ```
 
+## CycloneDX Support
+
+Jacked offers support for CycloneDX, a lightweight software bill of materials (SBOM) standard. In addition to generating CycloneDX reports in JSON and XML formats, Jacked also supports the use of VEX (Vulnerability Exchange) data within CycloneDX reports. This enhances the accuracy and depth of vulnerability information included in the SBOM.
+
+By utilizing VEX data, Jacked ensures that your CycloneDX reports provide comprehensive and up-to-date vulnerability information, empowering you to make informed decisions about your software's security posture.
+
 ## Output formats
 Jacked provides flexible options for formatting and presenting scan results, making it easy to tailor the output to your specific needs. 
 ```bash
