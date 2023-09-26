@@ -7,10 +7,9 @@
 
 Jacked is a powerful open-source tool designed to enhance security measures for Docker images, tarballs, and code repositories. 
 
-<!-- <details>
-<summary>Sample Result</summary> -->
-<img src="assets/jacked_sample.png" style="display: block; margin-left: auto; margin-right: auto; width: 65%;">
-<!-- </details> -->
+<p align="center">
+<img src="assets/jacked_sample.png" style="width: 65%;">
+</p>
 
 ## Integration with Diggity
 
@@ -271,7 +270,7 @@ Jacked is released under the [Apache License 2.0](https://choosealicense.com/lic
 
 <footer>
 <h4>
-  <p style="text-align:center;">
+  <p align="center">
     Jacked is developed and maintained by <a href="https://carbonetes.com/">Carbonetes</a>. 
   </p>
 </h4>
