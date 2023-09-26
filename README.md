@@ -116,8 +116,8 @@ jacked <target> -o <output-format>
  You can choose from the following output formats:
 - `table`: The default output format, providing a concise columnar summary of the scan results. This format is ideal for a quick overview of vulnerabilities.
 - `json`: Get detailed scan results in JSON format, enabling easy integration with other tools and systems for further analysis and automation.
-- `cyclonedx-json`: Receive scan reports in JSON format that conform to the [CycloneDX 1.5 JSON Schema](https://github.com/CycloneDX/specification/blob/master/schema/bom-1.5.schema.json). This format is useful for compatibility with CycloneDX-aware tools and platforms.
-- `cyclonedx-xml`: Similar to CycloneDX JSON, this format provides scan reports in XML format, following the [CycloneDX 1.5 XML Schema](https://github.com/CycloneDX/specification/blob/master/schema/bom-1.5.xsd).
+- `cdx-json`: Receive scan reports in JSON format that conform to the [CycloneDX 1.5 JSON Schema](https://github.com/CycloneDX/specification/blob/master/schema/bom-1.5.schema.json). This format is useful for compatibility with CycloneDX-aware tools and platforms.
+- `cdx-xml`: Similar to CycloneDX JSON, this format provides scan reports in XML format, following the [CycloneDX 1.5 XML Schema](https://github.com/CycloneDX/specification/blob/master/schema/bom-1.5.xsd).
 
 Choose the output format that best suits your integration requirements and reporting preferences. Jacked's versatile output options ensure that you can effectively communicate and act on your scan results in a way that aligns with your workflow.
 
