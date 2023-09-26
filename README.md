@@ -1,7 +1,3 @@
-<p align="center">
-<img src="assets/jacked-logo.svg" style="display: block; margin-left: auto; margin-right: auto; width: 50%;">
-</p>
-
 # Jacked
 [![Github All Releases](https://img.shields.io/github/downloads/carbonetes/jacked/total.svg)]()
 [![Go Report Card](https://goreportcard.com/badge/github.com/carbonetes/jacked)](https://goreportcard.com/report/github.com/carbonetes/jacked)
@@ -9,106 +5,143 @@
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/carbonetes/jacked.svg)](https://github.com/carbonetes/jacked)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/carbonetes/jacked/blob/main/LICENSE)
 
-Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures. 
+Jacked is a powerful open-source tool designed to enhance security measures for Docker images, tarballs, and code repositories. 
 
-# Features
-- 🐞 | Scans image vulnerability; checks if your image is at risk.
-- 🔧 | Configuration that helps user's preference using the tool.
-- ⛑ | Works with major operating system and many packages.
-- 🗃 | Works seamlessly with [Diggity](https://github.com/carbonetes/diggity) (SBOM Container Image and File System)
-- 🗄 | Converts results to JSON and Tabulated Format.
+<!-- <details>
+<summary>Sample Result</summary> -->
+<img src="assets/jacked_sample.png" style="display: block; margin-left: auto; margin-right: auto; width: 65%;">
+<!-- </details> -->
+
+## Integration with Diggity
+
+**Jacked** works seamlessly with [Diggity](https://github.com/carbonetes/diggity), our powerful tool for generating Software Bill of Materials (SBOM). Together, they provide a comprehensive solution for securing your software development process.
 
 
-# Installation 📥
+## Key Features:
 
-## Installation Support OS 💽
-- Mac
-  - darwin_amd64.tar.gz
-  - darwin_arm64.tar.gz
-- Linux
-  - deb
-    - linux_amd64.deb
-    - linux_arm64.deb
-    - linux_ppc64le.deb
-  - rpm
-    - linux_amd64.rpm
-    - linux_arm64.rpm
-    - linux_ppc64le.rpm
-  - tar.gz
-    - linux_amd64.tar.gz
-    - linux_arm64.tar.gz
-    - linux_ppc64le.tar.gz
-- Windows
-  - windows_amd64.zip
+- **Scan Image Vulnerabilities**: Jacked diligently scans your Docker images, identifying potential security risks and vulnerabilities. This ensures that your deployed containers are robust and free from known threats.
+- **Tailored Configuration**: Customize Jacked to align with your specific security preferences. Tailor the tool to suit your organization's unique requirements and security policies.
+- **Cross-Platform Compatibility**: Jacked seamlessly integrates with major operating systems and supports various package types. It offers flexibility and compatibility to fit into your existing workflow.
+- **Diggity Integration**: Enhance your security posture by leveraging Jacked's compatibility with Diggity. This integration provides SBOM (Software Bill of Materials) Container Image and File System support.
+- **Integration-Friendly**: Seamlessly integrate Jacked into your CI/CD pipelines and DevOps workflows to automate vulnerability analysis.
+- **User-Friendly Interface**: Jacked offers an intuitive command-line interface, making it accessible to both security experts and developers.
+- **Flexible Output Formats**: Jacked provides multiple output formats, making it easy to analyze scan results. Choose from options like tabulated summaries, JSON reports, CycloneDX, SPDX, and more.
+
+With Jacked, you can fortify your software applications against security threats, streamline your vulnerability management process, and deliver software that is secure, compliant, and reliable.
+
+## Vulnerability Data Sources
+
+Jacked leverages multiple trusted data sources for comprehensive vulnerability detection and management:
+
+1. **NVD (National Vulnerability Database):** The NVD provides a rich source of vulnerability data, including CVEs (Common Vulnerabilities and Exposures), which Jacked uses to identify and assess vulnerabilities.
+
+2. **GitHub Advisories:** Jacked monitors GitHub's advisory feed to stay up-to-date with security advisories related to open-source projects hosted on GitHub, enhancing its ability to detect vulnerabilities in widely used libraries and repositories.
+
+3. **Alpine Security Advisories:** Jacked is equipped to access and utilize Alpine Linux's security advisories. This integration ensures that Alpine Linux-based containers are thoroughly scanned for security issues.
+
+4. **Debian Security Advisories:** Jacked taps into Debian's security advisories, enabling it to detect vulnerabilities in packages commonly found in Debian-based systems.
+
+By combining these data sources, Jacked provides a comprehensive and up-to-date view of potential security risks, helping you fortify your applications against known vulnerabilities.
+
+## Installation
 
 ## Recommended
 
-A great way to install a working binary tool on your terminal. 
+### Using Curl (Linux/macOS)
+Run the following command to download and install Jacked using Curl:
 ```bash
-curl -sSfL https://raw.githubusercontent.com/carbonetes/jacked/main/install.sh | sh -s -- -d /usr/local/bin
+bash -c "$(curl -sSL curl -sSfL https://raw.githubusercontent.com/carbonetes/jacked/main/install.sh | sh -s -- -d /usr/local/bin)"
 ```
-You can specify a release version and destination directory for the installation:
+**Note**: Use root access with `sudo sh -s -- -d /usr/local/bin` if you encounter a Permission Denied issue, as the `/usr/local/bin` directory requires the necessary permissions to write to the target directory.
 
-```
-curl -sSfL https://raw.githubusercontent.com/carbonetes/jacked/main/install.sh | sh -s -- -d <DESTINATION_DIR> -v <RELEASE_VERSION>
-```
-### Homebrew
-```sh
+### Using Homebrew (Linux/macOS)
+First, tap to the jacked repository by running the following command:
+```bash
 brew tap carbonetes/jacked
+```
+Then, install Jacked using Homebrew:
+```bash
 brew install jacked
 ```
-### Scoop
+To check if Jacked is installed properly, try running the following command:
+```bash
+jacked --version
+```
+
+### Using Scoop (Windows)
+First, add the jacked-bucket by running:
 ```sh
-scoop bucket add jacked https://github.com/carbonetes/jacked-bucket
+scoop bucket add diggity https://github.com/carbonetes/jacked-bucket
+```
+Then, install Jacked using Scoop:
+```sh
 scoop install jacked
 ```
-
-# Getting Started 🚀  
-
-## Run the CLI tool 🏁
-Once you've successfully installed the Jacked and wanted to scan an image, on your terminal:
-```
-jacked <image>
-```
-You can also scan sbom json file from diggity.
-```
-jacked --sbom <path-to-your-sbom-file>
+Verify that Jacked is installed correctly by running:
+```sh
+jacked --version
 ```
 
+# Getting Started
+ Jacked offers a user-friendly command-line interface, ensuring that it is accessible to both security experts and developers.
+
+## Scanning Docker Images
+To scan a Docker image, use the following command:
+```bash 
+jacked <image-name:tag>
+```
+Replace <image_name> with the name of the Docker image you want to scan.
+
+## Scanning Code Repositories
+To analyze a code repository, use the following command:
+```bash 
+jacked --dir <repository-path>
+```
+## Scanning Tarballs
+To scan a tarball, use the following command:
+```bash 
+jacked --tar <tarball-path>
+```
+
+## Output formats
+Jacked provides flexible options for formatting and presenting scan results, making it easy to tailor the output to your specific needs. 
+```bash
+jacked <target> -o <output-format>
+```
+ You can choose from the following output formats:
+- `table`: The default output format, providing a concise columnar summary of the scan results. This format is ideal for a quick overview of vulnerabilities.
+- `json`: Get detailed scan results in JSON format, enabling easy integration with other tools and systems for further analysis and automation.
+- `cyclonedx-json`: Receive scan reports in JSON format that conform to the [CycloneDX 1.5 JSON Schema](https://github.com/CycloneDX/specification/blob/master/schema/bom-1.5.schema.json). This format is useful for compatibility with CycloneDX-aware tools and platforms.
+- `cyclonedx-xml`: Similar to CycloneDX JSON, this format provides scan reports in XML format, following the [CycloneDX 1.5 XML Schema](https://github.com/CycloneDX/specification/blob/master/schema/bom-1.5.xsd).
+
+Choose the output format that best suits your integration requirements and reporting preferences. Jacked's versatile output options ensure that you can effectively communicate and act on your scan results in a way that aligns with your workflow.
+
+## Vulnerability Severity Threshold
+Jacked provides a powerful feature that allows you to set a severity threshold for vulnerabilities, helping you control the actions triggered based on the severity level of identified vulnerabilities. With this feature, you can tailor your security policies to align with your organization's risk tolerance and operational requirements.
+
+### How it Works
+
+In CI mode `--ci`, Jacked can be configured to evaluate the severity of vulnerabilities detected in your images or code repositories. By adding `--fail-criteria` option on scan arguments, you can specify the severity threshold that your organization deems acceptable, such as "low," "medium," or "high."
+
+By defining a severity threshold, you can specify which vulnerabilities should trigger specific actions or policies. For example, you might want to:
+
+- **Fail a CI/CD Pipeline**: Jacked can be integrated into your CI/CD pipeline to halt the pipeline execution if vulnerabilities of a certain severity level (e.g., "low" or higher) are detected. This ensures that only secure code gets deployed.
+- **Generate Alerts**: Configure alerts or notifications to be sent to relevant team members when vulnerabilities exceed the specified severity threshold. Stay informed and act swiftly when critical issues arise.
+
+- **Customize Actions**: Define custom actions or policies based on severity levels. For instance, you can automatically open a ticket in your issue tracking system for "high" severity vulnerabilities.
+
+Here's an example of how to use this feature. To trigger a CI pipeline failure if any vulnerabilities are found in the image with a severity of "low" or higher, use the following command:
+```bash
+jacked <image> --ci --fail-criteria medium
+```
 <details>
-<summary>Jacked Running on a terminal:</summary>
+<summary>Sample Evaluation</summary>
 
-<p align="center">
-<img src="assets/jacked-scan.gif" style="display: block; margin-left: auto; margin-right: auto; width: 100%;">
-</p>
+<img src="assets/evaluation_sample_alpine_edge.png">
 
 </details>
 
-## Output formats
-
-The output format for Jacked is configurable as well using the
-`-o` (or `--output`) option:
-
-The available `formats` are:
-- `table`: A columnar summary (default).
-- `json`: Use this to get as much information out of Jacked.
-- `cyclonedx-json`: A JSON report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
-- `cyclonedx-xml`: An XML report conforming to the [CycloneDX 1.4 specification](https://cyclonedx.org/specification/overview/).
-- `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/).
-- `spdx-json`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).format.
-- `spdx-xml`: A XML report conforming to the [SPDX 2.2 XML: Schema](https://github.com/mil-oss/spdx-xsd/blob/master/xml/xsd/spdx-xml-ref.xsd).format.
-
-## Gating on severity of vulnerabilities
-Gating on the severity of vulnerabilities refers to the practice of selectively allowing or disallowing certain actions or operations based on the severity level of a vulnerability. For example, in the context of software security, gating on severity can involve setting up rules or policies that restrict certain activities or operations (such as code changes, deployments, or releases) if the severity level of any identified vulnerabilities exceeds a certain threshold.
-
-You can have Jacked exit with an error if any vulnerabilities are reported equal or higher than the specified severity. This works perfectly using Jacked CI pipeline. To use this, use the --fail-criteria <severity> CLI flag.
-
-Example, here's how you could trigger a CI pipeline failure if any vulnerabilities are found in the image with a severity of "low" or higher:
-```
-jacked <image> --fail-criteria low
-```
-
-## Useful Commands and Flags 🚩
+## Useful Commands and Flags
 ```
 jacked [command] [flag]
 ```
@@ -219,6 +252,27 @@ registry:
   token: ""
 ```
 
+## Contributing
+We welcome contributions to Jacked from the community. We believe that collaboration and contributions from the community are essential to making Jacked even better. Whether it's reporting issues, submitting pull requests, or providing feedback, your input helps improve this project for everyone. Please check our [Contribution Guidelines](CONTRIBUTING.md) for more details on how to get involved.
+
+By contributing to Jacked, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md). We are committed to maintaining an open, inclusive, and respectful community.
+
+If you encounter bugs, have ideas for improvements, or want to request new features, please don't hesitate to open an issue on our [GitHub repository](https://github.com/carbonetes/jacked/issues).
+
+We appreciate your interest in making Jacked even better, and we welcome your contributions!
+
+## Contact
+
+If you have any questions, suggestions, or need assistance, you can reach us at [eng@carbonetes.com](mailto:eng@carbonetes.com). Your feedback and engagement are valuable to us.
+
 ## License
 
-[Apache 2.0](https://choosealicense.com/licenses/apache-2.0/)
+Jacked is released under the [Apache License 2.0](https://choosealicense.com/licenses/apache-2.0/). You are free to use, modify, and distribute this software in compliance with the terms and conditions of the Apache License 2.0. Please review the full license text for more details.
+
+<footer>
+<h4>
+  <p style="text-align:center;">
+    Jacked is developed and maintained by <a href="https://carbonetes.com/">Carbonetes</a>. 
+  </p>
+</h4>
+</footer>
