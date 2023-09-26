@@ -23,8 +23,8 @@ var log = logger.GetLogger()
 // Output functions for each type
 var outputFuncs = map[string]func(*dm.SBOM) string {
 	"json":           printJsonResult,
-	"cyclonedx-json": cyclonedx.PrintCycloneDXJSON,
-	"cyclonedx":      cyclonedx.PrintCycloneDX,
+	"cdx-json": cyclonedx.PrintCycloneDXJSON,
+	"cdx-xml":      cyclonedx.PrintCycloneDX,
 	"default":        table.DisplayScanResultTable,
 }
 
@@ -77,7 +77,7 @@ func generateOutput(outputType string, sbom *dm.SBOM, arguments *model.Arguments
 // printLicense prints license information based on the output type.
 func printLicense(licenses *[]model.License, outputType string) {
 	switch outputType {
-	case "json", "cyclonedx-json", "cyclonedx":
+	case "json", "cdx-json", "cdx-xml":
 		PrintJsonLicense(licenses)
 	default:
 		table.PrintLicenses(*licenses)
@@ -87,7 +87,7 @@ func printLicense(licenses *[]model.License, outputType string) {
 // printSecret prints secret information based on the output type.
 func printSecret(secret *dm.SecretResults, outputType string) {
 	switch outputType {
-	case "json", "cyclonedx-json", "cyclonedx":
+	case "json", "cdx-json", "cdx-xml":
 		PrintJsonSecret(secret)
 	default:
 		table.PrintSecrets(secret)

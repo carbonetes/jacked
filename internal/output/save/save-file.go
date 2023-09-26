@@ -29,9 +29,9 @@ func SaveOutputAsFile(filename string, outputType string, outputText string) err
 func addFileExtension(filename string, outputType string) string {
 	removeExistingFileExtension(&filename)
 	switch outputType {
-	case "json", "cyclonedx-json":
+	case "json", "cdx-json":
 		return filename + ".json"
-	case "cyclonedx":
+	case "cdx-xml":
 		return filename + ".xml"
 	default:
 		return filename + ".txt"

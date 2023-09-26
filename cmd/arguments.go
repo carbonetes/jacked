@@ -33,8 +33,8 @@ var (
 	OutputTypes = []string{
 		"table",
 		"json",
-		"cyclonedx-json",
-		"cyclonedx",
+		"cdx-json",
+		"cdx-xml",
 	}
 	Severities = []string{
 		"unknown",
