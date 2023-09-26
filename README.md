@@ -258,13 +258,11 @@ registry:
 ```
 
 ## Contributing
-We welcome contributions to Jacked from the community. We believe that collaboration and contributions from the community are essential to making Jacked even better. Whether it's reporting issues, submitting pull requests, or providing feedback, your input helps improve this project for everyone. Please check our [Contribution Guidelines](CONTRIBUTING.md) for more details on how to get involved.
+We welcome contributions to Jacked from the community. We believe that collaboration and contributions from the community are essential to making Jacked even better. Whether it's reporting issues, submitting pull requests, or providing feedback, your input helps improve this project for everyone. Please check our [Contribution Guidelines](https://github.com/carbonetes/jacked/blob/main/CONTRIBUTING.md) for more details on how to get involved.
 
-By contributing to Jacked, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md). We are committed to maintaining an open, inclusive, and respectful community.
+By contributing to Jacked, you agree to abide by our [Code of Conduct](https://github.com/carbonetes/jacked/blob/main/CODE_OF_CONDUCT.md). We are committed to maintaining an open, inclusive, and respectful community.
 
 If you encounter bugs, have ideas for improvements, or want to request new features, please don't hesitate to open an issue on our [GitHub repository](https://github.com/carbonetes/jacked/issues).
-
-We appreciate your interest in making Jacked even better, and we welcome your contributions!
 
 ## Contact
 
