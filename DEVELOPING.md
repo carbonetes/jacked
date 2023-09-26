@@ -6,7 +6,9 @@ This guide will help you set up Jacked for development on your local machine. By
 
 Before you begin, make sure you have the following prerequisites installed on your system:
 
-- **Go:** Jacked is written in Go, so you'll need to have [Go installed](https://golang.org/doc/install) on your system.
+- **Go (version 1.9 or higher):** Jacked is written in Go, so you'll need to have [Go installed](https://golang.org/doc/install) on your system.
+- **Git**: We use Git for version control. Familiarize yourself with Git if you aren't already.
+- Your Preferred Text Editor or IDE
 
 ## Cloning the Repository
 
@@ -55,11 +57,22 @@ git push origin feature-or-fix-name
 5. Create a pull request (PR) from your branch to the main Jacked repository. Be sure to include a clear description of your changes in the PR.
 
 ## Testing
-Jacked has a suite of tests to ensure its functionality. You can run the tests using the following command:
+- Write unit tests and, where applicable, integration tests for your code.
+- Ensure that all tests pass before submitting a PR. To run the project's tests, use the following command:
 ```bash
 go test ./...
 ```
-Make sure all tests pass before submitting a pull request.
+**Note**: Make sure all tests pass before submitting a pull request.
+- Add tests for bug fixes or new features, and update existing tests as needed.
+
+## Documentation
+- Keep code comments, function/method signatures, and user-facing documentation up to date.
+- Document code that is not self-explanatory or may be unclear to others.
+- Maintain a clear and organized project documentation.
+
+## Continuous Integration (CI)
+- Our CI pipeline runs automated tests, code linting, and other checks.
+- Ensure that your code passes all CI checks before creating a PR.
 
 ## Code Style
 Please adhere to the project's coding standards and style guidelines to maintain consistency throughout the codebase. We recommend following [Go's official coding style and conventions](https://google.github.io/styleguide/go/).
@@ -67,7 +80,10 @@ Please adhere to the project's coding standards and style guidelines to maintain
 ## Licensing
 By contributing to Jacked, you agree to license your contributions under the terms of the [Apache 2.0](https://choosealicense.com/licenses/apache-2.0/). All contributions will be subject to this license.
 
-## Contact
-If you have any questions, need assistance, or want to discuss your contributions, please don't hesitate to contact us at [eng@carbonetes.com](mailto:eng@carbonetes.com).
+## Getting Help
+If you have questions, need assistance, or want to discuss potential contributions, please don't hesitate to contact us at [eng@carbonetes.com](mailto:eng@carbonetes.com).
+
+## Conclusion
+By following these Development Guidelines, you'll contribute to the success of Jacked and help maintain a collaborative and efficient development process. Thank you for your dedication to our project!
 
 Happy coding!
