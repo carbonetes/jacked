@@ -25,7 +25,7 @@ var rootCmd = &cobra.Command{
 	Use:    "jacked [image]",
 	Args:   cobra.MaximumNArgs(1),
 	Short:  "Jacked Vulnerability Analyzer",
-	Long:   `Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures.`,
+	Long:   `Jacked is an open-source vulnerability scanning tool designed to help you identify and mitigate security risks in your Container Images and File Systems.`,
 	PreRun: preRun,
 	Run:    run,
 }
