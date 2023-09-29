@@ -178,8 +178,8 @@ jacked [flag]
 | `--registry-token string`                | Access token for private registry access                                                                                   |
 | `--registry-username string`             | Username credential for private registry access                                                                            |
 | `--registry-password string`             | Password credential for private registry access                                                                            |
-| `--secret-exclude-filenames stringArray` | Exclude secret searching for each specified filenames                                                                      |
-| `--secret-max-file-size int`             | Maximum file size that the secret will search -- each file (default 10485760)                                              |
+| `--secret-exclude-filenames stringArray` | Exclude secret searching for each specified filename                                                                     |
+| `--secret-max-file-size int`             | Maximum file size that the secret will search each file (default 10485760)                                              |
 | `-v`, `--version`                        | Print application version                                                                                                  |
 | `--ignore-package-names`                 | Specify package names to be whitelisted on the result                                                                      |
 | `--ignore-vuln-cves`                     | Specify CVEs to be whitelisted on the result                                                                               |
@@ -192,7 +192,7 @@ jacked config [flag]
 | `-d`,`--display` | Display the content of the configuration file |
 | `-h`,`--help`    | Help for configuration                        |
 | `-p`,`--path`    | Display the path of the configuration file    |
-| `-r`,`--reset`   | Restore default configuration file            |
+| `-r`,`--reset`   | Restore the default configuration file            |
 
 ```
 jacked db [flag]
