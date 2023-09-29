@@ -1,15 +1,19 @@
-# Jacked
+<p align="center">
+  <img src="assets/jacked-logo.svg" alt="Jacked" style="display: block; margin-left: auto; margin-right: auto; width: 40%; margin-bottom: 5%;">
+</p>
+
+<div align="center">
+
 [![Github All Releases](https://img.shields.io/github/downloads/carbonetes/jacked/total.svg)]()
 [![Go Report Card](https://goreportcard.com/badge/github.com/carbonetes/jacked)](https://goreportcard.com/report/github.com/carbonetes/jacked)
 [![GitHub release](https://img.shields.io/github/release/carbonetes/jacked.svg)](https://github.com/carbonetes/jacked/releases/latest)
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/carbonetes/jacked.svg)](https://github.com/carbonetes/jacked)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/carbonetes/jacked/blob/main/LICENSE)
 
-Jacked is a powerful open-source tool designed to enhance security measures for Docker images, tarballs, and code repositories. 
+Jacked is an open-source vulnerability scanning tool designed to help you identify and mitigate security risks in your [Container Images](#scanning-docker-images) and [File Systems](#scanning-code-repositories). 
 
-<p align="center">
-<img src="assets/jacked_sample.png" style="width: 65%;">
-</p>
+  <img src="assets/jacked_sample.png" style="width: 65%;">
+</div>
 
 ## Integration with Diggity
 
@@ -18,7 +22,7 @@ Jacked is a powerful open-source tool designed to enhance security measures for 
 
 ## Key Features:
 
-- **Scan Image Vulnerabilities**: Jacked diligently scans your Docker images, identifying potential security risks and vulnerabilities. This ensures that your deployed containers are robust and free from known threats.
+- **Comprehensive Vulnerability Scanning**: Jacked thoroughly examines your container images and file systems to pinpoint potential security risks and vulnerabilities. This comprehensive approach ensures the robustness and security of your deployed container images and codebases.
 - **Tailored Configuration**: Customize Jacked to align with your specific security preferences. Tailor the tool to suit your organization's unique requirements and security policies.
 - **Cross-Platform Compatibility**: Jacked seamlessly integrates with major operating systems and supports various package types. It offers flexibility and compatibility to fit into your existing workflow.
 - **Diggity Integration**: Enhance your security posture by leveraging Jacked's compatibility with Diggity. This integration provides SBOM (Software Bill of Materials) Container Image and File System support.
