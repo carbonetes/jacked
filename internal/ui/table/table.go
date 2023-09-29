@@ -25,10 +25,10 @@ const (
 )
 
 // Method that generates table header, table rows from the scan result, and displaying the generated table format output.
-func DisplayScanResultTable(pkgs *[]dm.Package) string {
+func DisplayScanResultTable(sbom *dm.SBOM) string {
 	table := simpletable.New()
 	header(table)
-	total := rows(pkgs, table)
+	total := rows(sbom.Packages, table)
 	if total-1 > 0 {
 		footer(total-1, table)
 		return display(table)

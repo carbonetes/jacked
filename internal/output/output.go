@@ -6,146 +6,90 @@ import (
 
 	dm "github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/jacked/internal/config"
+	"github.com/carbonetes/jacked/internal/logger"
 	"github.com/carbonetes/jacked/internal/output/cyclonedx"
 	"github.com/carbonetes/jacked/internal/output/save"
 	"github.com/carbonetes/jacked/internal/ui/table"
 	"github.com/carbonetes/jacked/pkg/core/model"
 )
 
-func PrintResult(sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configuration, licenses *[]model.License) {
+const (
+	noLicenseFound = "\nNo license has been found!"
+	noSecretsFound = "\nNo secret has been found!"
+)
 
-	if strings.Contains(*arguments.Output, ",") {
-		for _, _type := range strings.Split(*arguments.Output, ",") {
-			ShowScanResult(_type, sbom, arguments, cfg, licenses)
-		}
-	} else {
-		ShowScanResult(*arguments.Output, sbom, arguments, cfg, licenses)
-	}
+var log = logger.GetLogger()
 
+// Output functions for each type
+var outputFuncs = map[string]func(*dm.SBOM) string {
+	"json":           printJsonResult,
+	"cyclonedx-json": cyclonedx.PrintCycloneDXJSON,
+	"cyclonedx":      cyclonedx.PrintCycloneDX,
+	"default":        table.DisplayScanResultTable,
 }
 
-func ShowScanResult(outputType string, sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configuration, licenses *[]model.License) {
-	var source *string
-	var outputText string
+// PrintResult prints the scan result based on the specified output types.
+func PrintResult(sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configuration, licenses *[]model.License) {
+	outputTypes := strings.Split(*arguments.Output, ",")
 
-	if arguments.Image != nil {
-		source = arguments.Image
+	for _, outputType := range outputTypes {
+		outputText := generateOutput(outputType, sbom, arguments, cfg, licenses)
+
+		if arguments.OutputFile != nil && *arguments.OutputFile != "" {
+			if err := save.SaveOutputAsFile(*arguments.OutputFile, *arguments.Output, outputText); err != nil {
+				log.Printf("Error saving output to file: %v\n", err)
+			}
+		} else {
+			fmt.Println(outputText)
+		}
 	}
-	if arguments.Tar != nil {
-		source = arguments.Tar
+}
+
+// generateOutput generates output text based on the specified output type.
+func generateOutput(outputType string, sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configuration, licenses *[]model.License) string {
+	outputFunc, exists := outputFuncs[outputType]
+	if !exists {
+		// Use the default output function for unknown types
+		outputFunc = outputFuncs["default"]
 	}
-	if arguments.Dir != nil {
-		source = arguments.Dir
+
+	outputText := outputFunc(sbom)
+
+	if cfg.LicenseFinder {
+		if len(*licenses) > 0 {
+			printLicense(licenses, outputType)
+		} else {
+			outputText += noLicenseFound
+		}
 	}
-	if arguments.SbomFile != nil {
-		source = arguments.SbomFile
+
+	if !*arguments.DisableSecretSearch {
+		if len(sbom.Secret.Secrets) > 0 {
+			printSecret(sbom.Secret, outputType)
+		} else {
+			outputText += noSecretsFound
+		}
 	}
+
+	return outputText
+}
+
+// printLicense prints license information based on the output type.
+func printLicense(licenses *[]model.License, outputType string) {
 	switch outputType {
-	case "json":
-		outputText = printJsonResult(sbom)
-		if cfg.LicenseFinder {
-			if len(*licenses) > 0 {
-				PrintJsonLicense(licenses)
-			} else {
-				fmt.Print("\nNo license has been found!\n")
-			}
-		}
-		if !*arguments.DisableSecretSearch {
-			if len(sbom.Secret.Secrets) > 0 {
-				PrintJsonSecret(sbom.Secret)
-			} else {
-				fmt.Print("\nNo secret has been found!\n")
-			}
-		}
-	case "cyclonedx-json":
-		outputText = cyclonedx.PrintCycloneDXJSON(sbom)
-
-		if cfg.LicenseFinder {
-			if len(*licenses) > 0 {
-				PrintJsonLicense(licenses)
-			} else {
-				fmt.Print("\nNo license has been found!\n")
-			}
-		}
-		if !*arguments.DisableSecretSearch {
-			if len(sbom.Secret.Secrets) > 0 {
-				PrintJsonSecret(sbom.Secret)
-			} else {
-				fmt.Print("\nNo secret has been found!\n")
-			}
-		}
-	case "spdx-json":
-		outputText = PrintSPDX("json", source, sbom)
-
-		if cfg.LicenseFinder {
-			if len(*licenses) > 0 {
-				PrintJsonLicense(licenses)
-			} else {
-				fmt.Print("\nNo license has been found!\n")
-			}
-		}
-		if !*arguments.DisableSecretSearch {
-			if len(sbom.Secret.Secrets) > 0 {
-				PrintJsonSecret(sbom.Secret)
-			} else {
-				fmt.Print("\nNo secret has been found!\n")
-			}
-		}
-	case "cyclonedx-xml":
-		outputText = cyclonedx.PrintCycloneDXXML(sbom)
-
-		if cfg.LicenseFinder {
-			if len(*licenses) > 0 {
-				PrintXMLLicense(licenses)
-			} else {
-				fmt.Print("\nNo license has been found!\n")
-			}
-		}
-		if !*arguments.DisableSecretSearch {
-			if len(sbom.Secret.Secrets) > 0 {
-				PrintXMLSecret(sbom.Secret)
-			} else {
-				fmt.Print("\nNo secret has been found!\n")
-			}
-		}
-	case "spdx-xml":
-		outputText = PrintSPDX("xml", source, sbom)
-
-		if cfg.LicenseFinder {
-			if len(*licenses) > 0 {
-				PrintXMLLicense(licenses)
-			} else {
-				fmt.Print("\nNo license has been found!\n")
-			}
-		}
-		if !*arguments.DisableSecretSearch {
-			if len(sbom.Secret.Secrets) > 0 {
-				PrintXMLSecret(sbom.Secret)
-			} else {
-				fmt.Print("\nNo secret has been found!\n")
-			}
-		}
-	case "spdx-tag-value":
-		outputText = PrintSPDX("tag-value", source, sbom)
+	case "json", "cyclonedx-json", "cyclonedx":
+		PrintJsonLicense(licenses)
 	default:
-		outputText = table.DisplayScanResultTable(sbom.Packages)
-		if cfg.LicenseFinder {
-			if len(*licenses) > 0 {
-				table.PrintLicenses(*licenses)
-			} else {
-				fmt.Print("\nNo license has been found!\n")
-			}
-		}
-		if !*arguments.DisableSecretSearch {
-			if len(sbom.Secret.Secrets) > 0 {
-				table.PrintSecrets(sbom.Secret)
-			} else {
-				fmt.Print("\nNo secret has been found!\n")
-			}
-		}
+		table.PrintLicenses(*licenses)
 	}
+}
 
-	if arguments.OutputFile != nil && *arguments.OutputFile != "" {
-		save.SaveOutputAsFile(*arguments.OutputFile, *arguments.Output, outputText)
+// printSecret prints secret information based on the output type.
+func printSecret(secret *dm.SecretResults, outputType string) {
+	switch outputType {
+	case "json", "cyclonedx-json", "cyclonedx":
+		PrintJsonSecret(secret)
+	default:
+		table.PrintSecrets(secret)
 	}
 }

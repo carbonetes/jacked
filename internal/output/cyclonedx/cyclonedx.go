@@ -23,7 +23,7 @@ func PrintCycloneDXJSON(sbom *dm.SBOM) string {
 
 }
 
-func PrintCycloneDXXML(sbom *dm.SBOM) string {
+func PrintCycloneDX(sbom *dm.SBOM) string {
 	cdx := convert.ToCDX(sbom)
 	xml, err := xml.MarshalIndent(cdx, "", " ")
 	if err != nil {
