@@ -93,7 +93,7 @@ func checkDefinedArguments(arguments *model.Arguments) {
 		if len(acceptedArgs) > 0 {
 			*arguments.Output = strings.Join(acceptedArgs, ",")
 		} else {
-			*arguments.Output = acceptedArgs[0]
+			log.Fatalf("Output type [%v] is not supported", *arguments.Output)
 		}
 	}
 
