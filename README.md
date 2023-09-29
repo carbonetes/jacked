@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/jacked-logo.svg" alt="Jacked" style="display: block; margin-left: auto; margin-right: auto; width: 40%; margin-bottom: 5%;">
+  <img src="assets/jacked-logo.svg" alt="Jacked" style="display: block; margin-left: auto; margin-right: auto; width: 50%; margin-bottom: 5%;">
 </p>
 
 <div align="center">
@@ -146,7 +146,7 @@ jacked <image> --ci --fail-criteria medium
 <details>
 <summary>Sample Evaluation</summary>
 
-<img src="assets/evaluation_sample_alpine_edge.png">
+<img src="assets/evaluation_sample_alpine_edge.png" style="width: 50%;">
 
 </details>
 
