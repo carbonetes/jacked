@@ -209,16 +209,13 @@ jacked version [flag] [string]
 | :--------------------------------- | :---------------------------------------------------------------------------------- |
 | `-f` [string], `--format` [string] | Print application version format (json, text) (default "text")                      |
 
-## Configuration 🚧
-Improve using the tool based on your preferences.
-<br>
-Configuration search paths:
-- `<HOME>/.jacked.yaml`
+## Configuration
+Customize Jacked to match your preferences by modifying its configuration options. You can find the configuration file in `<HOME>/.jacked.yaml`.
 
-Configuration options (example values are the default):
+Here are some of the key configuration options along with their default values:
 
 ```yaml
-# supported output types: (table, json, cyclonedx-xml, cyclonedx-json, spdx-xml, spdx-json, spdx-tag-value) (default "table") 
+# supported output types: (table, json, cdx-xml, cdx-json) (default "table") 
 output: table
 # disables all logging except vulnerability result
 quiet: false
@@ -233,7 +230,7 @@ ignore:
     name: []
     type: []
     version: []
-# specify enabled parsers ([apk debian java npm composer python gem rpm dart nuget go]) (default all)
+# specify enabled parsers ([apk debian java npm composer python gem rpm dart nuget go ...]) (default all)
 enabled-parsers: []
 # disables file listing from package metadata
 disable-file-listing: false
