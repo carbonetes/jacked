@@ -108,7 +108,6 @@ func footer(count int, table *simpletable.Table) {
 func display(table *simpletable.Table) string {
 	// Set Table Style
 	table.SetStyle(simpletable.StyleCompactLite)
-	fmt.Println(table.String())
 	return table.String()
 }
 

@@ -21,10 +21,10 @@ var log = logger.GetLogger()
 
 // Output functions for each type
 var outputFuncs = map[string]func(*dm.SBOM) string{
+	"table":    table.DisplayScanResultTable,
 	"json":     printJsonResult,
 	"cdx-json": cyclonedx.PrintCycloneDXJSON,
 	"cdx-xml":  cyclonedx.PrintCycloneDX,
-	"default":  table.DisplayScanResultTable,
 }
 
 // PrintResult prints the scan result based on the specified output types.
@@ -38,6 +38,10 @@ func PrintResult(sbom *dm.SBOM, arguments *model.Arguments, cfg *config.Configur
 			if err := save.SaveOutputAsFile(*arguments.OutputFile, *arguments.Output, outputText); err != nil {
 				log.Printf("Error saving output to file: %v\n", err)
 			}
+		}
+
+		if !*arguments.Quiet {
+			log.Printf("\n%s", outputText)
 		}
 	}
 }
