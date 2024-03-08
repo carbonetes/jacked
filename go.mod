@@ -6,6 +6,7 @@ toolchain go1.22.0
 
 require (
 	github.com/CycloneDX/cyclonedx-go v0.8.0
+	github.com/alexeyco/simpletable v1.0.0
 	github.com/charmbracelet/bubbles v0.17.1
 	github.com/charmbracelet/bubbletea v0.25.0
 	github.com/charmbracelet/lipgloss v0.9.1
@@ -18,6 +19,7 @@ require (
 	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
 	github.com/uptrace/bun v1.1.12
 	github.com/uptrace/bun/dialect/sqlitedialect v1.1.12
+	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678
 	gopkg.in/yaml.v2 v2.4.0
 	modernc.org/sqlite v1.29.2
 )
