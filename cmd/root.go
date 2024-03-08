@@ -1,150 +1,96 @@
 package cmd
 
 import (
-	"os"
-	"strings"
-
-	"github.com/carbonetes/jacked/internal/engine"
-	"github.com/carbonetes/jacked/internal/logger"
-	"github.com/carbonetes/jacked/internal/ui/bar"
-	"github.com/carbonetes/jacked/internal/ui/spinner"
+	diggity "github.com/carbonetes/diggity/pkg/types"
+	"github.com/carbonetes/jacked/internal/helper"
+	"github.com/carbonetes/jacked/internal/log"
 	"github.com/carbonetes/jacked/internal/version"
-	"github.com/carbonetes/jacked/pkg/core/ci"
-	"github.com/carbonetes/jacked/pkg/core/model"
-	"golang.org/x/exp/slices"
-
+	"github.com/carbonetes/jacked/pkg/analyzer"
+	"github.com/carbonetes/jacked/pkg/types"
 	"github.com/spf13/cobra"
 )
 
-const (
-	defaultTag   string = "latest"
-	tagSeparator string = ":"
-)
-
-var rootCmd = &cobra.Command{
-	Use:    "jacked [image]",
-	Args:   cobra.MaximumNArgs(1),
-	Short:  "Jacked Vulnerability Analyzer",
-	Long:   `Jacked is an open-source vulnerability scanning tool designed to help you identify and mitigate security risks in your Container Images and File Systems.`,
-	PreRun: preRun,
-	Run:    run,
+var root = &cobra.Command{
+	Use:   "jacked [image]",
+	Args:  cobra.MaximumNArgs(1),
+	Short: "Jacked Vulnerability Analyzer",
+	Long:  `Jacked is an open-source vulnerability scanning tool designed to help you identify and mitigate security risks in your Container Images and File Systems.`,
+	Run:   run,
 }
 
-func preRun(_ *cobra.Command, args []string) {
-	if len(args) > 0 {
-		arguments.Image = &args[0]
-		arguments.Quiet = &quiet
-		cfg.Output = *arguments.Output
-		cfg.LicenseFinder = license
-		//arguments for CI Mode
-		ciCfg.FailCriteria.Package.Name = appendIgnoreList(ciCfg.FailCriteria.Package.Name, *arguments.IgnorePackageNames)
-		ciCfg.FailCriteria.Vulnerability.CVE = appendIgnoreList(ciCfg.FailCriteria.Vulnerability.CVE, *arguments.IgnoreCVEs)
-		//arguments for normal scan
-		cfg.Ignore.Package.Name = appendIgnoreList(cfg.Ignore.Package.Name, *arguments.IgnorePackageNames)
-		cfg.Ignore.Vulnerability.CVE = appendIgnoreList(cfg.Ignore.Vulnerability.CVE, *arguments.IgnoreCVEs)
-
-		if !*arguments.Quiet {
-			spinner.Enable()
-			bar.Enable()
-		} else {
-			logger.SetQuietMode()
-		}
-	}
-}
-
+// Main entry point
 func run(c *cobra.Command, args []string) {
 
-	if c.Flags().Changed("version") {
-		log.Infof("%v", version.GetBuild().Version)
-		os.Exit(0)
+	// if version flag is set, print the version and exit
+	versionArg, _ := c.Flags().GetBool("version")
+	if versionArg {
+		log.Print(version.GetBuild().Version)
+		return
 	}
 
-	if c.Flags().Changed("secrets") {
-		*arguments.DisableSecretSearch = false
-		cfg.SecretConfig.Disabled = false
+	// Get the flags
+	tarball, _ := c.Flags().GetString("tar")
+	filesystem, _ := c.Flags().GetString("dir")
+	quiet, _ := c.Flags().GetBool("quiet")
+	format, _ := c.Flags().GetString("output-format")
+	scanners, _ := c.Flags().GetStringArray("scanners")
+	file, _ := c.Flags().GetString("file")
+	skip, _ := c.Flags().GetBool("skip-db-update")
+	force, _ := c.Flags().GetBool("force-db-update")
+	ci, _ := c.Flags().GetBool("ci")
+
+	// If CI mode is enabled, suppress all output except for errors
+	if ci {
+		quiet = true
 	}
 
-	if len(args) == 0 && len(*arguments.Image) == 0 && len(*arguments.Dir) == 0 && len(*arguments.Tar) == 0 && len(*arguments.SbomFile) == 0 {
+	params := types.Parameters{
+		Format:        types.Format(format),
+		Quiet:         quiet,
+		File:          file,
+		SkipDBUpdate:  skip,
+		ForceDBUpdate: force,
+		CI:            ci,
+		Diggity: diggity.Parameters{
+			Scanners:     scanners,
+			OutputFormat: diggity.JSON,
+		},
+	}
+
+	if len(args) > 0 {
+		params.Diggity.Input = helper.FormatImage(args[0])
+	} else if len(tarball) > 0 {
+		params.Diggity.Input = tarball
+	} else if len(filesystem) > 0 {
+		params.Diggity.Input = filesystem
+	} else {
 		err := c.Help()
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Error(err)
 		}
-		os.Exit(0)
+		return
 	}
 
-	if c.Flags().Changed("fail-criteria") {
-		if !ciMode {
-			log.Warn("Fail Criteria : CI Mode is not enabled.")
-		}
+	// Set the scan type based on the input
+	params.Diggity.GetScanType()
+
+	// Validate the output format type
+	valid := validatFormat(params.Format)
+	if !valid {
+		log.Fatalf("Output type [%v] is not supported", params.Format)
 	}
 
-	if ciMode {
-		ci.Analyze(arguments, &ciCfg)
-	}
-
-	checkDefinedArguments(arguments)
-	engine.Start(arguments, &cfg)
+	// Run the analyzer with the parameters provided
+	analyzer.New(params)
 }
 
-func checkDefinedArguments(arguments *model.Arguments) {
-	// Check user output type is supported
-	if arguments.Output != nil && *arguments.Output != "" {
-		acceptedArgs := ValidateOutputArg(*arguments.Output)
-		if len(acceptedArgs) > 0 {
-			*arguments.Output = strings.Join(acceptedArgs, ",")
-		} else {
-			log.Fatalf("Output type [%v] is not supported", *arguments.Output)
-		}
-	}
 
-	if len(*arguments.Image) != 0 && !strings.Contains(*arguments.Image, tagSeparator) {
-		log.Print("Using default tag:", defaultTag)
-		modifiedTag := *arguments.Image + tagSeparator + defaultTag
-		arguments.Image = &modifiedTag
+// validatFormat validates the output format type provided by the user and returns true if it is valid else false
+func validatFormat(format types.Format) bool {
+	switch types.Format(format) {
+	case types.JSON, types.Table, types.SPDXJSON, types.SPDXXML, types.SPDXTag, types.SnapshotJSON:
+		return true
+	default:
+		return false
 	}
-}
-
-// ValidateOutputArg checks if output types specified are valid
-func ValidateOutputArg(outputArg string) []string {
-	var acceptedArgs []string
-
-	if strings.Contains(outputArg, ",") {
-		for _, o := range strings.Split(outputArg, ",") {
-			if slices.Contains(OutputTypes, strings.ToLower(o)) {
-				acceptedArgs = append(acceptedArgs, strings.ToLower(o))
-			}
-		}
-	} else {
-		if slices.Contains(OutputTypes, strings.ToLower(outputArg)) {
-			acceptedArgs = append(acceptedArgs, strings.ToLower(outputArg))
-		}
-	}
-	return acceptedArgs
-}
-
-func appendIgnoreList(currentList []string, input string) []string {
-	if len(input) == 0 {
-		return removeDuplicates(currentList)
-	}
-	var newList []string
-	if strings.Contains(input, ",") {
-		newList = append(newList, strings.Split(input, ",")...)
-	} else {
-		newList = append(newList, input)
-	}
-	return removeDuplicates(newList)
-}
-
-func removeDuplicates(slice []string) []string {
-	encountered := map[string]bool{}
-	result := []string{}
-
-	for _, str := range slice {
-		strLowerCase := strings.ToLower(str)
-		if !encountered[strLowerCase] {
-			encountered[strLowerCase] = true
-			result = append(result, strLowerCase)
-		}
-	}
-	return result
 }

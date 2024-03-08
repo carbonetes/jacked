@@ -1,12 +1,10 @@
 package cmd
 
-import "github.com/carbonetes/jacked/internal/logger"
-
-var log = logger.GetLogger()
+import "github.com/carbonetes/jacked/internal/log"
 
 func Execute() {
-	rootCmd.CompletionOptions.DisableDefaultCmd = true
-	err := rootCmd.Execute()
+	root.CompletionOptions.DisableDefaultCmd = true
+	err := root.Execute()
 	if err != nil {
 		log.Fatalf("Error executing root command: %v", err)
 	}
