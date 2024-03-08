@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
-	"github.com/carbonetes/jacked/internal/ui/spinner"
-
+	"github.com/carbonetes/jacked/internal/log"
 	"github.com/google/uuid"
 )
 
@@ -35,16 +35,17 @@ var (
  */
 func DBCheck(skipDbUpdate bool, forceDbUpdate bool) {
 
-	spinner.OnCheckDatabaseStart()
 	metadataList, err := getGlobalMetadataList()
 	if err != nil {
-		spinner.OnStop(err)
+		log.Errorf("Error fetching metadata: %v", err)
 	}
 
 	latestMetadata := getLatestMetadata(metadataList)
 	if forceDbUpdate && !skipDbUpdate {
 		err := updateLocalDatabase(latestMetadata)
-		spinner.OnStop(err)
+		if err != nil {
+			log.Errorf("Error updating database: %v", err)
+		}
 		return
 	}
 
@@ -52,49 +53,52 @@ func DBCheck(skipDbUpdate bool, forceDbUpdate bool) {
 	metadataFileExists := checkFile(metadataPath)
 
 	if !dbFileExists && skipDbUpdate {
-		spinner.OnStop(errors.New("No database found on local!"))
+		log.Error("No database found on local!")
 	}
 
 	if !metadataFileExists && skipDbUpdate {
-		spinner.OnStop(errors.New("No database metadata found on local!"))
+		log.Error("No metadata found on local!")
 	}
 
 	if !metadataFileExists {
 		err := updateLocalDatabase(latestMetadata)
-		spinner.OnStop(err)
-		return
+		if err != nil {
+			log.Errorf("Error updating database: %v", err)
+		}
 	}
 
 	if !dbFileExists {
 		err := updateLocalDatabase(latestMetadata)
-		spinner.OnStop(err)
-		return
+		if err != nil {
+			log.Errorf("Error updating database: %v", err)
+		}
 	}
 
 	localMetadata, err := getMetadata(metadataPath)
 	if err != nil {
-		spinner.OnStop(err)
+		log.Errorf("Error reading metadata: %v", err)
 	}
 
 	if localMetadata.Build != latestMetadata.Build && !skipDbUpdate {
 		err := updateLocalDatabase(latestMetadata)
-		spinner.OnStop(err)
+		if err != nil {
+			log.Errorf("Error updating database: %v", err)
+		}
 		return
 	}
 
-	spinner.OnStop(nil)
 }
 
 // Download and extract latest database files.
 func updateLocalDatabase(metadata Metadata) error {
-	tmpFilepath := download(metadata.URL)
+	tmpFilepath := download(metadata.URL, "Downloading "+filepath.Base(metadata.URL))
 	checksum, err := generateChecksum(tmpFilepath)
 	if err != nil {
 		return err
 	}
 
 	if !compareChecksum(checksum, metadata.Checksum) {
-		return errors.New("Metadata checksum mismatch")
+		return errors.New("metadata checksum mismatch")
 	}
 
 	tmpFolder := path.Join(os.TempDir(), "jacked-tmp-"+uuid.New().String())
@@ -105,7 +109,7 @@ func updateLocalDatabase(metadata Metadata) error {
 	}
 
 	if !checkFile(path.Join(tmpFolder, metadataFile)) && !checkFile(path.Join(tmpFolder, dbFile)) {
-		return errors.New("Temporary files not found")
+		return errors.New("temporary files not found")
 	}
 
 	dbChecksum, err := generateChecksum(path.Join(tmpFolder, dbFile))
@@ -119,7 +123,7 @@ func updateLocalDatabase(metadata Metadata) error {
 	}
 
 	if !compareChecksum(dbChecksum, newMetadata.Checksum) {
-		return errors.New("Latest Metadata checksum mismatch")
+		return errors.New("latest Metadata checksum mismatch")
 	}
 
 	err = replaceFiles(tmpFilepath, tmpFolder)
@@ -219,7 +223,7 @@ func compareChecksum(checksum1, checksum2 string) bool {
 	if strings.EqualFold(checksum1, checksum2) {
 		return true
 	} else {
-		log.Errorln("Integrity File Failed!")
+		log.Error("Integrity File Failed!")
 	}
 	return false
 }
@@ -256,7 +260,7 @@ func GetLocalMetadata() Metadata {
 	if checkFile(metadataPath) {
 		file, err := os.Open(metadataPath)
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Error(err.Error())
 		}
 		defer file.Close()
 
@@ -264,11 +268,11 @@ func GetLocalMetadata() Metadata {
 		err = json.Unmarshal(content, &metadata)
 
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Error(err.Error())
 		}
 
 	} else {
-		log.Errorln("No local metadata found!")
+		log.Error("No local metadata found!")
 	}
 	return metadata
 }

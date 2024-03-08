@@ -11,16 +11,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/carbonetes/jacked/internal/ui/bar"
-	"github.com/carbonetes/jacked/internal/ui/spinner"
-
+	"github.com/carbonetes/jacked/internal/log"
+	"github.com/carbonetes/jacked/internal/tea/progress"
 	"github.com/google/uuid"
 )
 
 // Download using the provided url from the root metadata latest version and returns file path to be used on generating checksums.
-func download(url string) string {
-	spinner.OnPause()
-	spinner.OnDatabaseUpdateStart()
+func download(url string, status string) string {
 	var fileExt string = ".tar.gz"
 	var tempFile string = path.Join(os.TempDir(), "jacked-tmp-"+uuid.New().String()+fileExt)
 
@@ -35,13 +32,15 @@ func download(url string) string {
 		log.Errorf("Error downloading database: %v", err)
 	}
 
-	bar.OnDownloading(resp.ContentLength)
 	defer resp.Body.Close()
+
+	progress.Download(resp, out, status)
+
 	if resp.StatusCode != http.StatusOK {
 		log.Errorf("Error downloading database: %v", resp.Status)
 	}
 
-	_, err = io.Copy(io.MultiWriter(out, bar.GetBar()), resp.Body)
+	_, err = io.Copy(io.MultiWriter(out), resp.Body)
 	if err != nil {
 		log.Errorf("Error copying downloaded data into output tar file: %v", err)
 	}
@@ -61,12 +60,6 @@ func extractTarGz(target, extractionPath string) error {
 
 	defer reader.Close()
 
-	fileStat, err := reader.Stat()
-	if err != nil {
-		return err
-	}
-
-	bar.OnExtracting(fileStat.Size())
 	gzipReader, err := gzip.NewReader(reader)
 	if err != nil {
 		return err
@@ -102,15 +95,16 @@ func extractTarGz(target, extractionPath string) error {
 				return err
 			}
 			out, err := os.Create(path)
+			progress.Extract(tarReader, int(header.Size), out, "Extracting "+header.Name)
 			if err != nil {
 				return err
 			}
-			if _, err := io.Copy(io.MultiWriter(out, bar.GetBar()), tarReader); err != nil {
+			if _, err := io.Copy(io.MultiWriter(out), tarReader); err != nil {
 				return err
 			}
 			defer out.Close()
 		default:
-			return errors.New("Unknown tar header type flag")
+			return errors.New("unknown tar header type flag")
 		}
 	}
 	return nil
