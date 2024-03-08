@@ -3,14 +3,15 @@ package db
 import (
 	"context"
 
-	"github.com/carbonetes/jacked/pkg/core/model"
+	"github.com/carbonetes/jacked/internal/log"
+	"github.com/carbonetes/jacked/pkg/types"
 	"github.com/uptrace/bun"
 )
 
 // FindPackage is a function that accepts a list of keywords and a list of Vulnerability structs.
 // It uses the bun package to query the database for vulnerabilities that match any of the keywords.
 // If there is an error while querying the database, the function logs the error as fatal.
-func FindByKeywords(keywords *[]string, vulnerabilities *[]model.Vulnerability) {
+func FindByKeywords(keywords *[]string, vulnerabilities *[]types.Vulnerability) {
 	// Use db.NewSelect() to create a new select query on the vulnerabilities table.
 	// Then use .Model(vulnerabilities) to specify the destination struct for the query results.
 	// Use .Where("package IN (?)", bun.In(keywords)) to filter the query results by looking for vulnerabilities where the "package" field matches any of the keywords.

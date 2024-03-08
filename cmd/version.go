@@ -3,7 +3,8 @@ package cmd
 import (
 	"os"
 
-	"github.com/carbonetes/jacked/internal/utils"
+	"github.com/carbonetes/jacked/internal/helper"
+	"github.com/carbonetes/jacked/internal/log"
 	"github.com/carbonetes/jacked/internal/version"
 
 	"github.com/spf13/cobra"
@@ -19,15 +20,16 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(versionCmd)
+	root.AddCommand(versionCmd)
 
+	// Format flag to specify the output format of the version information
 	versionCmd.Flags().StringVarP(&format, "format", "f", "text", "Print application version format (json, text)")
 }
 
 func versionRun(c *cobra.Command, _ []string) {
 	info := version.GetBuild()
 	if format == "json" {
-		output, err := utils.ToJSON(info)
+		output, err := helper.ToJSON(info)
 		if err != nil {
 			log.Fatalf("Error marshalling version info: %v", err)
 		}

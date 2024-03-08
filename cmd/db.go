@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/carbonetes/jacked/internal/db"
+	"github.com/carbonetes/jacked/internal/log"
 
 	"github.com/spf13/cobra"
 )
@@ -18,10 +19,15 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(dbCmd)
+	root.AddCommand(dbCmd)
 
+	// Build flag to print the database current build based on the local metadata
 	dbCmd.Flags().BoolP("build", "b", false, "Print database current build")
+
+	// Info flag to print the database metadata information based on the local metadata
 	dbCmd.Flags().BoolP("info", "i", false, "Print database metadata information")
+
+	// Update DB flag to do force update on vulnerability database without scanning 
 	dbCmd.Flags().BoolP("update-db", "u", false, "Update the vulnerability database without scanning")
 }
 
@@ -38,12 +44,12 @@ func dbRun(c *cobra.Command, _ []string) {
 		log.Infof("%v", string(metadata))
 		os.Exit(0)
 	}
-	if c.Flags().Changed("update-db"){
+	if c.Flags().Changed("update-db") {
 		db.DBCheck(false, true)
 	} else {
 		err := c.Help()
 		if err != nil {
-			log.Errorln(err.Error())
+			log.Error(err)
 		}
 		os.Exit(0)
 	}
