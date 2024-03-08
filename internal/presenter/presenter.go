@@ -26,11 +26,11 @@ func Display(params types.Parameters, elapsed float64) {
 		table.Show(table.Create(), elapsed)
 	case types.JSON:
 		// Display the results in a JSON format
-		result, err := helper.ToJSON(sbom)
+		result, err := helper.ToJSON(*sbom)
 		if err != nil {
 			log.Error(err)
 		}
-		print(result)
+		log.Print(string(result))
 	}
-	
+
 }

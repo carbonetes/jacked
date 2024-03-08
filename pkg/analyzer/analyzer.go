@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/carbonetes/diggity/pkg/cdx"
@@ -10,6 +11,8 @@ import (
 	"github.com/carbonetes/jacked/internal/log"
 	"github.com/carbonetes/jacked/internal/presenter"
 	"github.com/carbonetes/jacked/internal/tea/spinner"
+	"github.com/carbonetes/jacked/pkg/ci"
+	"github.com/carbonetes/jacked/pkg/config"
 	"github.com/carbonetes/jacked/pkg/types"
 )
 
@@ -61,6 +64,12 @@ func New(params types.Parameters) {
 
 	// Analyze sbom to find vulnerabilities
 	AnalyzeCDX(sbom)
+
+	if params.CI {
+		// Run CI
+		ci.Run(config.Config.CI, sbom)
+		os.Exit(0)
+	}
 
 	elapsed := time.Since(start).Seconds()
 

@@ -55,6 +55,11 @@ func Printf(format string, args ...interface{}) {
 	log.Printf(format, args...)
 }
 
+// Println func prints the arguments to stdout
+func Println(arg ...interface{}) {
+	log.Println(arg...)
+}
+
 // Error func prints the arguments to stderr1
 func Error(arg ...interface{}) {
 	log.Error(arg...)
@@ -93,4 +98,14 @@ func Fatal(arg ...interface{}) {
 // Fatalf func prints the formatted arguments to stderr and exits with code 0
 func Fatalf(format string, args ...interface{}) {
 	log.Fatalf(format, args...)
+}
+
+// Warn func prints the arguments to stderr
+func Warn(arg ...interface{}) {
+	log.Warn(arg...)
+}
+
+// Warnf func prints the formatted arguments to stderr
+func Warnf(format string, args ...interface{}) {
+	log.Warnf(format, args...)
 }
