@@ -64,33 +64,23 @@ builds:
 
 archives:
   - id: tar-archives
-    rlcp: true
     builds:
       - linux-builds
       - darwin-builds
     name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
     format: tar.gz
     files:
-      - src: license*
-      - src: LICENSE*
-      - src: readme*
-      - src: README*
-      - src: changelog*
-      - src: CHANGELOG*
+      - src: LICENSE
+      - src: README.md
 
   - id: zip-archives
-    rlcp: true
     builds:
       - windows-build
     name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
     format: zip
     files:
-      - src: license*
-      - src: LICENSE*
-      - src: readme*
-      - src: README*
-      - src: changelog*
-      - src: CHANGELOG*
+      - src: LICENSE
+      - src: README.md
 
 nfpms:
   - file_name_template: '{{ .PackageName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}'
@@ -108,53 +98,33 @@ nfpms:
 brews:
   - 
     skip_upload: false   # set to true to avoid uploading while under testing
-    tap:
+    repository:
       owner: carbonetes
       name: homebrew-jacked
       branch: main
-      token: "{{ .Env.GITHUB_TOKEN }}"
     folder: Formula
     ids:
       - tar-archives
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
     homepage: https://www.carbonetes.com/
-    description: "Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures."
+    description: "Jacked is an open-source vulnerability scanning tool designed to help you identify and mitigate security risks in your Container Images and File Systems."
     license: "Apache License 2.0"
-    dependencies:
-      - name : docker
 
-chocolateys:
+scoops:
   -
-    skip_publish: true   # set to true to avoid uploading while under testing
-    authors: carbonetes
-    description: "Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures."
-    name: jacked
-    project_url: https://www.carbonetes.com/
-    copyright: 2023 Carbonetes
-    license_url: https://github.com/carbonetes/jacked/blob/main/LICENSE
-    require_license_acceptance: false
-    project_source_url: https://github.com/carbonetes/jacked
-    docs_url: https://github.com/carbonetes/jacked/blob/main/README.md
-    release_notes: "https://github.com/carbonetes/jacked/releases/tag/v{{ .Version }}"
-    source_repo: "https://push.chocolatey.org/"
-    api_key: '{{ .Env.CHOCOLATEY_API_KEY }}'
-    dependencies:
-      - id: docker
-
-scoop:
-  skip_upload: false
-  bucket:
-    owner: carbonetes
-    name: jacked-bucket
-    branch: main
-    token: "{{ .Env.GITHUB_TOKEN }}"
-  commit_author:
-    name: carbonetes
-    email: eng@carbonetes.com
-  commit_msg_template: "Update for {{ .ProjectName }} version {{ .Tag }}"
-  homepage: https://www.carbonetes.com/
-  description: "Jacked provides organizations with a more comprehensive look at their application to take calculated actions and create a better security approach. Its primary purpose is to scan vulnerabilities to implement subsequent risk mitigation measures."
-  license: "Apache License 2.0"
+    skip_upload: false
+    repository:
+      owner: carbonetes
+      name: jacked-bucket
+      branch: main
+      token: "{{ .Env.GITHUB_TOKEN }}"
+    commit_author:
+      name: carbonetes
+      email: eng@carbonetes.com
+    commit_msg_template: "Update for {{ .ProjectName }} version {{ .Tag }}"
+    homepage: https://www.carbonetes.com/
+    description: "Jacked is an open-source vulnerability scanning tool designed to help you identify and mitigate security risks in your Container Images and File Systems."
+    license: "Apache License 2.0"
 
 checksum:
   name_template: '{{.ProjectName}}_{{.Version}}_checksums.txt'
