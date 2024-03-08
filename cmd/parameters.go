@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/carbonetes/diggity/pkg/scanner"
 	"github.com/carbonetes/jacked/pkg/types"
 	"github.com/spf13/cobra"
@@ -38,6 +40,8 @@ func init() {
 	// CI flag to enable CI mode
 	// CI mode is a mode that is used to run jacked in a CI/CD pipeline
 	root.Flags().BoolP("ci", "", false, "Enable CI mode [experimental] (e.g. --ci)")
+
+	root.Flags().StringP("fail-criteria", "", "", fmt.Sprintf("Input a severity that will be found at or above given severity then return code will be 1 (%v)", types.GetJoinedSeverities()))
 
 	root.PersistentFlags().BoolP("help", "h", false, "")
 	root.PersistentFlags().Lookup("help").Hidden = true
