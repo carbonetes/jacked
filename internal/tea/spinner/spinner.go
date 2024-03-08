@@ -10,7 +10,10 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var p *tea.Program
+var (
+	p    *tea.Program
+	Skip = false
+)
 
 type errMsg error
 
@@ -73,6 +76,9 @@ func (m model) View() string {
 }
 
 func Set(status string) {
+	if Skip {
+		return
+	}
 	p = tea.NewProgram(new(status))
 	go func() {
 		if _, err := p.Run(); err != nil {
@@ -83,9 +89,15 @@ func Set(status string) {
 }
 
 func Done() {
+	if Skip {
+		return
+	}
 	p.Send(true)
 }
 
 func Status(val string) {
+	if Skip {
+		return
+	}
 	p.Send(val)
 }
