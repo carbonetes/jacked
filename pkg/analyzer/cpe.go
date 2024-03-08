@@ -1,14 +1,14 @@
-package analysis
+package analyzer
 
 import (
-	"github.com/carbonetes/jacked/pkg/core/model"
+	"github.com/carbonetes/jacked/pkg/types"
 	"github.com/facebookincubator/nvdtools/wfn"
 )
 
-// MatchCPE is a function that takes in a slice of Common Platform Enumeration (CPE) strings and a pointer to a `model.Criteria` object, and returns true if any CPE matches the criteria, false otherwise.
-// Input: a slice of CPE strings, and a pointer to a `model.Criteria` object.
+// MatchCPE is a function that takes in a slice of Common Platform Enumeration (CPE) strings and a pointer to a `types.Criteria` object, and returns true if any CPE matches the criteria, false otherwise.
+// Input: a slice of CPE strings, and a pointer to a `types.Criteria` object.
 // Output: a boolean value indicating whether any CPE matched the criteria.
-func MatchCPE(cpes []string, criteria *model.Criteria) bool {
+func MatchCPE(cpes []string, criteria *types.Criteria) bool {
 	// Iterate over each CPE string in the input slice.
 	for _, p := range cpes {
 		// Parse the CPE string using the `UnbindFmtString()` method from the `wfn` package's API. If an error occurs during parsing, skip to the next CPE string.

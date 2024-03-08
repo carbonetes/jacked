@@ -1,17 +1,26 @@
-package analysis
+package analyzer
 
 import (
 	"sync"
 
 	"github.com/CycloneDX/cyclonedx-go"
-	"github.com/carbonetes/jacked/internal/analysis"
 	"github.com/carbonetes/jacked/internal/db"
-	"github.com/carbonetes/jacked/pkg/core/convert"
-	"github.com/carbonetes/jacked/pkg/core/model"
+	"github.com/carbonetes/jacked/internal/tea/spinner"
+	"github.com/carbonetes/jacked/pkg/types"
 )
 
 // diggity cpe2.3 property flag
-const cpe = "diggity:cpe23"
+const cpe = "cpe23"
+
+var (
+	// Create an empty slice for storing the found vulnerabilities.
+	vexList *[]cyclonedx.Vulnerability
+	lock    sync.RWMutex
+)
+
+func init() {
+	vexList = new([]cyclonedx.Vulnerability)
+}
 
 // AnalyzeCDX is a function that accepts a CycloneDX BOM (Software Bill of Materials) as input.
 // It calls findMatchingVulnerabilities to search for vulnerabilities affecting the components in the BOM, and appends any found vulnerabilities to the BOM's Vulnerabilities list.
@@ -21,7 +30,7 @@ func AnalyzeCDX(sbom *cyclonedx.BOM) {
 		return
 	}
 	// Call findMatchingVulnerabilities to get a list of matching vulnerabilities for the BOM.
-	vexList := findMatchingVulnerabilities(sbom)
+	findMatchingVulnerabilities(sbom)
 	// Create a new empty slice for storing the vulnerabilities found.
 	sbom.Vulnerabilities = new([]cyclonedx.Vulnerability)
 	// Append the vulnerabilities in vexList to the BOM's Vulnerabilities slice.
@@ -29,18 +38,18 @@ func AnalyzeCDX(sbom *cyclonedx.BOM) {
 }
 
 // findMatchingVulnerabilities is a helper function called by AnalyzeCDX.
-// It searches for vulnerabilities affecting the components in the BOM, and returns a list of matching vulnerabilities.
-func findMatchingVulnerabilities(sbom *cyclonedx.BOM) *[]cyclonedx.Vulnerability {
-	// Create an empty slice for storing the found vulnerabilities.
-	vexList := []cyclonedx.Vulnerability{}
+// It searches for vulnerabilities affecting the components in the BOM, and adds any found vulnerabilities to the BOM's Vulnerabilities list.
+func findMatchingVulnerabilities(sbom *cyclonedx.BOM) {
 	// Create a WaitGroup to wait until all component analysis goroutines have completed.
 	var wg sync.WaitGroup
 	// Use findVulnerabilitiesForPackages to look up known vulnerabilities for the components in the BOM.
 	// Return early if there are no known vulnerabilities.
 	vulnerabilities := findVulnerabilitiesForPackages(sbom.Components)
 	if vulnerabilities == nil {
-		return nil
+		return
 	}
+
+	spinner.Status("Analyzing components for vulnerabilities")
 	// Loop through each component in the BOM.
 	// Spawn a goroutine to analyze each component for matching vulnerabilities.
 	wg.Add(len(*sbom.Components))
@@ -48,6 +57,8 @@ func findMatchingVulnerabilities(sbom *cyclonedx.BOM) *[]cyclonedx.Vulnerability
 		go func(comp cyclonedx.Component) {
 			// Decrement the WaitGroup counter when analysis is complete.
 			defer wg.Done()
+			spinner.Status("Analyzing " + comp.Name)
+			// Look up known vulnerabilities for the current component.
 			packageVulnerabilties := filterVulnerabilitiesByKeyword(&comp.Name, vulnerabilities)
 
 			// Extract the CPEs (Common Platform Enumeration) associated with the component, if any.
@@ -58,17 +69,17 @@ func findMatchingVulnerabilities(sbom *cyclonedx.BOM) *[]cyclonedx.Vulnerability
 			// Loop through each known vulnerability and check if it applies to the current component.
 			// If a match is found, create a new Vulnerability Exploitability eXchange (VEX) record for the component/vulnerability pair and add it to vexList.
 			for _, v := range *packageVulnerabilties {
-				if analysis.MatchConstraint(&comp.Version, &v.Criteria) ||
+				if MatchConstraint(&comp.Version, &v.Criteria) ||
 					len(cpes) > 0 && MatchCPE(cpes, &v.Criteria) {
-					vex := convert.ToVex(&comp, &v)
-					vexList = append(vexList, *vex)
+					vex := ToVex(&comp, &v)
+					// vexList = append(vexList, *vex)
+					AddVex(vex)
 				}
 			}
 		}(c)
 	}
 	// Wait for all component analysis goroutines to complete before returning vexList.
 	wg.Wait()
-	return &vexList
 }
 
 // getCPES is a helper function used by findMatchingVulnerabilities.
@@ -86,10 +97,10 @@ func getCPES(c *[]cyclonedx.Property) []string {
 }
 
 // findVulnerabilitiesForPackages is a helper function used by findMatchingVulnerabilities.
-// It looks up known vulnerabilities for the components in pkgs and returns them as a slice of model.Vulnerability structs.
-func findVulnerabilitiesForPackages(pkgs *[]cyclonedx.Component) *[]model.Vulnerability {
+// It looks up known vulnerabilities for the components in pkgs and returns them as a slice of types.Vulnerability structs.
+func findVulnerabilitiesForPackages(pkgs *[]cyclonedx.Component) *[]types.Vulnerability {
 	// Create a new empty slice for storing the found vulnerabilities.
-	vulnerabilities := new([]model.Vulnerability)
+	vulnerabilities := new([]types.Vulnerability)
 	// Create a new empty slice for storing search keywords (i.e. package names).
 	keywords := new([]string)
 	// Loop through each component in the BOM and add its name to the keywords list.
@@ -104,12 +115,30 @@ func findVulnerabilitiesForPackages(pkgs *[]cyclonedx.Component) *[]model.Vulner
 	return vulnerabilities
 }
 
-func filterVulnerabilitiesByKeyword(keyword *string, vulnerabilities *[]model.Vulnerability) *[]model.Vulnerability {
-	filtered := new([]model.Vulnerability)
+func filterVulnerabilitiesByKeyword(keyword *string, vulnerabilities *[]types.Vulnerability) *[]types.Vulnerability {
+	filtered := new([]types.Vulnerability)
 	for _, v := range *vulnerabilities {
 		if v.Package == *keyword {
 			*filtered = append(*filtered, v)
 		}
 	}
 	return filtered
+}
+
+func AddVex(vex *cyclonedx.Vulnerability) {
+	lock.Lock()
+	defer lock.Unlock()
+
+	if vex == nil {
+		return
+	}
+
+	// check if the vulnerability already exists in the list
+	for _, v := range *vexList {
+		if v.ID == vex.ID && v.BOMRef == vex.BOMRef {
+			return
+		}
+	}
+
+	*vexList = append(*vexList, *vex)
 }

@@ -1,14 +1,14 @@
-package analysis
+package analyzer
 
 import (
 	"regexp"
 	"strings"
 
-	"github.com/carbonetes/jacked/pkg/core/model"
+	"github.com/carbonetes/jacked/pkg/types"
 	"github.com/hashicorp/go-version"
 )
 
-func MatchConstraint(packageVersion *string, criteria *model.Criteria) bool {
+func MatchConstraint(packageVersion *string, criteria *types.Criteria) bool {
 
 	v, err := version.NewVersion(normalizeVersion(*packageVersion))
 	if err != nil {
