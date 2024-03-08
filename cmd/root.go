@@ -92,7 +92,11 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	// Set the scan type based on the input
-	params.Diggity.GetScanType()
+	err := params.Diggity.GetScanType()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 
 	if len(failCriteria) > 0 {
 		failCriteria = strings.ToLower(failCriteria)
