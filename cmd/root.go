@@ -1,11 +1,15 @@
 package cmd
 
 import (
+	"strings"
+
 	diggity "github.com/carbonetes/diggity/pkg/types"
 	"github.com/carbonetes/jacked/internal/helper"
 	"github.com/carbonetes/jacked/internal/log"
+	"github.com/carbonetes/jacked/internal/tea/spinner"
 	"github.com/carbonetes/jacked/internal/version"
 	"github.com/carbonetes/jacked/pkg/analyzer"
+	"github.com/carbonetes/jacked/pkg/config"
 	"github.com/carbonetes/jacked/pkg/types"
 	"github.com/spf13/cobra"
 )
@@ -20,7 +24,6 @@ var root = &cobra.Command{
 
 // Main entry point
 func run(c *cobra.Command, args []string) {
-
 	// if version flag is set, print the version and exit
 	versionArg, _ := c.Flags().GetBool("version")
 	if versionArg {
@@ -38,12 +41,29 @@ func run(c *cobra.Command, args []string) {
 	skip, _ := c.Flags().GetBool("skip-db-update")
 	force, _ := c.Flags().GetBool("force-db-update")
 	ci, _ := c.Flags().GetBool("ci")
+	failCriteria, _ := c.Flags().GetString("fail-criteria")
 
 	// If CI mode is enabled, suppress all output except for errors
 	if ci {
 		quiet = true
+		if len(failCriteria) == 0 || !types.IsValidSeverity(failCriteria) {
+			log.Warn("CI mode is enabled, but no valid fail criteria is provided")
+			log.Warn("Default fail criteria will be used: 'critical' severity vulnerabilities will fail the build")
+			failCriteria = "critical"
+		}
+	} else {
+		if len(failCriteria) > 0 {
+			log.Warn("CI mode is not enabled, fail criteria will not be used")
+		}
 	}
 
+	if quiet {
+		// If quiet mode is enabled, suppress the spinner
+		spinner.Skip = true
+
+		// If quiet mode is enabled, force the output format to JSON to avoid any issues
+		format = string(types.JSON)
+	}
 	params := types.Parameters{
 		Format:        types.Format(format),
 		Quiet:         quiet,
@@ -74,6 +94,11 @@ func run(c *cobra.Command, args []string) {
 	// Set the scan type based on the input
 	params.Diggity.GetScanType()
 
+	if len(failCriteria) > 0 {
+		failCriteria = strings.ToLower(failCriteria)
+		config.Config.CI.FailCriteria.Severity = failCriteria
+	}
+
 	// Validate the output format type
 	valid := validatFormat(params.Format)
 	if !valid {
@@ -83,7 +108,6 @@ func run(c *cobra.Command, args []string) {
 	// Run the analyzer with the parameters provided
 	analyzer.New(params)
 }
-
 
 // validatFormat validates the output format type provided by the user and returns true if it is valid else false
 func validatFormat(format types.Format) bool {
