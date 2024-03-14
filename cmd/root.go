@@ -6,6 +6,7 @@ import (
 	diggity "github.com/carbonetes/diggity/pkg/types"
 	"github.com/carbonetes/jacked/internal/helper"
 	"github.com/carbonetes/jacked/internal/log"
+	"github.com/carbonetes/jacked/internal/tea/progress"
 	"github.com/carbonetes/jacked/internal/tea/spinner"
 	"github.com/carbonetes/jacked/internal/version"
 	"github.com/carbonetes/jacked/pkg/analyzer"
@@ -33,7 +34,7 @@ func run(c *cobra.Command, args []string) {
 
 	// Get the flags
 	tarball, _ := c.Flags().GetString("tar")
-	filesystem, _ := c.Flags().GetString("dir")
+	filesystem, _ := c.Flags().GetString("directory")
 	quiet, _ := c.Flags().GetBool("quiet")
 	format, _ := c.Flags().GetString("output-format")
 	scanners, _ := c.Flags().GetStringArray("scanners")
@@ -60,6 +61,7 @@ func run(c *cobra.Command, args []string) {
 	if quiet {
 		// If quiet mode is enabled, suppress the spinner
 		spinner.Skip = true
+		progress.Skip = true
 
 		// If quiet mode is enabled, force the output format to JSON to avoid any issues
 		format = string(types.JSON)
