@@ -10,7 +10,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var t *tea.Program
+var (
+	t    *tea.Program
+	Skip bool
+)
 
 type progressWriter struct {
 	total      int
@@ -43,6 +46,10 @@ func (pw *progressWriter) Write(p []byte) (int, error) {
 }
 
 func Download(resp *http.Response, file *os.File, status string) {
+	if Skip {
+		return
+	}
+
 	pw := &progressWriter{
 		total:  int(resp.ContentLength),
 		file:   file,
@@ -69,6 +76,10 @@ func Download(resp *http.Response, file *os.File, status string) {
 }
 
 func Extract(reader io.Reader, total int, file *os.File, status string) {
+	if Skip {
+		return
+	}
+
 	pw := &progressWriter{
 		total:  total,
 		file:   file,
