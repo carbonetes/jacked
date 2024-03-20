@@ -10,7 +10,7 @@ import (
 )
 
 // diggity cpe2.3 property flag
-const cpe = "cpe23"
+const cpe = "diggity:package:cpe23"
 
 var (
 	// Create an empty slice for storing the found vulnerabilities.

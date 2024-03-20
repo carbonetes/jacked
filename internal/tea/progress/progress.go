@@ -12,7 +12,7 @@ import (
 
 var (
 	t    *tea.Program
-	Skip bool
+	Skip = true
 )
 
 type progressWriter struct {

@@ -12,7 +12,7 @@ import (
 
 var (
 	p    *tea.Program
-	Skip = false
+	Skip = true
 )
 
 type errMsg error
