@@ -47,15 +47,18 @@ func New(params types.Parameters) {
 		spinner.Set(fmt.Sprintf("Reading tarfile %s", params.Diggity.Input))
 		image, err := reader.ReadTarballAsImage(params.Diggity.Input)
 		if err != nil {
-			log.Error(err)
+			log.Fatal(err)
 		}
 		err = reader.ReadFiles(image)
 		if err != nil {
-			log.Error(err)
+			log.Fatal(err)
 		}
 	case 3: // Filesystem
 		spinner.Set(fmt.Sprintf("Reading directory %s", params.Diggity.Input))
-		reader.FilesystemScanHandler(params.Diggity.Input)
+		err := reader.FilesystemScanHandler(params.Diggity.Input)
+		if err != nil {
+			log.Fatal(err)
+		}
 	default:
 		log.Fatal("Invalid scan type")
 	}
