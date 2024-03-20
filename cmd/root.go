@@ -59,12 +59,12 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	if quiet {
-		// If quiet mode is enabled, suppress the spinner
-		spinner.Skip = true
-		progress.Skip = true
-
 		// If quiet mode is enabled, force the output format to JSON to avoid any issues
 		format = string(types.JSON)
+	} else {
+		// If quiet mode is not enabled, enable the spinner and progress bar
+		spinner.Skip = false
+		progress.Skip = false
 	}
 	params := types.Parameters{
 		Format:        types.Format(format),
