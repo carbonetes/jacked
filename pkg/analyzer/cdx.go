@@ -5,6 +5,7 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/carbonetes/jacked/internal/db"
+	"github.com/carbonetes/jacked/internal/helper"
 	"github.com/carbonetes/jacked/internal/tea/spinner"
 	"github.com/carbonetes/jacked/pkg/types"
 )
@@ -59,8 +60,10 @@ func findMatchingVulnerabilities(sbom *cyclonedx.BOM) {
 			defer wg.Done()
 			spinner.Status("Analyzing " + comp.Name)
 			// Look up known vulnerabilities for the current component.
-			packageVulnerabilties := filterVulnerabilitiesByKeyword(&comp.Name, vulnerabilities)
-
+			packageVulnerabilties := filterVulnerabilitiesByKeyword(&comp, vulnerabilities)
+			if packageVulnerabilties == nil {
+				return
+			}
 			// Extract the CPEs (Common Platform Enumeration) associated with the component, if any.
 			cpes := getCPES(comp.Properties)
 			if len(comp.CPE) != 0 {
@@ -115,13 +118,46 @@ func findVulnerabilitiesForPackages(pkgs *[]cyclonedx.Component) *[]types.Vulner
 	return vulnerabilities
 }
 
-func filterVulnerabilitiesByKeyword(keyword *string, vulnerabilities *[]types.Vulnerability) *[]types.Vulnerability {
+func filterVulnerabilitiesByKeyword(comp *cyclonedx.Component, vulnerabilities *[]types.Vulnerability) *[]types.Vulnerability {
 	filtered := new([]types.Vulnerability)
-	for _, v := range *vulnerabilities {
-		if v.Package == *keyword {
-			*filtered = append(*filtered, v)
+	// for _, v := range *vulnerabilities {
+	// 	if v.Package == *keyword {
+	// 		*filtered = append(*filtered, v)
+	// 	}
+	// }
+
+	if comp.Properties == nil || vulnerabilities == nil {
+		return nil
+	}
+
+	pkgType := helper.GetComponentType(comp.Properties)
+	if pkgType == nil {
+		return nil
+	}
+
+	// TODO: Add support for other package types. Currently only supporting deb and apk for now but can be extended once the new jacked-db is ready.
+	// Filter vulnerabilities based on package type
+	switch *pkgType {
+	case "deb":
+		for _, v := range *vulnerabilities {
+			if v.Package == comp.Name && (v.Criteria.Source == "debian" || v.Criteria.Source == "nvd") {
+				*filtered = append(*filtered, v)
+			}
+		}
+	case "apk":
+		for _, v := range *vulnerabilities {
+			if v.Package == comp.Name && (v.Criteria.Source == "alpine" || v.Criteria.Source == "nvd") {
+				*filtered = append(*filtered, v)
+			}
+		}
+	default:
+		for _, v := range *vulnerabilities {
+			if v.Package == comp.Name {
+				*filtered = append(*filtered, v)
+			}
 		}
 	}
+
 	return filtered
 }
 
