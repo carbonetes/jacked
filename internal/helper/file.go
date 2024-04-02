@@ -63,7 +63,7 @@ func SaveToFile(data interface{}, path, format string) error {
 		return fmt.Errorf("invalid format: %s", format)
 	}
 
-	fmt.Printf("File saved to %s", path)
+	fmt.Printf("Result saved into file: %s", path)
 
 	return nil
 }
