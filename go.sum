@@ -83,6 +83,8 @@ github.com/bradleyjkemp/cupaloy/v2 v2.8.0 h1:any4BmKE+jGIaMpnU8YgH/I2LPiLBufr6oM
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0/go.mod h1:bm7JXdkRd4BHJk9HpwqAI8BoAY1lps46Enkdqw6aRX0=
 github.com/carbonetes/diggity v1.12.1 h1:s6dMAYX1ZGtvVruBv6PRZ3NYP3xZnz5qUZybFsut0ck=
 github.com/carbonetes/diggity v1.12.1/go.mod h1:1J8fQ5f4p+u+Qb3b9/IWPRmVkiA3AL/nC+WICqxcpl8=
+github.com/carbonetes/diggity v1.12.3 h1:I4MyVdSPpYlx9qhoKtSTBMk8p7/Bczj19Zgbu1Wjc7s=
+github.com/carbonetes/diggity v1.12.3/go.mod h1:5ZIOsl55UjSFTQEPeF09o4z9TczQHS/FUo+omwpRQcc=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/census-instrumentation/opencensus-proto v0.3.0/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
