@@ -7,6 +7,7 @@ import (
 
 	"github.com/carbonetes/diggity/pkg/cdx"
 	"github.com/carbonetes/diggity/pkg/reader"
+	diggity "github.com/carbonetes/diggity/pkg/types"
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/internal/log"
 	"github.com/carbonetes/jacked/internal/presenter"
@@ -24,14 +25,21 @@ func New(params types.Parameters) {
 
 	// Check if the database is up to date
 	db.DBCheck(params.SkipDBUpdate, params.ForceDBUpdate)
-
 	start := time.Now()
 
+	diggityParams := params.Diggity
+	// Generate unique address for the scan
+	addr, err := diggity.NewAddress(diggityParams.Input)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	cdx.New(addr)
 	switch params.Diggity.ScanType {
 	case 1: // Image
 		spinner.Set(fmt.Sprintf("Fetching %s from remote registry", params.Diggity.Input))
 		// Scan target with diggity
-		diggityParams := params.Diggity
 
 		// Pull and read image from registry
 		image, err := reader.GetImage(diggityParams.Input, nil)
@@ -39,7 +47,7 @@ func New(params types.Parameters) {
 			log.Fatal(err)
 		}
 
-		err = reader.ReadFiles(image)
+		err = reader.ReadFiles(image, addr)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -49,13 +57,13 @@ func New(params types.Parameters) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = reader.ReadFiles(image)
+		err = reader.ReadFiles(image, addr)
 		if err != nil {
 			log.Fatal(err)
 		}
 	case 3: // Filesystem
 		spinner.Set(fmt.Sprintf("Reading directory %s", params.Diggity.Input))
-		err := reader.FilesystemScanHandler(params.Diggity.Input)
+		err := reader.FilesystemScanHandler(diggityParams.Input, addr)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -63,15 +71,13 @@ func New(params types.Parameters) {
 		log.Fatal("Invalid scan type")
 	}
 
-	// Get sbom from cdx mod
-	sbom := cdx.BOM
-
+	bom := cdx.SortComponents(addr)
 	// Analyze sbom to find vulnerabilities
-	AnalyzeCDX(sbom)
+	AnalyzeCDX(bom)
 
 	if params.CI {
 		// Run CI
-		ci.Run(config.Config.CI, sbom)
+		ci.Run(config.Config.CI, bom)
 		os.Exit(0)
 	}
 
@@ -80,5 +86,5 @@ func New(params types.Parameters) {
 	spinner.Done()
 
 	// Display the results
-	presenter.Display(params, elapsed)
+	presenter.Display(params, elapsed, bom)
 }
