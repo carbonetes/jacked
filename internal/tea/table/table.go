@@ -3,8 +3,11 @@ package table
 import (
 	"fmt"
 	"os"
+	"sort"
+	"strings"
 
-	"github.com/carbonetes/diggity/pkg/cdx"
+	"github.com/CycloneDX/cyclonedx-go"
+	"github.com/carbonetes/jacked/internal/log"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -44,7 +47,7 @@ func (m model) View() string {
 	return baseStyle.Render(m.table.View()) + fmt.Sprintf("\nDuration: %.3f sec", m.duration) + "\n" + helpStyle.Render("Press esc to quit... 🐱🐓")
 }
 
-func Create() table.Model {
+func Create(bom *cyclonedx.BOM) table.Model {
 	columns := []table.Column{
 		{Title: "Component", Width: 28},
 		{Title: "Version", Width: 16},
@@ -53,20 +56,35 @@ func Create() table.Model {
 	}
 
 	var rows []table.Row
-	vulnerabilities := cdx.BOM.Vulnerabilities
-	components := cdx.BOM.Components
-	for _, v := range *vulnerabilities {
+	vulnerabilities := bom.Vulnerabilities
+	components := bom.Components
 
-		for _, c := range *components {
-			if v.BOMRef == c.BOMRef {
-				rows = append(rows, table.Row{
-					c.Name,
-					c.Version,
-					v.ID,
-					v.Recommendation,
-				})
-			}
+	// Put component names and versions in a map for easy lookup
+	componentsMap := make(map[string]string)
+	for _, c := range *components {
+		componentsMap[c.BOMRef] = c.Name + ":" + c.Version
+	}
+
+	// Sort vulnerabilities by bom ref
+	sort.Slice(*vulnerabilities, func(i, j int) bool {
+		return (*vulnerabilities)[i].BOMRef < (*vulnerabilities)[j].BOMRef
+	})
+
+	for _, v := range *vulnerabilities {
+		component, ok := componentsMap[v.BOMRef]
+		if !ok {
+			log.Error("Component not found for vulnerability: " + v.BOMRef)
+			continue
 		}
+		parts := strings.Split(component, ":")
+		name, version := parts[0], parts[1]
+
+		rows = append(rows, table.Row{
+			name,
+			version,
+			v.ID,
+			v.Recommendation,
+		})
 	}
 
 	t := table.New(
