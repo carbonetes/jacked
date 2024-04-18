@@ -13,15 +13,7 @@ import (
 // diggity cpe2.3 property flag
 const cpe = "diggity:package:cpe23"
 
-var (
-	// Create an empty slice for storing the found vulnerabilities.
-	vexList *[]cyclonedx.Vulnerability
-	lock    sync.RWMutex
-)
-
-func init() {
-	vexList = new([]cyclonedx.Vulnerability)
-}
+var lock sync.RWMutex
 
 // AnalyzeCDX is a function that accepts a CycloneDX BOM (Software Bill of Materials) as input.
 // It calls findMatchingVulnerabilities to search for vulnerabilities affecting the components in the BOM, and appends any found vulnerabilities to the BOM's Vulnerabilities list.
@@ -30,19 +22,26 @@ func AnalyzeCDX(sbom *cyclonedx.BOM) {
 	if len(*sbom.Components) == 0 {
 		return
 	}
+
+	// Create a new empty slice for storing the overall vulnerabilities found.
+	vexList := new([]cyclonedx.Vulnerability)
+
 	// Call findMatchingVulnerabilities to get a list of matching vulnerabilities for the BOM.
-	findMatchingVulnerabilities(sbom)
+	findMatchingVulnerabilities(sbom, vexList)
+	
 	// Create a new empty slice for storing the vulnerabilities found.
 	sbom.Vulnerabilities = new([]cyclonedx.Vulnerability)
+	
 	// Append the vulnerabilities in vexList to the BOM's Vulnerabilities slice.
 	*sbom.Vulnerabilities = append(*sbom.Vulnerabilities, *vexList...)
 }
 
 // findMatchingVulnerabilities is a helper function called by AnalyzeCDX.
 // It searches for vulnerabilities affecting the components in the BOM, and adds any found vulnerabilities to the BOM's Vulnerabilities list.
-func findMatchingVulnerabilities(sbom *cyclonedx.BOM) {
+func findMatchingVulnerabilities(sbom *cyclonedx.BOM, vexList *[]cyclonedx.Vulnerability) {
 	// Create a WaitGroup to wait until all component analysis goroutines have completed.
 	var wg sync.WaitGroup
+	
 	// Use findVulnerabilitiesForPackages to look up known vulnerabilities for the components in the BOM.
 	// Return early if there are no known vulnerabilities.
 	vulnerabilities := findVulnerabilitiesForPackages(sbom.Components)
@@ -50,7 +49,9 @@ func findMatchingVulnerabilities(sbom *cyclonedx.BOM) {
 		return
 	}
 
+	// Show a status message indicating that the components are being analyzed.
 	spinner.Status("Analyzing components for vulnerabilities")
+	
 	// Loop through each component in the BOM.
 	// Spawn a goroutine to analyze each component for matching vulnerabilities.
 	wg.Add(len(*sbom.Components))
@@ -76,7 +77,7 @@ func findMatchingVulnerabilities(sbom *cyclonedx.BOM) {
 					len(cpes) > 0 && MatchCPE(cpes, &v.Criteria) {
 					vex := ToVex(&comp, &v)
 					// vexList = append(vexList, *vex)
-					AddVex(vex)
+					AddVex(vex, vexList)
 				}
 			}
 		}(c)
@@ -161,7 +162,7 @@ func filterVulnerabilitiesByKeyword(comp *cyclonedx.Component, vulnerabilities *
 	return filtered
 }
 
-func AddVex(vex *cyclonedx.Vulnerability) {
+func AddVex(vex *cyclonedx.Vulnerability, vexList *[]cyclonedx.Vulnerability) {
 	lock.Lock()
 	defer lock.Unlock()
 
