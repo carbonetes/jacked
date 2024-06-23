@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -16,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const root = "https://objectstorage.us-sanjose-1.oraclecloud.com/n/ax9xbtj6kqpb/b/vulnerability-db/o/metadata.json"
+const root = "https://objectstorage.us-sanjose-1.oraclecloud.com/n/ax9xbtj6kqpb/b/vulnerability-db-v3/o/metadata.json"
 
 type Metadata struct {
 	Build    int64  `json:"build,omitempty"`
@@ -42,10 +41,7 @@ func DBCheck(skipDbUpdate bool, forceDbUpdate bool) {
 
 	latestMetadata := getLatestMetadata(metadataList)
 	if forceDbUpdate && !skipDbUpdate {
-		err := updateLocalDatabase(latestMetadata)
-		if err != nil {
-			log.Errorf("Error updating database: %v", err)
-		}
+		updateLocalDatabase(latestMetadata)
 		return
 	}
 
@@ -61,17 +57,13 @@ func DBCheck(skipDbUpdate bool, forceDbUpdate bool) {
 	}
 
 	if !metadataFileExists {
-		err := updateLocalDatabase(latestMetadata)
-		if err != nil {
-			log.Errorf("Error updating database: %v", err)
-		}
+		updateLocalDatabase(latestMetadata)
+		return
 	}
 
 	if !dbFileExists {
-		err := updateLocalDatabase(latestMetadata)
-		if err != nil {
-			log.Errorf("Error updating database: %v", err)
-		}
+		updateLocalDatabase(latestMetadata)
+		return
 	}
 
 	localMetadata, err := getMetadata(metadataPath)
@@ -80,93 +72,86 @@ func DBCheck(skipDbUpdate bool, forceDbUpdate bool) {
 	}
 
 	if localMetadata.Build != latestMetadata.Build && !skipDbUpdate {
-		err := updateLocalDatabase(latestMetadata)
-		if err != nil {
-			log.Errorf("Error updating database: %v", err)
-		}
+		updateLocalDatabase(latestMetadata)
 		return
 	}
 
 }
 
 // Download and extract latest database files.
-func updateLocalDatabase(metadata Metadata) error {
+func updateLocalDatabase(metadata Metadata) {
 	tmpFilepath := download(metadata.URL, "Downloading "+filepath.Base(metadata.URL))
 	checksum, err := generateChecksum(tmpFilepath)
 	if err != nil {
-		return err
+		log.Fatal("cannot generate checksum: ", err.Error())
 	}
 
 	if !compareChecksum(checksum, metadata.Checksum) {
-		return errors.New("metadata checksum mismatch")
+		log.Fatal("database checksum mismatch")
 	}
 
 	tmpFolder := path.Join(os.TempDir(), "jacked-tmp-"+uuid.New().String())
 
 	err = extractTarGz(tmpFilepath, tmpFolder)
 	if err != nil {
-		return err
+		log.Fatal("cannot extract tar.gz file: ", err.Error())
 	}
 
 	if !checkFile(path.Join(tmpFolder, metadataFile)) && !checkFile(path.Join(tmpFolder, dbFile)) {
-		return errors.New("temporary files not found")
+		log.Fatal("metadata or db file not found in the archive")
 	}
 
 	dbChecksum, err := generateChecksum(path.Join(tmpFolder, dbFile))
 	if err != nil {
-		return err
+		log.Fatal("cannot generate db file checksum: ", err.Error())
 	}
 
 	newMetadata, err := getMetadata(path.Join(tmpFolder, metadataFile))
 	if err != nil {
-		return err
+		log.Fatal("cannot read metadata file: ", err.Error())
 	}
 
 	if !compareChecksum(dbChecksum, newMetadata.Checksum) {
-		return errors.New("latest Metadata checksum mismatch")
+		log.Fatal("latest database checksum mismatch")
 	}
 
-	err = replaceFiles(tmpFilepath, tmpFolder)
-	if err != nil {
-		return err
-	}
+	replaceFiles(tmpFilepath, tmpFolder)
 
-	return nil
 }
 
 // Replace old database files with new ones.
-func replaceFiles(tmpFilepath, tmpFolder string) error {
+func replaceFiles(tmpFilepath, tmpFolder string) {
 
 	err := os.RemoveAll(path.Join(userCache, "jacked"))
 	if err != nil {
-		return err
+		log.Fatal("cannot remove old database files: ", err)
 	}
 
 	err = os.MkdirAll(dbDirectory, os.ModePerm)
 	if err != nil {
-		log.Fatalf("Cannot create directory %v", err.Error())
+		log.Fatal("cannot create directory: ", err.Error())
 	}
 
-	err = moveFile(path.Join(tmpFolder, dbFile), dbFilepath)
+	err = moveFile(filepath.Join(tmpFolder, dbFile), dbFilepath)
 	if err != nil {
-		return err
+		log.Fatal("cannot move database file: ", err.Error())
 	}
 
 	err = moveFile(path.Join(tmpFolder, metadataFile), metadataPath)
 	if err != nil {
-		return err
+		log.Fatal("cannot move metadata file: ", err.Error())
 	}
 
 	err = os.RemoveAll(tmpFolder)
 	if err != nil {
-		return err
+		log.Fatal("cannot remove temporary files: ", err.Error())
 	}
 
 	err = deleteTempFile(tmpFilepath)
 	if err != nil {
-		return err
+		log.Fatal("cannot remove temporary files: ", err.Error())
 	}
-	return nil
+
 }
 
 // Get the list of metadata from the repository.
