@@ -25,7 +25,7 @@ var (
 	dbFilepath = os.Getenv("JACKED_DB")
 )
 
-func init() {
+func Load() {
 	if dbFilepath == "" {
 		dbFilepath = path.Join(dbDirectory, dbFile)
 		os.Setenv("JACKED_DB", dbFilepath)
