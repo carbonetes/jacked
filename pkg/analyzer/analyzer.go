@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/carbonetes/diggity/pkg/cdx"
+	"github.com/carbonetes/diggity/pkg/cdx/dependency"
 	"github.com/carbonetes/diggity/pkg/reader"
 	diggity "github.com/carbonetes/diggity/pkg/types"
 	"github.com/carbonetes/jacked/internal/db"
@@ -25,6 +26,7 @@ func New(params types.Parameters) {
 
 	// Check if the database is up to date
 	db.DBCheck(params.SkipDBUpdate, params.ForceDBUpdate)
+	db.Load()
 	start := time.Now()
 
 	diggityParams := params.Diggity
@@ -36,16 +38,19 @@ func New(params types.Parameters) {
 	}
 
 	cdx.New(addr)
+	dependency.NewDependencyNodes(addr)
 	switch params.Diggity.ScanType {
 	case 1: // Image
 		spinner.Set(fmt.Sprintf("Fetching %s from remote registry", params.Diggity.Input))
 		// Scan target with diggity
 
 		// Pull and read image from registry
-		image, err := reader.GetImage(diggityParams.Input, nil)
+		image, ref, err := reader.GetImage(diggityParams.Input, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		cdx.SetMetadataComponent(addr, cdx.SetImageMetadata(*image, *ref, diggityParams.Input))
 
 		err = reader.ReadFiles(image, addr)
 		if err != nil {
@@ -71,7 +76,7 @@ func New(params types.Parameters) {
 		log.Fatal("Invalid scan type")
 	}
 
-	bom := cdx.SortComponents(addr)
+	bom := cdx.Finalize(addr)
 	// Analyze sbom to find vulnerabilities
 	AnalyzeCDX(bom)
 

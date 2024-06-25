@@ -48,6 +48,14 @@ func (m model) View() string {
 }
 
 func Create(bom *cyclonedx.BOM) table.Model {
+	if bom == nil || bom.Vulnerabilities == nil || len(*bom.Vulnerabilities) == 0 {
+		return table.New(
+			table.WithColumns([]table.Column{{Title: "No vulnerabilities found"}}),
+			table.WithRows([]table.Row{{"No vulnerabilities found"}}),
+			table.WithFocused(true),
+		)
+	}
+
 	columns := []table.Column{
 		{Title: "Component", Width: 28},
 		{Title: "Version", Width: 16},

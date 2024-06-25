@@ -21,3 +21,32 @@ func FindByKeywords(keywords *[]string, vulnerabilities *[]types.Vulnerability) 
 		log.Fatal(err)
 	}
 }
+
+// FindMatchesByPackageNames is a function that accepts a list of package names and a list of Match structs.
+func FindMatchesByPackageNames(packageNames []string) (matches *[]types.Match) {
+	matches = new([]types.Match)
+	if err := db.NewSelect().Model(matches).Where("package IN (?)", bun.In(packageNames)).Scan(context.Background()); err != nil {
+		log.Fatal(err)
+	}
+
+	return matches
+}
+
+// FindVulnerabilitiesByNamespaces is a function that accepts a list of namespaces and a list of Vulnerability structs.
+func FindVulnerabilitiesByNamespacesAndCVEs(namespaces []string, cves []string) (vulnerabilities *[]types.Vulnerability) {
+	vulnerabilities = new([]types.Vulnerability)
+	if err := db.NewSelect().Model(vulnerabilities).Where("namespace IN (?) AND cve IN (?)", bun.In(namespaces), bun.In(cves)).Scan(context.Background()); err != nil {
+		log.Fatal(err)
+	}
+
+	return vulnerabilities
+}
+
+func FindMatchesByPackageName(packageName string, qualifiers []string) (matches *[]types.Match) {
+	matches = new([]types.Match)
+	if err := db.NewSelect().Model(matches).Where("package = ?", packageName).Scan(context.Background()); err != nil {
+		log.Fatal(err)
+	}
+
+	return matches
+}

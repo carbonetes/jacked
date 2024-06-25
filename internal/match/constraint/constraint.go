@@ -1,30 +1,51 @@
-package analyzer
+package constraint
 
 import (
 	"regexp"
 	"strings"
 
-	"github.com/carbonetes/jacked/pkg/types"
 	"github.com/hashicorp/go-version"
 )
 
-func MatchConstraint(packageVersion *string, criteria *types.Criteria) bool {
-
-	v, err := version.NewVersion(normalizeVersion(*packageVersion))
-	if err != nil {
-		return false
+func Check(constraints []string, packageVersion string) (string, bool) {
+	if len(constraints) == 0 {
+		return "", false
 	}
 
-	c, err := version.NewConstraint(normalizeConstraint(criteria.Constraint))
-	if err != nil {
-		return false
+	packageVersion = normalizeVersion(packageVersion)
+
+	for _, constraint := range constraints {
+		if strings.Contains(constraint, ", ") {
+			parts := strings.Split(constraint, ", ")
+			if len(parts) > 1 {
+				constraint1, err := version.NewConstraint(normalizeConstraint(parts[0]))
+				if err != nil {
+					return "", false
+				}
+
+				constraint2, err := version.NewConstraint(normalizeConstraint(parts[1]))
+				if err != nil {
+					return "", false
+				}
+
+				if constraint1.Check(version.Must(version.NewVersion(packageVersion))) && constraint2.Check(version.Must(version.NewVersion(packageVersion))) {
+					return constraint, true
+				}
+
+			}
+		} else {
+			constraint, err := version.NewConstraint(normalizeConstraint(constraint))
+			if err != nil {
+				return "", false
+			}
+
+			if constraint.Check(version.Must(version.NewVersion(packageVersion))) {
+				return constraint.String(), true
+			}
+		}
 	}
 
-	if c.Check(v) {
-		return true
-	}
-
-	return false
+	return "", false
 }
 
 func normalizeConstraint(constraint string) string {
