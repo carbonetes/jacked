@@ -9,3 +9,7 @@ func Check(forceUpdate bool) {
 	}
 	db.DBCheck(false, false)
 }
+
+func Load() {
+	db.Load()
+}
