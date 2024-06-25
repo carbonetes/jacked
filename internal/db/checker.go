@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -37,15 +36,12 @@ func DBCheck(skipDbUpdate bool, forceDbUpdate bool) {
 
 	metadataList, err := getGlobalMetadataList()
 	if err != nil {
-		log.Errorf("Error fetching metadata: %v", err)
+		log.Debugf("Error fetching metadata: %v", err)
 	}
 
 	latestMetadata := getLatestMetadata(metadataList)
 	if forceDbUpdate && !skipDbUpdate {
-		err := updateLocalDatabase(latestMetadata)
-		if err != nil {
-			log.Errorf("Error updating database: %v", err)
-		}
+		updateLocalDatabase(latestMetadata)
 		return
 	}
 
@@ -53,120 +49,109 @@ func DBCheck(skipDbUpdate bool, forceDbUpdate bool) {
 	metadataFileExists := checkFile(metadataPath)
 
 	if !dbFileExists && skipDbUpdate {
-		log.Error("No database found on local!")
+		log.Debug("No database found on local!")
 	}
 
 	if !metadataFileExists && skipDbUpdate {
-		log.Error("No metadata found on local!")
+		log.Debug("No metadata found on local!")
 	}
 
 	if !metadataFileExists {
-		err := updateLocalDatabase(latestMetadata)
-		if err != nil {
-			log.Errorf("Error updating database: %v", err)
-		}
+		updateLocalDatabase(latestMetadata)
+		return
 	}
 
 	if !dbFileExists {
-		err := updateLocalDatabase(latestMetadata)
-		if err != nil {
-			log.Errorf("Error updating database: %v", err)
-		}
+		updateLocalDatabase(latestMetadata)
+		return
 	}
 
 	localMetadata, err := getMetadata(metadataPath)
 	if err != nil {
-		log.Errorf("Error reading metadata: %v", err)
+		log.Debugf("Error reading metadata: %v", err)
 	}
 
 	if localMetadata.Build != latestMetadata.Build && !skipDbUpdate {
-		err := updateLocalDatabase(latestMetadata)
-		if err != nil {
-			log.Errorf("Error updating database: %v", err)
-		}
+		updateLocalDatabase(latestMetadata)
 		return
 	}
 
 }
 
 // Download and extract latest database files.
-func updateLocalDatabase(metadata Metadata) error {
+func updateLocalDatabase(metadata Metadata) {
 	tmpFilepath := download(metadata.URL, "Downloading "+filepath.Base(metadata.URL))
 	checksum, err := generateChecksum(tmpFilepath)
 	if err != nil {
-		return err
+		log.Fatal("cannot generate checksum: ", err.Error())
 	}
 
 	if !compareChecksum(checksum, metadata.Checksum) {
-		return errors.New("metadata checksum mismatch")
+		log.Fatal("database checksum mismatch")
 	}
 
 	tmpFolder := path.Join(os.TempDir(), "jacked-tmp-"+uuid.New().String())
 
 	err = extractTarGz(tmpFilepath, tmpFolder)
 	if err != nil {
-		return err
+		log.Fatal("cannot extract tar.gz file: ", err.Error())
 	}
 
 	if !checkFile(path.Join(tmpFolder, metadataFile)) && !checkFile(path.Join(tmpFolder, dbFile)) {
-		return errors.New("temporary files not found")
+		log.Fatal("metadata or db file not found in the archive")
 	}
 
 	dbChecksum, err := generateChecksum(path.Join(tmpFolder, dbFile))
 	if err != nil {
-		return err
+		log.Fatal("cannot generate db file checksum: ", err.Error())
 	}
 
 	newMetadata, err := getMetadata(path.Join(tmpFolder, metadataFile))
 	if err != nil {
-		return err
+		log.Fatal("cannot read metadata file: ", err.Error())
 	}
 
 	if !compareChecksum(dbChecksum, newMetadata.Checksum) {
-		return errors.New("latest Metadata checksum mismatch")
+		log.Fatal("latest database checksum mismatch")
 	}
 
-	err = replaceFiles(tmpFilepath, tmpFolder)
-	if err != nil {
-		return err
-	}
+	replaceFiles(tmpFilepath, tmpFolder)
 
-	return nil
 }
 
 // Replace old database files with new ones.
-func replaceFiles(tmpFilepath, tmpFolder string) error {
+func replaceFiles(tmpFilepath, tmpFolder string) {
 
 	err := os.RemoveAll(path.Join(userCache, "jacked"))
 	if err != nil {
-		return err
+		log.Fatal("cannot remove old database files: ", err)
 	}
 
 	err = os.MkdirAll(dbDirectory, os.ModePerm)
 	if err != nil {
-		log.Fatalf("Cannot create directory %v", err.Error())
+		log.Fatal("cannot create directory: ", err.Error())
 	}
 
-	err = moveFile(path.Join(tmpFolder, dbFile), dbFilepath)
+	err = moveFile(filepath.Join(tmpFolder, dbFile), dbFilepath)
 	if err != nil {
-		return err
+		log.Fatal("cannot move database file: ", err.Error())
 	}
 
 	err = moveFile(path.Join(tmpFolder, metadataFile), metadataPath)
 	if err != nil {
-		return err
+		log.Fatal("cannot move metadata file: ", err.Error())
 	}
 
 	err = os.RemoveAll(tmpFolder)
 	if err != nil {
-		return err
+		log.Fatal("cannot remove temporary files: ", err.Error())
 	}
 
 	err = deleteTempFile(tmpFilepath)
 	if err != nil {
-		return err
+		log.Fatal("cannot remove temporary files: ", err.Error())
 	}
-	return nil
+
 }
 
 // Get the list of metadata from the repository.
@@ -223,7 +208,7 @@ func compareChecksum(checksum1, checksum2 string) bool {
 	if strings.EqualFold(checksum1, checksum2) {
 		return true
 	} else {
-		log.Error("Integrity File Failed!")
+		log.Debug("Integrity File Failed!")
 	}
 	return false
 }
@@ -260,7 +245,7 @@ func GetLocalMetadata() Metadata {
 	if checkFile(metadataPath) {
 		file, err := os.Open(metadataPath)
 		if err != nil {
-			log.Error(err.Error())
+			log.Debug(err.Error())
 		}
 		defer file.Close()
 
@@ -268,11 +253,11 @@ func GetLocalMetadata() Metadata {
 		err = json.Unmarshal(content, &metadata)
 
 		if err != nil {
-			log.Error(err.Error())
+			log.Debug(err.Error())
 		}
 
 	} else {
-		log.Error("No local metadata found!")
+		log.Debug("No local metadata found!")
 	}
 	return metadata
 }

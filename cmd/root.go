@@ -88,7 +88,7 @@ func run(c *cobra.Command, args []string) {
 	} else {
 		err := c.Help()
 		if err != nil {
-			log.Error(err)
+			log.Debug(err)
 		}
 		return
 	}

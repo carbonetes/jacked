@@ -27,7 +27,7 @@ func init() {
 	// Info flag to print the database metadata information based on the local metadata
 	dbCmd.Flags().BoolP("info", "i", false, "Print database metadata information")
 
-	// Update DB flag to do force update on vulnerability database without scanning 
+	// Update DB flag to do force update on vulnerability database without scanning
 	dbCmd.Flags().BoolP("update-db", "u", false, "Update the vulnerability database without scanning")
 }
 
@@ -49,7 +49,7 @@ func dbRun(c *cobra.Command, _ []string) {
 	} else {
 		err := c.Help()
 		if err != nil {
-			log.Error(err)
+			log.Debug(err)
 		}
 		os.Exit(0)
 	}
