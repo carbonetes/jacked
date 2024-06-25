@@ -7,7 +7,7 @@ toolchain go1.22.0
 require (
 	github.com/CycloneDX/cyclonedx-go v0.8.0
 	github.com/alexeyco/simpletable v1.0.0
-	github.com/carbonetes/diggity v1.12.4
+	github.com/carbonetes/diggity v1.13.1
 	github.com/charmbracelet/bubbles v0.17.1
 	github.com/charmbracelet/bubbletea v0.25.0
 	github.com/charmbracelet/lipgloss v0.9.1
@@ -87,7 +87,9 @@ require (
 
 require (
 	github.com/geertjanvdk/xkit v0.9.0-beta.6 // indirect
+	github.com/gitchander/permutation v0.0.0-20210517125447-a5d73722e1b1 // indirect
 	github.com/golistic/urn v0.0.0-20230504070933-711e86b5b7cb // indirect
+	github.com/package-url/packageurl-go v0.1.3 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 )
 
