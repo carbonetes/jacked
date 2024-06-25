@@ -36,7 +36,7 @@ func DBCheck(skipDbUpdate bool, forceDbUpdate bool) {
 
 	metadataList, err := getGlobalMetadataList()
 	if err != nil {
-		log.Errorf("Error fetching metadata: %v", err)
+		log.Debugf("Error fetching metadata: %v", err)
 	}
 
 	latestMetadata := getLatestMetadata(metadataList)
@@ -49,11 +49,11 @@ func DBCheck(skipDbUpdate bool, forceDbUpdate bool) {
 	metadataFileExists := checkFile(metadataPath)
 
 	if !dbFileExists && skipDbUpdate {
-		log.Error("No database found on local!")
+		log.Debug("No database found on local!")
 	}
 
 	if !metadataFileExists && skipDbUpdate {
-		log.Error("No metadata found on local!")
+		log.Debug("No metadata found on local!")
 	}
 
 	if !metadataFileExists {
@@ -68,7 +68,7 @@ func DBCheck(skipDbUpdate bool, forceDbUpdate bool) {
 
 	localMetadata, err := getMetadata(metadataPath)
 	if err != nil {
-		log.Errorf("Error reading metadata: %v", err)
+		log.Debugf("Error reading metadata: %v", err)
 	}
 
 	if localMetadata.Build != latestMetadata.Build && !skipDbUpdate {
@@ -208,7 +208,7 @@ func compareChecksum(checksum1, checksum2 string) bool {
 	if strings.EqualFold(checksum1, checksum2) {
 		return true
 	} else {
-		log.Error("Integrity File Failed!")
+		log.Debug("Integrity File Failed!")
 	}
 	return false
 }
@@ -245,7 +245,7 @@ func GetLocalMetadata() Metadata {
 	if checkFile(metadataPath) {
 		file, err := os.Open(metadataPath)
 		if err != nil {
-			log.Error(err.Error())
+			log.Debug(err.Error())
 		}
 		defer file.Close()
 
@@ -253,11 +253,11 @@ func GetLocalMetadata() Metadata {
 		err = json.Unmarshal(content, &metadata)
 
 		if err != nil {
-			log.Error(err.Error())
+			log.Debug(err.Error())
 		}
 
 	} else {
-		log.Error("No local metadata found!")
+		log.Debug("No local metadata found!")
 	}
 	return metadata
 }

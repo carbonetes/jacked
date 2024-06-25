@@ -32,7 +32,7 @@ func New(params types.Parameters) {
 	// Generate unique address for the scan
 	addr, err := diggity.NewAddress(diggityParams.Input)
 	if err != nil {
-		log.Error(err)
+		log.Debug(err)
 		return
 	}
 

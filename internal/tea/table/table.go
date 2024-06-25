@@ -73,7 +73,7 @@ func Create(bom *cyclonedx.BOM) table.Model {
 	for _, v := range *vulnerabilities {
 		component, ok := componentsMap[v.BOMRef]
 		if !ok {
-			log.Error("Component not found for vulnerability: " + v.BOMRef)
+			log.Debug("Component not found for vulnerability: " + v.BOMRef)
 			continue
 		}
 		parts := strings.Split(component, ":")
