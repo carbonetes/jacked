@@ -49,9 +49,10 @@ func (m model) View() string {
 
 func Create(bom *cyclonedx.BOM) table.Model {
 	columns := []table.Column{
-		{Title: "Component", Width: 28},
+		{Title: "Component", Width: 24},
 		{Title: "Version", Width: 16},
 		{Title: "CVE", Width: 16},
+		{Title: "Severity", Width: 16},
 		{Title: "Recommendation", Width: 42},
 	}
 
@@ -79,10 +80,21 @@ func Create(bom *cyclonedx.BOM) table.Model {
 		parts := strings.Split(component, ":")
 		name, version := parts[0], parts[1]
 
+		severity := "UNKNOWN"
+		if v.Ratings != nil && len(*v.Ratings) > 0 {
+			for _, r := range *v.Ratings {
+				if r.Severity != "" {
+					severity = string(r.Severity)
+					break
+				}
+			}
+		}
+
 		rows = append(rows, table.Row{
 			name,
 			version,
 			v.ID,
+			severity,
 			v.Recommendation,
 		})
 	}
@@ -111,7 +123,7 @@ func Create(bom *cyclonedx.BOM) table.Model {
 func Show(t table.Model, duration float64) {
 	m := model{table: t, duration: duration}
 	if _, err := tea.NewProgram(m).Run(); err != nil {
-		fmt.Println("Error running program:", err)
-		os.Exit(1)
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(0)
 	}
 }
