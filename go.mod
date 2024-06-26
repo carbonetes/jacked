@@ -5,7 +5,7 @@ go 1.22.4
 require (
 	github.com/CycloneDX/cyclonedx-go v0.9.0
 	github.com/alexeyco/simpletable v1.0.0
-	github.com/carbonetes/diggity v1.13.3
+	github.com/carbonetes/diggity v1.13.4
 	github.com/charmbracelet/bubbles v0.18.0
 	github.com/charmbracelet/bubbletea v0.26.6
 	github.com/charmbracelet/lipgloss v0.11.0
