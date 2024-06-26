@@ -5,7 +5,7 @@ go 1.22.4
 require (
 	github.com/CycloneDX/cyclonedx-go v0.9.0
 	github.com/alexeyco/simpletable v1.0.0
-	github.com/carbonetes/diggity v1.13.2
+	github.com/carbonetes/diggity v1.13.3
 	github.com/charmbracelet/bubbles v0.18.0
 	github.com/charmbracelet/bubbletea v0.26.6
 	github.com/charmbracelet/lipgloss v0.11.0
@@ -43,7 +43,6 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/geertjanvdk/xkit v0.9.0-beta.6 // indirect
-	github.com/gitchander/permutation v0.0.0-20210517125447-a5d73722e1b1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golistic/urn v0.0.0-20230504070933-711e86b5b7cb // indirect
 	github.com/google/go-containerregistry v0.19.2 // indirect
@@ -75,7 +74,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	gitlab.com/jhumel/grove v1.0.3 // indirect
+	gitlab.com/jhumel/grove v1.0.4 // indirect
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
