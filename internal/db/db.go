@@ -26,6 +26,8 @@ var (
 	dbFilepath   = os.Getenv("JACKED_DB")
 )
 
+type Store struct{}
+
 func init() {
 	if dbFilepath == "" {
 		dbFilepath = path.Join(dbDirectory, dbFile)
@@ -46,4 +48,8 @@ func Load() {
 	if err := db.Ping(); err != nil {
 		log.Fatalf("error pinging database: %v", err)
 	}
+}
+
+func GetDB() *bun.DB {
+	return db
 }
