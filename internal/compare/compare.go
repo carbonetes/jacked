@@ -50,7 +50,7 @@ func newcomparer() *comparer {
 }
 
 func (c *comparer) execute(bom *cyclonedx.BOM) {
-	c = newcomparer().classify(bom.Components)
+	c = c.classify(bom.Components)
 
 	// This functionality is used to analyze the exclusive types in sbom.
 	// Exclusive types are types that are needed to be analyzed in more controlled manner to avoid any false positives.
