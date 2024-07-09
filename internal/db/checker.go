@@ -15,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const root = "https://objectstorage.us-sanjose-1.oraclecloud.com/n/ax9xbtj6kqpb/b/vulnerability-db/o/metadata.json"
+const root = "https://objectstorage.us-sanjose-1.oraclecloud.com/n/ax9xbtj6kqpb/b/vulnerability-db-v3/o/metadata.json"
 
 type Metadata struct {
 	Build    int64  `json:"build,omitempty"`

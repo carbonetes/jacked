@@ -1,32 +1,82 @@
-package analyzer
+package compare
 
 import (
+	"errors"
 	"regexp"
 	"strings"
 
-	"github.com/carbonetes/jacked/pkg/types"
 	"github.com/hashicorp/go-version"
 )
 
-func MatchConstraint(packageVersion *string, criteria *types.Criteria) bool {
+const (
+	VersionEqual   = 0
+	VersionLess    = -1
+	VersionGreater = 1
+)
 
-	v, err := version.NewVersion(normalizeVersion(*packageVersion))
-	if err != nil {
-		return false
+var constraintRegex = regexp.MustCompile(`(>=|<=|>|<|=)\s*(.+)`)
+
+func parseSingleConstraint(singleRawConstraint string) ([]string, error) {
+	matches := constraintRegex.FindStringSubmatch(singleRawConstraint)
+	if matches == nil {
+		return nil, errors.New("invalid constraint format")
 	}
 
-	c, err := version.NewConstraint(normalizeConstraint(criteria.Constraint))
-	if err != nil {
-		return false
+	if len(matches) != 3 {
+		return nil, errors.New("invalid constraint format")
 	}
 
-	if c.Check(v) {
-		return true
-	}
-
-	return false
+	return matches, nil
 }
 
+func parseMultiConstraint(multiRawConstraint string) ([][]string, error) {
+	constraints := strings.Split(multiRawConstraint, ", ")
+	if len(constraints) == 0 {
+		return nil, errors.New("invalid constraint format")
+	}
+
+	res := make([][]string, len(constraints))
+	for i, constraint := range constraints {
+		parts, err := parseSingleConstraint(constraint)
+		if err != nil {
+			return nil, err
+		}
+		res[i] = parts
+	}
+
+	return res, nil
+}
+
+// Using semver to compare versions and constraints, this function will return true if the package version satisfies the constraint.
+func MatchGenericConstraint(packageVersion *string, constraints string) (bool, string) {
+	if len(constraints) == 0 {
+		return false, ""
+	}
+
+	if strings.Contains(constraints, " || ") {
+		constraintSlice := strings.Split(constraints, " || ")
+		for _, constraint := range constraintSlice {
+			v, err := version.NewVersion(normalizeVersion(*packageVersion))
+			if err != nil {
+				return false, ""
+			}
+
+			c, err := version.NewConstraint(normalizeConstraint(constraint))
+			if err != nil {
+				return false, ""
+			}
+
+			if c.Check(v) {
+				return true, constraint
+			}
+		}
+	}
+
+	return false, ""
+}
+
+
+// try to normalize the version string to a valid semver string
 func normalizeConstraint(constraint string) string {
 	if strings.Contains(constraint, ", ") {
 		constraints := strings.Split(constraint, ", ")
@@ -50,6 +100,8 @@ func normalizeConstraint(constraint string) string {
 	return constraint
 }
 
+
+// remove any non-numeric characters from the version string and try to normalize it to a valid semver string
 func normalizeVersion(version string) string {
 
 	parts := strings.Split(version, ".")

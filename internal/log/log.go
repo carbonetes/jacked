@@ -43,6 +43,7 @@ func init() {
 	log.SetFormatter(&easy.Formatter{
 		LogFormat: "%msg%\n",
 	})
+	log.SetLevel(logrus.DebugLevel)
 }
 
 // Print func prints the arguments to stdout
