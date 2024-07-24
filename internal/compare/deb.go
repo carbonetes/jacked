@@ -18,7 +18,7 @@ type debMatcher struct {
 	upstream      string
 	component     *cyclonedx.Component
 	debSecTracker *[]types.Vulnerability
-	nvd           *[]types.Vulnerability // nvd is not yet used in this comparer since we are still working on the implementation
+	// nvd           *[]types.Vulnerability // nvd is not yet used in this comparer since we are still working on the implementation
 	matches       *[]match
 }
 
