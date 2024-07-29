@@ -22,8 +22,8 @@ type genericMatcher struct {
 	upstream  string
 	component *cyclonedx.Component
 	nvd       *[]types.Vulnerability
-	ghsa      *[]types.Vulnerability
-	matches   *[]match
+	// ghsa      *[]types.Vulnerability
+	matches *[]match
 }
 
 type genericConstraint struct {
@@ -101,7 +101,7 @@ func (c *comparer) lookUpNvd() *comparer {
 		}
 		c.generic[i].nvd = &vulns
 	}
-	
+
 	return c
 }
 
@@ -201,7 +201,7 @@ func (c *comparer) toVex() *comparer {
 
 		for _, match := range *pkg.matches {
 			vex := genericToVex(pkg.component, match.Vulnerability)
-			if vex != nil {
+			if vex == nil {
 				continue
 			}
 

@@ -17,7 +17,7 @@ type mavenMatcher struct {
 	group     string
 	version   string
 	component *cyclonedx.Component
-	nvd       *[]types.Vulnerability // nvd is not yet used in this comparer since we are still working on the implementation
+	// nvd       *[]types.Vulnerability // nvd is not yet used in this comparer since we are still working on the implementation
 	ghsa      *[]types.Vulnerability
 	matches   *[]match
 }

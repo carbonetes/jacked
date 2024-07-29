@@ -19,7 +19,7 @@ type apkMatcher struct {
 	upstream  string
 	component *cyclonedx.Component
 	apkSecDB  *[]types.Vulnerability
-	nvd       *[]types.Vulnerability // nvd is not yet used in this comparer since we are still working on the implementation
+	// nvd       *[]types.Vulnerability // nvd is not yet used in this comparer since we are still working on the implementation
 	matches   *[]match
 }
 
@@ -217,16 +217,4 @@ func getPackageTypeAndUpstream(bomref string) (string, string) {
 
 	return purl.Type, upstream
 
-}
-
-func parseApkVersion(version string) string {
-	parts := strings.Split(version, ".")
-	if len(parts) >= 2 {
-		if !strings.HasPrefix(parts[0], "v") {
-			parts[0] = "v" + parts[0]
-		}
-		return strings.Join(parts[:2], ".")
-	}
-
-	return version
 }
