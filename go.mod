@@ -6,7 +6,7 @@ require (
 	github.com/CycloneDX/cyclonedx-go v0.9.0
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/alexeyco/simpletable v1.0.0
-	github.com/carbonetes/diggity v1.13.4
+	github.com/carbonetes/diggity v1.14.0
 	github.com/charmbracelet/bubbles v0.18.0
 	github.com/charmbracelet/bubbletea v0.26.6
 	github.com/charmbracelet/lipgloss v0.11.0
@@ -44,6 +44,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/edsrzf/mmap-go v1.1.0 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/geertjanvdk/xkit v0.9.0-beta.6 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -72,6 +73,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/saferwall/pe v1.5.4 // indirect
+	github.com/secDre4mer/pkcs7 v0.0.0-20240322103146-665324a4461d // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/vbatts/tar-split v0.11.3 // indirect
