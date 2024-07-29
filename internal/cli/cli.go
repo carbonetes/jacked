@@ -1,4 +1,4 @@
-package analyzer
+package cli
 
 import (
 	"fmt"
@@ -7,14 +7,16 @@ import (
 
 	"github.com/carbonetes/diggity/pkg/cdx"
 	"github.com/carbonetes/diggity/pkg/reader"
-	diggity "github.com/carbonetes/diggity/pkg/types"
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/internal/log"
 	"github.com/carbonetes/jacked/internal/presenter"
 	"github.com/carbonetes/jacked/internal/tea/spinner"
+	"github.com/carbonetes/jacked/pkg/analyzer"
 	"github.com/carbonetes/jacked/pkg/ci"
 	"github.com/carbonetes/jacked/pkg/config"
 	"github.com/carbonetes/jacked/pkg/types"
+
+	diggity "github.com/carbonetes/diggity/pkg/types"
 )
 
 // New is the main function for the analyzer
@@ -30,7 +32,7 @@ func New(params types.Parameters) {
 
 	diggityParams := params.Diggity
 	// Generate unique address for the scan
-	addr, err := diggity.NewAddress(diggityParams.Input)
+	addr, err := diggity.NewAddress()
 	if err != nil {
 		log.Debug(err)
 		return
@@ -75,8 +77,9 @@ func New(params types.Parameters) {
 	}
 
 	bom := cdx.Finalize(addr)
+
 	// Analyze sbom to find vulnerabilities
-	AnalyzeCDX(bom)
+	analyzer.AnalyzeCDX(bom)
 
 	if params.CI {
 		// Run CI
