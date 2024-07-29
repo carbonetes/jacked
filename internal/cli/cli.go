@@ -1,4 +1,4 @@
-package analyzer
+package cli
 
 import (
 	"fmt"
@@ -12,6 +12,7 @@ import (
 	"github.com/carbonetes/jacked/internal/log"
 	"github.com/carbonetes/jacked/internal/presenter"
 	"github.com/carbonetes/jacked/internal/tea/spinner"
+	"github.com/carbonetes/jacked/pkg/analyzer"
 	"github.com/carbonetes/jacked/pkg/ci"
 	"github.com/carbonetes/jacked/pkg/config"
 	"github.com/carbonetes/jacked/pkg/types"
@@ -21,7 +22,7 @@ import (
 // It checks if the database is up to date, then scans the target with diggity
 // It then gets the sbom from cdx mod and analyzes it to find vulnerabilities
 // Finally, it displays the results
-func New(params types.Parameters) {
+func Run(params types.Parameters) {
 
 	// Check if the database is up to date
 	db.DBCheck(params.SkipDBUpdate, params.ForceDBUpdate)
@@ -30,7 +31,7 @@ func New(params types.Parameters) {
 
 	diggityParams := params.Diggity
 	// Generate unique address for the scan
-	addr, err := diggity.NewAddress(diggityParams.Input)
+	addr, err := diggity.NewAddress()
 	if err != nil {
 		log.Debug(err)
 		return
@@ -76,7 +77,7 @@ func New(params types.Parameters) {
 
 	bom := cdx.Finalize(addr)
 	// Analyze sbom to find vulnerabilities
-	AnalyzeCDX(bom)
+	analyzer.AnalyzeCDX(bom)
 
 	if params.CI {
 		// Run CI
