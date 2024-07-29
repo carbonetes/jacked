@@ -4,12 +4,12 @@ import (
 	"strings"
 
 	diggity "github.com/carbonetes/diggity/pkg/types"
+	"github.com/carbonetes/jacked/internal/cli"
 	"github.com/carbonetes/jacked/internal/helper"
 	"github.com/carbonetes/jacked/internal/log"
 	"github.com/carbonetes/jacked/internal/tea/progress"
 	"github.com/carbonetes/jacked/internal/tea/spinner"
 	"github.com/carbonetes/jacked/internal/version"
-	"github.com/carbonetes/jacked/pkg/analyzer"
 	"github.com/carbonetes/jacked/pkg/config"
 	"github.com/carbonetes/jacked/pkg/types"
 	"github.com/spf13/cobra"
@@ -112,7 +112,7 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	// Run the analyzer with the parameters provided
-	analyzer.New(params)
+	cli.Run(params)
 }
 
 // validatFormat validates the output format type provided by the user and returns true if it is valid else false
