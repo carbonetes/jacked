@@ -239,6 +239,11 @@ func genericToVex(pkg *cyclonedx.Component, vuln *types.Vulnerability) *cycloned
 			rating.Vector = cvss.Vector
 			*ratings = append(*ratings, rating)
 		}
+	} else {
+		// If no scoring method is available, add a new VulnerabilityRating struct with a severity of "Unknown".
+		*ratings = append(*ratings, cyclonedx.VulnerabilityRating{
+			Severity: cyclonedx.SeverityUnknown,
+		})
 	}
 
 	// Create a recommendation string to suggest how to solve the vulnerability (if possible)
