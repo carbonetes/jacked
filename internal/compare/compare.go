@@ -83,7 +83,7 @@ func (c *comparer) execute(bom *cyclonedx.BOM) {
 	if len(c.generic) > 0 {
 		c = c.lookUpNvd().matchGeneric().toVex()
 	}
-	
+
 	bom.Vulnerabilities = c.vex
 }
 
@@ -148,4 +148,49 @@ func (m *comparer) classify(comps *[]cyclonedx.Component) *comparer {
 	}
 
 	return m
+}
+
+func (c *comparer) addNVDData() {
+	cves := []string{}
+	v := c.vex
+
+	for _, vuln := range *v {
+		cves = append(cves, vuln.ID)
+	}
+
+	nvdData := c.store.NVDMatchCVEsWithKeywords(cves)
+
+	for i, vuln := range *v {
+		for _, nvd := range *nvdData {
+			if vuln.ID == nvd.CVE {
+				if (*v)[i].Ratings == nil {
+					(*v)[i].Ratings = new([]cyclonedx.VulnerabilityRating)
+				}
+
+				if len(nvd.CVSS) == 0 {
+					*(*v)[i].Ratings = append(*(*v)[i].Ratings, cyclonedx.VulnerabilityRating{
+						Severity: cyclonedx.SeverityUnknown,
+					})
+					continue
+				}
+
+				*(*v)[i].Ratings = append(*(*v)[i].Ratings, cyclonedx.VulnerabilityRating{
+					Severity: cyclonedx.Severity(nvd.CVSS[0].Severity),
+					Score:    &nvd.CVSS[0].Score,
+					Vector:   nvd.CVSS[0].Vector,
+					Source: &cyclonedx.Source{
+						Name: nvd.CVSS[0].Source,
+					},
+				})
+
+			}
+		}
+		if (*v)[i].Ratings == nil {
+			(*v)[i].Ratings = new([]cyclonedx.VulnerabilityRating)
+			*(*v)[i].Ratings = append(*(*v)[i].Ratings, cyclonedx.VulnerabilityRating{
+				Severity: cyclonedx.SeverityUnknown,
+			})
+		}		
+	}
+	c.vex = v
 }

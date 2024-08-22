@@ -20,7 +20,7 @@ type apkMatcher struct {
 	component *cyclonedx.Component
 	apkSecDB  *[]types.Vulnerability
 	// nvd       *[]types.Vulnerability // nvd is not yet used in this comparer since we are still working on the implementation
-	matches   *[]match
+	matches *[]match
 }
 
 type apkConstraint struct {
@@ -157,11 +157,11 @@ func (c *comparer) apkSecDBToVex() *comparer {
 				},
 			}
 
-			vex.Ratings = &[]cyclonedx.VulnerabilityRating{
-				{
-					Severity: cyclonedx.Severity(match.Vulnerability.Severity),
-				},
-			}
+			// vex.Ratings = &[]cyclonedx.VulnerabilityRating{
+			// 	{
+			// 		Severity: cyclonedx.Severity(match.Vulnerability.Severity),
+			// 	},
+			// }
 
 			props := make([]cyclonedx.Property, 0)
 			matcher := cyclonedx.Property{
@@ -193,6 +193,7 @@ func (c *comparer) apkSecDBToVex() *comparer {
 		}
 	}
 	c.vex = addVex(c.vex, incoming)
+	c.addNVDData()
 	return c
 }
 

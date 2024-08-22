@@ -6,7 +6,7 @@ require (
 	github.com/CycloneDX/cyclonedx-go v0.9.0
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/alexeyco/simpletable v1.0.0
-	github.com/carbonetes/diggity v1.14.1
+	github.com/carbonetes/diggity v1.14.2
 	github.com/charmbracelet/bubbles v0.18.0
 	github.com/charmbracelet/bubbletea v0.26.6
 	github.com/charmbracelet/lipgloss v0.11.0
@@ -30,6 +30,8 @@ require (
 require (
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/aquasecurity/go-gem-version v0.0.0-20201115065557-8eed6fe000ce // indirect
+	github.com/aquasecurity/go-version v0.0.0-20201107203531-5e48ac5d022a // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/harmonica v0.2.0 // indirect
 	github.com/charmbracelet/x/ansi v0.1.2 // indirect
