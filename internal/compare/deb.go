@@ -148,11 +148,11 @@ func (c *comparer) debSecTrackerToVex() *comparer {
 				},
 			}
 
-			vex.Ratings = &[]cyclonedx.VulnerabilityRating{
-				{
-					Severity: cyclonedx.Severity(match.Vulnerability.Severity),
-				},
-			}
+			// vex.Ratings = &[]cyclonedx.VulnerabilityRating{
+			// 	{
+			// 		Severity: cyclonedx.Severity(match.Vulnerability.Severity),
+			// 	},
+			// }
 
 			props := make([]cyclonedx.Property, 0)
 			matcher := cyclonedx.Property{
@@ -189,12 +189,12 @@ func (c *comparer) debSecTrackerToVex() *comparer {
 				}
 			}
 
-			ratings := make([]cyclonedx.VulnerabilityRating, 0)
-			rating := cyclonedx.VulnerabilityRating{
-				Severity: cyclonedx.Severity(match.Vulnerability.Severity),
-			}
-			ratings = append(ratings, rating)
-			vex.Ratings = &ratings
+			// ratings := make([]cyclonedx.VulnerabilityRating, 0)
+			// rating := cyclonedx.VulnerabilityRating{
+			// 	Severity: cyclonedx.Severity(match.Vulnerability.Severity),
+			// }
+			// ratings = append(ratings, rating)
+			// vex.Ratings = &ratings
 
 			vex.Description = match.Vulnerability.Description
 
@@ -214,5 +214,6 @@ func (c *comparer) debSecTrackerToVex() *comparer {
 	}
 
 	c.vex = addVex(c.vex, incoming)
+	c.addNVDData()
 	return c
 }

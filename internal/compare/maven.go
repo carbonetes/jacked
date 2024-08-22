@@ -282,5 +282,6 @@ func (c *comparer) mavenToVex() *comparer {
 		}
 	}
 	c.vex = addVex(c.vex, incoming)
+	c.addNVDData()
 	return c
 }
