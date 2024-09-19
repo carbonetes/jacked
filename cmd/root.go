@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"os"
 	"strings"
 
 	diggity "github.com/carbonetes/diggity/pkg/types"
@@ -79,26 +80,54 @@ func run(c *cobra.Command, args []string) {
 		},
 	}
 
-	if len(args) > 0 {
-		params.Diggity.Input = helper.FormatImage(args[0])
-	} else if len(tarball) > 0 {
-		params.Diggity.Input = tarball
-	} else if len(filesystem) > 0 {
-		params.Diggity.Input = filesystem
-	} else {
-		err := c.Help()
-		if err != nil {
-			log.Debug(err)
+	if filesystem != "" {
+		if found, _ := helper.IsDirExists(filesystem); !found {
+			log.Fatal("directory not found: " + filesystem)
+			return
 		}
-		return
+		params.Diggity.ScanType = 3
+		params.Diggity.Input = filesystem
 	}
 
-	// Set the scan type based on the input
-	err := params.Diggity.GetScanType()
-	if err != nil {
-		log.Fatal(err)
-		return
+	if tarball != "" {
+		if found, _ := helper.IsFileExists(tarball); !found {
+			log.Fatal("tarball not found: " + tarball)
+			return
+		}
+		params.Diggity.Input = tarball
+		params.Diggity.ScanType = 2
 	}
+
+	if filesystem == "" && tarball == "" {
+		if len(args) > 0 {
+			params.Diggity.Input = helper.FormatImage(args[0])
+			params.Diggity.ScanType = 1
+		} else {
+			_ = c.Help()
+			os.Exit(0)
+		}
+	}
+
+	// if len(args) > 0 {
+	// 	params.Diggity.Input = helper.FormatImage(args[0])
+	// } else if len(tarball) > 0 {
+	// 	params.Diggity.Input = tarball
+	// } else if len(filesystem) > 0 {
+	// 	params.Diggity.Input = filesystem
+	// } else {
+	// 	err := c.Help()
+	// 	if err != nil {
+	// 		log.Debug(err)
+	// 	}
+	// 	return
+	// }
+
+	// Set the scan type based on the input
+	// err := params.Diggity.GetScanType()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// 	return
+	// }
 
 	if len(failCriteria) > 0 {
 		failCriteria = strings.ToLower(failCriteria)

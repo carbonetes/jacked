@@ -6,6 +6,18 @@ import (
 	"strings"
 )
 
+// IsDirExists checks if a directory exists and is valid.
+func IsDirExists(path string) (bool, error) {
+	info, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return info.IsDir(), nil
+}
+
 // IsFileExists checks if a file exists and is valid.
 func IsFileExists(path string) (bool, error) {
 	info, err := os.Stat(path)
