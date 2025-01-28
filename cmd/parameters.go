@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/carbonetes/diggity/pkg/scanner"
 	"github.com/carbonetes/jacked/pkg/types"
 	"github.com/spf13/cobra"
 )
@@ -20,16 +19,16 @@ func init() {
 	root.Flags().StringP("tar", "t", "", "Read a tarball from a path on disk for archives created from docker save (e.g. 'jacked -t path/to/image.tar)'")
 
 	// Directory flag to scan a directory
-	root.Flags().StringP("directory", "d", "", "Read directly from a path on disk (any directory) (e.g. 'jacked -d path/to/directory)'")
+	root.Flags().StringP("dir", "d", "", "Read directly from a path on disk (any directory) (e.g. 'jacked -d path/to/directory)'")
 
 	// Quiet flag to allows the user to suppress all output except for errors
 	root.Flags().BoolP("quiet", "q", false, "Suppress all output except for errors")
 
 	// Output flag to specify the output format
-	root.Flags().StringP("output-format", "o", string(types.Table), "Supported output types are: "+types.GetAllOutputFormat())
+	root.Flags().StringP("output", "o", string(types.Table), "Supported output types are: "+types.GetAllOutputFormat())
 
 	// Scanners flag to specify the selected scanners to run
-	root.Flags().StringArray("scanners", scanner.All, "Allow only selected scanners to run (e.g. --scanners apk,dpkg)")
+	// root.Flags().StringArray("scanners", scanner.All, "Allow only selected scanners to run (e.g. --scanners apk,dpkg)")
 
 	// File flag to save the scan result to a file
 	root.Flags().StringP("file", "f", "", "Save scan result to a file")
