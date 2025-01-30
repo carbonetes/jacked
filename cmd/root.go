@@ -37,8 +37,8 @@ func run(c *cobra.Command, args []string) {
 	tarball, _ := c.Flags().GetString("tar")
 	filesystem, _ := c.Flags().GetString("directory")
 	quiet, _ := c.Flags().GetBool("quiet")
-	format, _ := c.Flags().GetString("output-format")
-	scanners, _ := c.Flags().GetStringArray("scanners")
+	format, _ := c.Flags().GetString("output")
+	// scanners, _ := c.Flags().GetStringArray("scanners")
 	file, _ := c.Flags().GetString("file")
 	skip, _ := c.Flags().GetBool("skip-db-update")
 	force, _ := c.Flags().GetBool("force-db-update")
@@ -67,6 +67,7 @@ func run(c *cobra.Command, args []string) {
 		spinner.Skip = false
 		progress.Skip = false
 	}
+
 	params := types.Parameters{
 		Format:        types.Format(format),
 		Quiet:         quiet,
@@ -75,7 +76,6 @@ func run(c *cobra.Command, args []string) {
 		ForceDBUpdate: force,
 		CI:            ci,
 		Diggity: diggity.Parameters{
-			Scanners:     scanners,
 			OutputFormat: diggity.JSON,
 		},
 	}
@@ -107,27 +107,6 @@ func run(c *cobra.Command, args []string) {
 			os.Exit(0)
 		}
 	}
-
-	// if len(args) > 0 {
-	// 	params.Diggity.Input = helper.FormatImage(args[0])
-	// } else if len(tarball) > 0 {
-	// 	params.Diggity.Input = tarball
-	// } else if len(filesystem) > 0 {
-	// 	params.Diggity.Input = filesystem
-	// } else {
-	// 	err := c.Help()
-	// 	if err != nil {
-	// 		log.Debug(err)
-	// 	}
-	// 	return
-	// }
-
-	// Set the scan type based on the input
-	// err := params.Diggity.GetScanType()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// 	return
-	// }
 
 	if len(failCriteria) > 0 {
 		failCriteria = strings.ToLower(failCriteria)
