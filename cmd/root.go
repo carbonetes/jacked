@@ -35,7 +35,7 @@ func run(c *cobra.Command, args []string) {
 
 	// Get the flags
 	tarball, _ := c.Flags().GetString("tar")
-	filesystem, _ := c.Flags().GetString("directory")
+	filesystem, _ := c.Flags().GetString("dir")
 	quiet, _ := c.Flags().GetBool("quiet")
 	format, _ := c.Flags().GetString("output")
 	// scanners, _ := c.Flags().GetStringArray("scanners")
