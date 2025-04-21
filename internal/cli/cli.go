@@ -82,7 +82,7 @@ func Run(params types.Parameters) {
 	// CI Mode
 	if params.CI {
 		// Start Personal Access Token Public API
-		ci.PersonalAccessToken()
+		ci.PersonalAccessToken(params.Token)
 		// End Personal Access Token Public API
 
 		// Run CI

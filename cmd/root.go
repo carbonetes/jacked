@@ -44,6 +44,7 @@ func run(c *cobra.Command, args []string) {
 	force, _ := c.Flags().GetBool("force-db-update")
 	ci, _ := c.Flags().GetBool("ci")
 	failCriteria, _ := c.Flags().GetString("fail-criteria")
+	token, _ := c.Flags().GetString("token")
 
 	// If CI mode is enabled, suppress all output except for errors
 	if ci {
@@ -111,6 +112,10 @@ func run(c *cobra.Command, args []string) {
 	if len(failCriteria) > 0 {
 		failCriteria = strings.ToLower(failCriteria)
 		config.Config.CI.FailCriteria.Severity = failCriteria
+	}
+
+	if len(token) > 0 {
+		params.Token = token
 	}
 
 	// Validate the output format type

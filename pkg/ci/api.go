@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-func PersonalAccessToken() {
+func PersonalAccessToken(token string) {
 	// API endpoint
 
 	// API URL
@@ -17,7 +17,7 @@ func PersonalAccessToken() {
 
 	// JSON request payload
 	payload := map[string]string{
-		"token": "cn_dlL2EhSRpPkOvQRP8hiD6G4F",
+		"token": token,
 	}
 
 	// Marshal into JSON

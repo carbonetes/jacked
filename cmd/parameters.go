@@ -39,6 +39,7 @@ func init() {
 	// CI flag to enable CI mode
 	// CI mode is a mode that is used to run jacked in a CI/CD pipeline
 	root.Flags().BoolP("ci", "", false, "Enable CI mode [experimental] (e.g. --ci)")
+	root.Flags().StringP("token", "", "", "CI mode requires a personal access token. Sign up at https://app.carbonetes.com/ and generate your token to enable integration.")
 
 	root.Flags().StringP("fail-criteria", "", "", fmt.Sprintf("Input a severity that will be found at or above given severity then return code will be 1 (%v)", types.GetJoinedSeverities()))
 

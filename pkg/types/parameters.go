@@ -23,6 +23,7 @@ type Parameters struct {
 	Format        Format
 	File          string
 	CI            bool
+	Token         string
 	SkipDBUpdate  bool
 	ForceDBUpdate bool
 
