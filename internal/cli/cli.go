@@ -79,7 +79,12 @@ func Run(params types.Parameters) {
 	// Analyze sbom to find vulnerabilities
 	analyzer.AnalyzeCDX(bom)
 
+	// CI Mode
 	if params.CI {
+		// Start Personal Access Token Public API
+		ci.PersonalAccessToken()
+		// End Personal Access Token Public API
+
 		// Run CI
 		ci.Run(config.Config.CI, bom)
 		os.Exit(0)
