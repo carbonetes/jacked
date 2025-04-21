@@ -4,35 +4,37 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 )
 
 func PersonalAccessToken() {
 	// API endpoint
+
+	// API URL
 	url := "http://localhost:3001/personal-access-token/is-expired"
 
-	// request body
-	data := map[string]string{
+	// JSON request payload
+	payload := map[string]string{
 		"token": "cn_dlL2EhSRpPkOvQRP8hiD6G4F",
 	}
 
-	// Convert map to JSON
-	jsonData, err := json.Marshal(data)
+	// Marshal into JSON
+	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		panic(err)
 	}
 
-	// Make the POST request
+	// Perform HTTP POST request
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		panic(err)
 	}
 	defer resp.Body.Close()
 
-	// Read and print the response
-	body, err := ioutil.ReadAll(resp.Body)
+	// Read response body (modern way)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
 	}
