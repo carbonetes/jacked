@@ -12,7 +12,7 @@ import (
 const (
 	// Convert link to test / prod url
 	patURL             = "http://localhost:3001/personal-access-token/is-expired"
-	fetchVulnResultURL = "http://localhost:3005/vulnerability/plugin-repo"
+	fetchVulnResultURL = "http://localhost:3005/analysis/vulnerabilities/plugin-repo"
 )
 
 // Response format
