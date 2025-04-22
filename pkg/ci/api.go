@@ -9,11 +9,23 @@ import (
 	"os"
 )
 
-func PersonalAccessToken(token string) {
-	// API endpoint
+const (
+	// Convert link to test / prod url
+	patURL             = "http://localhost:3001/personal-access-token/is-expired"
+	fetchVulnResultURL = "http://localhost:3005/vulnerability/plugin-repo"
+)
 
-	// API URL
-	url := "http://localhost:3001/personal-access-token/is-expired"
+// Response format
+type TokenCheckResponse struct {
+	Expired     bool `json:"expired"`
+	Permissions []struct {
+		Label       string   `json:"label"`
+		Permissions []string `json:"permissions"`
+	} `json:"permissions"`
+	Code string `json:"code"`
+}
+
+func PersonalAccessToken(token string) {
 
 	// JSON request payload
 	payload := map[string]string{
@@ -27,7 +39,7 @@ func PersonalAccessToken(token string) {
 	}
 
 	// Perform HTTP POST request
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(patURL, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		panic(err)
 	}
@@ -37,6 +49,13 @@ func PersonalAccessToken(token string) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
+	}
+
+	// Unmarshal the body into the struct
+	var result TokenCheckResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		fmt.Println("Failed to parse response:", err)
+		os.Exit(1)
 	}
 
 	if resp.StatusCode != 200 {
