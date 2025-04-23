@@ -22,12 +22,12 @@ type Match struct {
 }
 
 type Tally struct {
-	Unknown    int
-	Negligible int
-	Low        int
-	Medium     int
-	High       int
 	Critical   int
+	High       int
+	Medium     int
+	Low        int
+	Negligible int
+	Unknown    int
 }
 
 func Evaluate(criteria string, cdx *cyclonedx.BOM) Assessment {

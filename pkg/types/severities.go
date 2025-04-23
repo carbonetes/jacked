@@ -3,12 +3,12 @@ package types
 import "strings"
 
 var Severities = []string{
-	"unknown",
-	"negligible",
-	"low",
-	"medium",
+	"critcal",
 	"high",
-	"critical",
+	"medium",
+	"low",
+	"negligible",
+	"unknown",
 }
 
 func GetJoinedSeverities() string {

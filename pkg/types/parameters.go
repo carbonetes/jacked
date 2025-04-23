@@ -24,6 +24,7 @@ type Parameters struct {
 	File          string
 	CI            bool
 	Token         string
+	Plugin        string
 	SkipDBUpdate  bool
 	ForceDBUpdate bool
 
