@@ -80,25 +80,22 @@ func SavePluginRepository(bom *cyclonedx.BOM, repoName string, pluginType string
 		"repoName":              repoName,
 		"latestVulnAnalysis":    vulnAnalysis,
 	}
-	fmt.Println(payload)
-	/*
-	   // Perform HTTP POST request
-	   resp, body := apiRequest(payload)
-	   // ---------------
+	// Perform HTTP POST request
+	resp, body := apiRequest(payload)
+	// ---------------
 
-	   var result TokenCheckResponse
+	var result TokenCheckResponse
 
-	   	if err := json.Unmarshal(body, &result); err != nil {
-	   		fmt.Println("Failed to parse response:", err)
-	   		os.Exit(1)
-	   	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		fmt.Println("Failed to parse response:", err)
+		os.Exit(1)
+	}
 
-	   	if resp.StatusCode != 200 {
-	   		fmt.Println("Status Code:", resp.StatusCode)
-	   		fmt.Println("Response Body:", string(body))
-	   		os.Exit(1)
-	   	}
-	*/
+	if resp.StatusCode != 200 {
+		fmt.Println("Status Code:", resp.StatusCode)
+		fmt.Println("Response Body:", string(body))
+		os.Exit(1)
+	}
 }
 
 func apiRequest(payload any) (*http.Response, []byte) {
