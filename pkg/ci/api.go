@@ -29,7 +29,7 @@ func PersonalAccessToken(token string) {
 	}
 
 	// Perform HTTP POST request
-	resp, body := apiRequest(payload)
+	resp, body := apiRequest(payload, tokenURL)
 	// ---------------
 
 	// Unmarshal the body into the struct
@@ -56,35 +56,47 @@ func SavePluginRepository(bom *cyclonedx.BOM, repoName string, pluginType string
 
 	vulnAnalysis := map[string]interface{}{}
 	if bom == nil || bom.Vulnerabilities == nil || bom.Components == nil {
-		vulnAnalysis = nil
+		vulnAnalysis = map[string]interface{}{
+			"status":     "analyzed",
+			"duration":   fmt.Sprintf("%.2f", time.Since(start).Seconds()),
+			"critical":   0,
+			"high":       0,
+			"medium":     0,
+			"low":        0,
+			"negligible": 0,
+			"unknown":    0,
+			"os":         0,
+			"app":        0,
+		}
 	} else {
 		tally := tally(*bom.Vulnerabilities)
 		vulnAnalysis = map[string]interface{}{
 			"status":     "analyzed",
-			"duration":   time.Since(start).Seconds(),
+			"duration":   fmt.Sprintf("%.2f", time.Since(start).Seconds()),
 			"critical":   tally.Critical,
 			"high":       tally.High,
 			"medium":     tally.Medium,
 			"low":        tally.Low,
 			"negligible": tally.Negligible,
-			"unknown":    tally.Negligible,
-			"os":         "",
-			"app":        "",
+			"unknown":    tally.Unknown,
+			"os":         0,
+			"app":        0,
 		}
 	}
 
 	// Payload
 	payload := map[string]interface{}{
+		"repoName":              repoName,
 		"personalAccessTokenId": tokenId,
 		"pluginType":            pluginType,
-		"repoName":              repoName,
 		"latestVulnAnalysis":    vulnAnalysis,
 	}
+
 	// Perform HTTP POST request
-	resp, body := apiRequest(payload)
+	resp, body := apiRequest(payload, saveURL)
 	// ---------------
 
-	var result TokenCheckResponse
+	var result PluginRepo
 
 	if err := json.Unmarshal(body, &result); err != nil {
 		fmt.Println("Failed to parse response:", err)
@@ -98,14 +110,14 @@ func SavePluginRepository(bom *cyclonedx.BOM, repoName string, pluginType string
 	}
 }
 
-func apiRequest(payload any) (*http.Response, []byte) {
+func apiRequest(payload any, url string) (*http.Response, []byte) {
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		panic(err)
 	}
 
 	// Perform HTTP POST request
-	resp, err := http.Post(tokenURL, "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		panic(err)
 	}

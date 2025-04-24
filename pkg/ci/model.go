@@ -11,9 +11,10 @@ type TokenCheckResponse struct {
 }
 
 type PluginRepo struct {
-	PersonalAccessTokenID string `gorm:"column:personal_access_token_id;" json:",omitempty"`
-	RepoName              string `gorm:"column:repo_name;" json:",omitempty"`
-	PluginType            string `gorm:"foreignkey:plugin_type" json:",omitempty"`
+	PersonalAccessTokenID string                `gorm:"column:personal_access_token_id;" json:",omitempty"`
+	RepoName              string                `gorm:"column:repo_name;" json:",omitempty"`
+	PluginType            string                `gorm:"foreignkey:plugin_type" json:",omitempty"`
+	VulnerabilityAnalysis VulnerabilityAnalysis `gorm:"foreignkey:vulnerability_analysis" json:",omitempty"`
 }
 
 type VulnerabilityAnalysis struct {
@@ -35,7 +36,6 @@ type VulnerabilityAnalysis struct {
 	// Components []*Component `gorm:"references:id;foreignKey:vulnerability_analysis_id;" json:",omitempty"`
 }
 
-/*
 type Component struct {
 	VulnerabilityAnalysisID *string `gorm:"column:vulnerability_analysis_id;" json:",omitempty"`
 	BOMAnalysisID           *string `gorm:"column:bom_analysis_id;" json:",omitempty"`
@@ -88,4 +88,3 @@ type Location struct {
 	Path        string `gorm:"column:path;size:255;" json:",omitempty"`
 	LayerHash   string `gorm:"column:layer_hash;size:255;" json:",omitempty"`
 }
-*/
