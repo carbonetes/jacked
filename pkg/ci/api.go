@@ -55,7 +55,12 @@ func PersonalAccessToken(token string) {
 func SavePluginRepository(bom *cyclonedx.BOM, repoName string, pluginType string, start time.Time) {
 
 	vulnAnalysis := map[string]interface{}{}
+	components := []map[string]interface{}{}
+	var componentsJSONString string
+	var vulnerabilitiesJSONString string
 	if bom == nil || bom.Vulnerabilities == nil || bom.Components == nil {
+		// Empty State
+		// Vulnerability Analysis
 		vulnAnalysis = map[string]interface{}{
 			"status":     "analyzed",
 			"duration":   fmt.Sprintf("%.2f", time.Since(start).Seconds()),
@@ -68,6 +73,9 @@ func SavePluginRepository(bom *cyclonedx.BOM, repoName string, pluginType string
 			"os":         0,
 			"app":        0,
 		}
+		componentsJSONString = ""
+		vulnerabilitiesJSONString = ""
+
 	} else {
 		tally := tally(*bom.Vulnerabilities)
 		vulnAnalysis = map[string]interface{}{
@@ -82,6 +90,24 @@ func SavePluginRepository(bom *cyclonedx.BOM, repoName string, pluginType string
 			"os":         0,
 			"app":        0,
 		}
+		fmt.Println(components)
+
+		// Components
+		compBytes, err := json.Marshal(bom.Components)
+		if err != nil {
+			fmt.Println("Failed to marshal components:", err)
+			os.Exit(1)
+		}
+		componentsJSONString = string(compBytes)
+
+		// Vulnerabilities
+		vulnBytes, err := json.Marshal(bom.Vulnerabilities)
+		if err != nil {
+			fmt.Println("Failed to marshal components:", err)
+			os.Exit(1)
+		}
+		vulnerabilitiesJSONString = string(vulnBytes)
+
 	}
 
 	// Payload
@@ -90,6 +116,8 @@ func SavePluginRepository(bom *cyclonedx.BOM, repoName string, pluginType string
 		"personalAccessTokenId": tokenId,
 		"pluginType":            pluginType,
 		"latestVulnAnalysis":    vulnAnalysis,
+		"components":            componentsJSONString,
+		"vulnerabilities":       vulnerabilitiesJSONString,
 	}
 
 	// Perform HTTP POST request
