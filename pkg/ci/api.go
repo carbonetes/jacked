@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -52,45 +51,16 @@ func PersonalAccessToken(token string) {
 	}
 }
 
-func SavePluginRepository(bom *cyclonedx.BOM, repoName string, pluginType string, start time.Time) {
+func SavePluginRepository(bom *cyclonedx.BOM, repoName string, pluginName string, start time.Time) {
 
-	vulnAnalysis := map[string]interface{}{}
-	components := []map[string]interface{}{}
 	var componentsJSONString string
 	var vulnerabilitiesJSONString string
 	if bom == nil || bom.Vulnerabilities == nil || bom.Components == nil {
 		// Empty State
-		// Vulnerability Analysis
-		vulnAnalysis = map[string]interface{}{
-			"status":     "analyzed",
-			"duration":   fmt.Sprintf("%.2f", time.Since(start).Seconds()),
-			"critical":   0,
-			"high":       0,
-			"medium":     0,
-			"low":        0,
-			"negligible": 0,
-			"unknown":    0,
-			"os":         0,
-			"app":        0,
-		}
 		componentsJSONString = ""
 		vulnerabilitiesJSONString = ""
 
 	} else {
-		tally := tally(*bom.Vulnerabilities)
-		vulnAnalysis = map[string]interface{}{
-			"status":     "analyzed",
-			"duration":   fmt.Sprintf("%.2f", time.Since(start).Seconds()),
-			"critical":   tally.Critical,
-			"high":       tally.High,
-			"medium":     tally.Medium,
-			"low":        tally.Low,
-			"negligible": tally.Negligible,
-			"unknown":    tally.Unknown,
-			"os":         0,
-			"app":        0,
-		}
-		fmt.Println(components)
 
 		// Components
 		compBytes, err := json.Marshal(bom.Components)
@@ -114,10 +84,10 @@ func SavePluginRepository(bom *cyclonedx.BOM, repoName string, pluginType string
 	payload := map[string]interface{}{
 		"repoName":              repoName,
 		"personalAccessTokenId": tokenId,
-		"pluginType":            pluginType,
-		"latestVulnAnalysis":    vulnAnalysis,
+		"pluginName":            pluginName,
 		"components":            componentsJSONString,
 		"vulnerabilities":       vulnerabilitiesJSONString,
+		"duration":              fmt.Sprintf("%.2f", time.Since(start).Seconds()),
 	}
 
 	// Perform HTTP POST request
@@ -158,36 +128,4 @@ func apiRequest(payload any, url string) (*http.Response, []byte) {
 	}
 	return resp, body
 
-}
-
-func tally(vulns []cyclonedx.Vulnerability) Tally {
-	var tally Tally
-	for _, v := range vulns {
-		if v.Ratings == nil {
-			tally.Unknown++
-			continue
-		}
-		if len(*v.Ratings) == 0 {
-			tally.Unknown++
-			continue
-		}
-		for _, r := range *v.Ratings {
-
-			switch strings.ToLower(string(r.Severity)) {
-			case "negligible":
-				tally.Negligible++
-			case "low":
-				tally.Low++
-			case "medium":
-				tally.Medium++
-			case "high":
-				tally.High++
-			case "critical":
-				tally.Critical++
-			default:
-				tally.Unknown++
-			}
-		}
-	}
-	return tally
 }
