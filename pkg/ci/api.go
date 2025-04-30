@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	tokenURL = "http://https://tent-api.carbonetes.com/personal-access-token/is-expired"
-	saveURL  = "http://https://tent-api.carbonetes.com/integrations/vuln/plugin/save"
+	tokenURL = "https://tent-api.carbonetes.com/personal-access-token/is-expired"
+	saveURL  = "https://tent-api.carbonetes.com/integrations/vuln/plugin/save"
 )
 
 var tokenId = "0"
