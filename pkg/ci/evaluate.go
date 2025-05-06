@@ -1,7 +1,6 @@
 package ci
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -93,8 +92,6 @@ func newMatch(v *cyclonedx.Vulnerability, comps *[]cyclonedx.Component) Match {
 			match.Vulnerability = v
 			for _, p := range *c.Properties {
 				if p.Name == "diggity:package:type" {
-					fmt.Println("component", c.Name)
-					fmt.Println("properties >> ", p)
 					match.Type = p.Value
 				}
 			}
