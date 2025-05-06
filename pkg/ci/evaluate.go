@@ -1,6 +1,7 @@
 package ci
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -19,6 +20,7 @@ type Assessment struct {
 type Match struct {
 	Component     *cyclonedx.Component
 	Vulnerability *cyclonedx.Vulnerability
+	Type          string
 }
 
 type Tally struct {
@@ -89,6 +91,14 @@ func newMatch(v *cyclonedx.Vulnerability, comps *[]cyclonedx.Component) Match {
 		if v.BOMRef == c.BOMRef {
 			match.Component = &(*comps)[index]
 			match.Vulnerability = v
+			for _, p := range *c.Properties {
+				if p.Name == "diggity:package:type" {
+					fmt.Println("component", c.Name)
+					fmt.Println("properties >> ", p)
+					match.Type = p.Value
+				}
+			}
+
 		}
 	}
 	return match

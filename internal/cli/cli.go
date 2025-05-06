@@ -80,6 +80,11 @@ func Run(params types.Parameters) {
 	analyzer.AnalyzeCDX(bom)
 
 	if params.CI {
+		// Start Personal Access Token Public API
+		ci.PersonalAccessToken(params.Token)
+		ci.SavePluginRepository(bom, params.Diggity.Input, params.Plugin, start)
+		// End Personal Access Token Public API
+
 		// Run CI
 		ci.Run(config.Config.CI, bom)
 		os.Exit(0)

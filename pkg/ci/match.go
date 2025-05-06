@@ -19,6 +19,7 @@ func matchHeader(table *simpletable.Table) {
 			{Align: simpletable.AlignCenter, Text: "Package"},
 			{Align: simpletable.AlignCenter, Text: "CVE"},
 			{Align: simpletable.AlignCenter, Text: "Severity"},
+			{Align: simpletable.AlignCenter, Text: "Type"},
 		},
 	}
 }
@@ -29,6 +30,7 @@ func matchRows(matches []Match, table *simpletable.Table) {
 			{Text: string(m.Component.Name)},
 			{Text: string(m.Vulnerability.ID)},
 			{Text: getSeverity(m.Vulnerability.Ratings)},
+			{Text: string(m.Type)},
 		}
 		table.Body.Cells = append(table.Body.Cells, r)
 	}
