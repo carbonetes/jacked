@@ -102,7 +102,7 @@ brews:
       owner: carbonetes
       name: homebrew-jacked
       branch: main
-    folder: Formula
+    directory: Formula
     ids:
       - tar-archives
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
