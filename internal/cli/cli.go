@@ -24,6 +24,12 @@ import (
 // Finally, it displays the results
 func Run(params types.Parameters) {
 
+	if params.CI {
+		// Start Personal Access Token Public API
+		ci.PersonalAccessToken(params.Token)
+		// End Personal Access Token Public API
+	}
+
 	// Check if the database is up to date
 	db.DBCheck(params.SkipDBUpdate, params.ForceDBUpdate)
 	db.Load()
@@ -80,10 +86,9 @@ func Run(params types.Parameters) {
 	analyzer.AnalyzeCDX(bom)
 
 	if params.CI {
-		// Start Personal Access Token Public API
-		ci.PersonalAccessToken(params.Token)
+		// Start Analysis Saving Public API
 		ci.SavePluginRepository(bom, params.Diggity.Input, params.Plugin, start)
-		// End Personal Access Token Public API
+		// End Analysis Saving Public API
 
 		// Run CI
 		ci.Run(config.Config.CI, bom)
