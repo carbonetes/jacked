@@ -174,23 +174,46 @@ func (c *comparer) addNVDData() {
 					continue
 				}
 
-				*(*v)[i].Ratings = append(*(*v)[i].Ratings, cyclonedx.VulnerabilityRating{
-					Severity: cyclonedx.Severity(nvd.CVSS[0].Severity),
-					Score:    &nvd.CVSS[0].Score,
-					Vector:   nvd.CVSS[0].Vector,
-					Source: &cyclonedx.Source{
-						Name: nvd.CVSS[0].Source,
-					},
-				})
+				for _, cvss := range nvd.CVSS {
+					*(*v)[i].Ratings = append(*(*v)[i].Ratings, cyclonedx.VulnerabilityRating{
+						Severity: cyclonedx.Severity(cvss.Severity),
+						Method:   cyclonedx.ScoringMethod(cvss.Method),
+						Score:    &nvd.CVSS[0].Score,
+						Vector:   nvd.CVSS[0].Vector,
+						Source: &cyclonedx.Source{
+							Name: nvd.CVSS[0].Source,
+						},
+					})
 
+					if nvd.CVSS[0].ExploitabilityScore != 0 {
+						*(*v)[i].Ratings = append(*(*v)[i].Ratings, cyclonedx.VulnerabilityRating{
+							Score:         &cvss.ExploitabilityScore,
+							Justification: "ExploitabilityScore",
+							Source: &cyclonedx.Source{
+								Name: nvd.CVSS[0].Source,
+							},
+						})
+					}
+
+					if cvss.ImpactScore != 0 {
+						*(*v)[i].Ratings = append(*(*v)[i].Ratings, cyclonedx.VulnerabilityRating{
+							Score:         &cvss.ImpactScore,
+							Justification: "ImpactScore",
+							Source: &cyclonedx.Source{
+								Name: nvd.CVSS[0].Source,
+							},
+						})
+					}
+				}
 			}
 		}
+
 		if (*v)[i].Ratings == nil {
 			(*v)[i].Ratings = new([]cyclonedx.VulnerabilityRating)
 			*(*v)[i].Ratings = append(*(*v)[i].Ratings, cyclonedx.VulnerabilityRating{
 				Severity: cyclonedx.SeverityUnknown,
 			})
-		}		
+		}
 	}
 	c.vex = v
 }
