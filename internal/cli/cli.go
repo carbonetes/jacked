@@ -26,7 +26,7 @@ func Run(params types.Parameters) {
 
 	if params.CI {
 		// Start Personal Access Token Public API
-		ci.PersonalAccessToken(params.Token)
+		ci.PersonalAccessToken(params.Token, params.Plugin)
 		// End Personal Access Token Public API
 	}
 

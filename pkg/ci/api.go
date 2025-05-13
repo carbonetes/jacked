@@ -19,11 +19,12 @@ const (
 
 var tokenId = "0"
 
-func PersonalAccessToken(token string) {
+func PersonalAccessToken(token string, pluginType string) {
 
 	// Payload
 	payload := map[string]string{
-		"token": token,
+		"token":      token,
+		"pluginType": pluginType,
 	}
 
 	// Perform HTTP POST request
