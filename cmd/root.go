@@ -49,6 +49,13 @@ func run(c *cobra.Command, args []string) {
 	// If CI mode is enabled, suppress all output except for errors
 	if ci {
 		quiet = true
+		/* Disabled Integration for now 05-20-2024
+		if token == "" {
+			log.Fatal("Token is required. Please generate a token at https://app.carbonetes.com/personal-access-token and set it using the --token flag.")
+			return
+		}
+		*/
+
 		if len(failCriteria) == 0 || !types.IsValidSeverity(failCriteria) {
 			log.Warn("CI mode is enabled, but no valid fail criteria is provided")
 			log.Warn("Default fail criteria will be used: 'critical' severity vulnerabilities will fail the build")

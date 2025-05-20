@@ -23,12 +23,13 @@ import (
 // It then gets the sbom from cdx mod and analyzes it to find vulnerabilities
 // Finally, it displays the results
 func Run(params types.Parameters) {
-
+	/* Integration is disabled for now 05-20-2024
 	if params.CI {
 		// Start Personal Access Token Public API
 		ci.PersonalAccessToken(params.Token, params.Plugin)
 		// End Personal Access Token Public API
 	}
+	*/
 
 	// Check if the database is up to date
 	db.DBCheck(params.SkipDBUpdate, params.ForceDBUpdate)
@@ -87,7 +88,7 @@ func Run(params types.Parameters) {
 
 	if params.CI {
 		// Start Analysis Saving Public API
-		ci.SavePluginRepository(bom, params.Diggity.Input, params.Plugin, start)
+		// ci.SavePluginRepository(bom, params.Diggity.Input, params.Plugin, start) // Disabled for now 05-20-2024
 		// End Analysis Saving Public API
 
 		// Run CI
