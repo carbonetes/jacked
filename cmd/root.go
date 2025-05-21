@@ -116,7 +116,7 @@ func run(c *cobra.Command, args []string) {
 	if len(plugin) > 0 {
 		params.Plugin = plugin
 	} else {
-		params.Plugin = "jacked"
+		params.Plugin = "oss"
 	}
 
 	if len(failCriteria) > 0 {
