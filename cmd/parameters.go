@@ -20,7 +20,7 @@ func init() {
 	root.Flags().StringP("tar", "t", "", "Read a tarball from a path on disk for archives created from docker save (e.g. 'jacked -t path/to/image.tar)'")
 
 	// Directory flag to scan a directory
-	root.Flags().StringP("directory", "d", "", "Read directly from a path on disk (any directory) (e.g. 'jacked -d path/to/directory)'")
+	root.Flags().StringP("dir", "d", "", "Read directly from a path on disk (any directory) (e.g. 'jacked -d path/to/directory)'")
 
 	// Quiet flag to allows the user to suppress all output except for errors
 	root.Flags().BoolP("quiet", "q", false, "Suppress all output except for errors")
