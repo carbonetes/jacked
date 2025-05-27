@@ -18,6 +18,7 @@ const (
 )
 
 var tokenId = "0"
+var permitted = false
 
 func PersonalAccessToken(token string, pluginType string) {
 
@@ -38,11 +39,28 @@ func PersonalAccessToken(token string, pluginType string) {
 		os.Exit(1)
 	}
 
+	for _, p := range result.Permissions {
+		if p.Label == "Pipelines" {
+			for _, lp := range p.Permissions {
+				if lp == "write" {
+					permitted = true
+				}
+			}
+		}
+	}
+
+	if !permitted {
+		fmt.Println("Status Code:", 401)
+		fmt.Println("Error: You do not have pipeline write permission.")
+		os.Exit(1)
+	}
+
 	if resp.StatusCode != 200 {
 		fmt.Println("Status Code:", resp.StatusCode)
 		fmt.Println("Response Body:", string(body))
 		os.Exit(1)
 	}
+
 	tokenId = result.PersonalAccessTokenId
 	if result.PersonalAccessTokenId == "" {
 		fmt.Println("Status Code:", resp.StatusCode)
