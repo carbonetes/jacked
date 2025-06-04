@@ -50,3 +50,20 @@ func FindUpstream(target string) string {
 
 	return ""
 }
+
+func FindPackageType(props *[]cyclonedx.Property, name string) *string {
+	// Return nil if the properties are nil.
+	if props == nil {
+		return nil
+	}
+
+	// Loop through the component properties to find the "diggity:package:type" property.
+	for _, prop := range *props {
+		if prop.Name == name {
+			return &prop.Value
+		}
+	}
+
+	// Return nil if the property was not found.
+	return nil
+}
