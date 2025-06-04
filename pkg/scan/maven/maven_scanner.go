@@ -4,6 +4,8 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/internal/helper"
+	"github.com/carbonetes/jacked/internal/log"
+	v3 "github.com/carbonetes/jacked/pkg/model/cdx"
 	"github.com/carbonetes/jacked/pkg/version"
 )
 
@@ -33,7 +35,7 @@ func (s *Scanner) Scan(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error) {
 		if helper.GetComponentType(c.Properties) != "java" {
 			continue
 		}
-		
+
 		upstream := helper.FindUpstream(c.BOMRef)
 		keywords := []string{c.Name}
 		if upstream != "" {
@@ -55,7 +57,18 @@ func (s *Scanner) Scan(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error) {
 				continue
 			}
 
-			
+			match, err := mavenVersion.Check(vuln.Constraints)
+			if err != nil {
+				log.Errorf("error checking dpkg version %s against constraint %s: %v", c.Version, vuln.Constraints, err)
+				continue
+			}
+
+			if match {
+				vex := v3.ToVex(&vuln, &c, vuln.Constraints)
+				if vex != nil {
+					results = append(results, *vex)
+				}
+			}
 
 		}
 	}
