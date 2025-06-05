@@ -72,7 +72,7 @@ func PersonalAccessToken(token string, pluginType string) {
 func SavePluginRepository(bom *cyclonedx.BOM, repoName string, pluginName string, start time.Time) {
 
 	var bomJSONString string
-	if bom == nil || bom.Vulnerabilities == nil || bom.Components == nil {
+	if bom == nil {
 		// Empty State
 		bomJSONString = ""
 
