@@ -5,6 +5,8 @@ import (
 	"github.com/carbonetes/jacked/internal/compare"
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/pkg/scan"
+	golang "github.com/carbonetes/jacked/pkg/scan/go"
+	"github.com/carbonetes/jacked/pkg/scan/maven"
 	"github.com/carbonetes/jacked/pkg/scan/os/apk"
 	"github.com/carbonetes/jacked/pkg/scan/os/dpkg"
 )
@@ -43,6 +45,8 @@ func Analyze(bom *cyclonedx.BOM) {
 	scanManager := scan.NewManager(
 		dpkg.NewScanner(db.Store{}),
 		apk.NewScanner(db.Store{}),
+		maven.NewScanner(db.Store{}),
+		golang.NewScanner(db.Store{}),
 		// rpm.NewScanner(rpm.NewProvider(db.GetDB())),
 	)
 	vulns, err := scanManager.Run(bom)
