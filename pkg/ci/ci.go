@@ -8,13 +8,21 @@ import (
 
 // TODO: Implement more CI logic
 func Run(ci types.CIConfiguration, cdx *cyclonedx.BOM) {
-	totalComponents := len(*cdx.Components)
-	totalVulnerabilities := len(*cdx.Vulnerabilities)
-	log.Printf("\nPackages: %9v\nVulnerabilities: %v", totalComponents, totalVulnerabilities)
-	if len(*cdx.Vulnerabilities) == 0 {
-		log.Printf("\nPassed: %5v found components\n", len(*cdx.Components))
+	var totalComponents, totalVulnerabilities int
+
+	if cdx.Components != nil {
+		totalComponents = len(*cdx.Components)
+	}
+	if cdx.Vulnerabilities != nil {
+		totalVulnerabilities = len(*cdx.Vulnerabilities)
+	}
+
+	if totalVulnerabilities == 0 {
+		log.Printf("\nPassed: %5v found components\n", totalComponents)
 		return
 	}
+
+	log.Printf("\nPackages: %9v\nVulnerabilities: %v", totalComponents, totalVulnerabilities)
 
 	result := Evaluate(ci.FailCriteria.Severity, cdx)
 	log.Printf("\nTally Result")
@@ -30,7 +38,6 @@ func Run(ci types.CIConfiguration, cdx *cyclonedx.BOM) {
 
 	if !result.Passed {
 		log.Fatalf("\nFailed: %5v out of %v found vulnerabilities failed the assessment \n", len(result.Matches), totalVulnerabilities)
-
 	}
 
 	log.Infof("\nPassed: %5v out of %v found vulnerabilities passed the assessment\n", totalVulnerabilities, totalVulnerabilities)

@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/carbonetes/ci/api"
 	"github.com/carbonetes/diggity/pkg/cdx"
 	"github.com/carbonetes/diggity/pkg/reader"
 	diggity "github.com/carbonetes/diggity/pkg/types"
@@ -23,6 +24,10 @@ import (
 // It then gets the sbom from cdx mod and analyzes it to find vulnerabilities
 // Finally, it displays the results
 func Run(params types.Parameters) {
+
+	if params.CI {
+		api.PersonalAccessToken(params.Token, params.Plugin, 1)
+	}
 
 	// Check if the database is up to date
 	db.DBCheck(params.SkipDBUpdate, params.ForceDBUpdate)
@@ -80,6 +85,9 @@ func Run(params types.Parameters) {
 	analyzer.AnalyzeCDX(bom)
 
 	if params.CI {
+
+		api.SavePluginRepository(bom, params.Diggity.Input, params.Plugin, start, 1, 1)
+
 		// Run CI
 		ci.Run(config.Config.CI, bom)
 		os.Exit(0)

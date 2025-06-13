@@ -25,6 +25,8 @@ type Parameters struct {
 	CI            bool
 	SkipDBUpdate  bool
 	ForceDBUpdate bool
+	Token         string
+	Plugin        string
 
 	// Diggity tool parameters to be passed to the scan engine
 	Diggity diggity.Parameters
