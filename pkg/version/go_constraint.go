@@ -39,7 +39,7 @@ func (g *GoVersion) Check(constraints string) (bool, error) {
 			return false, nil
 		}
 
-		c, err := newSemanticConstraint(normalizedConstraint)
+		c, err := NewSemanticConstraint(normalizedConstraint)
 		if c == nil || err != nil {
 			return false, err
 		}

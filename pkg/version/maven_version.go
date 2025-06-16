@@ -9,7 +9,7 @@ import (
 
 type mavenVersion struct {
 	raw             mavenVersionRaw
-	symanticVersion string
+	semanticVersion string
 }
 
 type mavenVersionRaw struct {
@@ -31,7 +31,7 @@ func NewMavenVersion(version string) (*mavenVersion, error) {
 
 	v := &mavenVersion{
 		raw:             raw,
-		symanticVersion: normalizeMavenVersion(raw),
+		semanticVersion: normalizeMavenVersion(raw),
 	}
 	return v, nil
 }

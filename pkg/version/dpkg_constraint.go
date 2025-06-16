@@ -46,7 +46,7 @@ func (d *dpkgVersion) Check(constraints string) (bool, error) {
 		// Normalize the dpkg version constraint
 		normalizeDpkgVersionContraint(&constraint)
 		// Create a new semantic constraint
-		c, err := newSemanticConstraint(constraint)
+		c, err := NewSemanticConstraint(constraint)
 		if c == nil || err != nil {
 			// If the constraint is nil or an error occurred, return false and the error
 			return false, err

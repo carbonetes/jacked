@@ -32,9 +32,11 @@ func (m *mavenVersion) Check(constraints string) (bool, error) {
 	}
 
 	// Split the constraints by comma
-	constraintSlice := []string{constraints}
+	constraintSlice := []string{}
 	if strings.Contains(constraints, " || ") {
 		constraintSlice = strings.Split(constraints, " || ")
+	} else {
+		constraintSlice = append(constraintSlice, constraints)
 	}
 
 	for _, constraint := range constraintSlice {
@@ -44,12 +46,12 @@ func (m *mavenVersion) Check(constraints string) (bool, error) {
 			return false, nil
 		}
 
-		c, err := newSemanticConstraint(normalizedConstraint)
+		c, err := NewSemanticConstraint(normalizedConstraint)
 		if c == nil || err != nil {
 			return false, err
 		}
 
-		valid, err := c.check(m.symanticVersion)
+		valid, err := c.check(m.semanticVersion)
 		if err != nil || !valid {
 			return false, err
 		}

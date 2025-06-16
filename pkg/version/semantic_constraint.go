@@ -6,12 +6,12 @@ import (
 	"slices"
 	"strings"
 
-	hVersion "github.com/hashicorp/go-version"
+	hashicorp "github.com/hashicorp/go-version"
 )
 
 type semanticConstraint struct {
 	raw        string
-	constraint hVersion.Constraints
+	constraint hashicorp.Constraints
 	versionRaw string
 	operator   string
 }
@@ -20,12 +20,12 @@ type ConstraintNormalizer interface {
 	normalizer(constraintRaw string) (*semanticConstraint, error)	
 }
 
-func newSemanticConstraint(constraintRaw string) (*semanticConstraint, error) {
+func NewSemanticConstraint(constraintRaw string) (*semanticConstraint, error) {
 	if len(constraintRaw) == 0 {
 		return nil, fmt.Errorf("constraint is empty")
 	}
 
-	c, err := hVersion.NewConstraint(constraintRaw)
+	c, err := hashicorp.NewConstraint(constraintRaw)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func newSemanticConstraint(constraintRaw string) (*semanticConstraint, error) {
 }
 
 func (s *semanticConstraint) check(version string) (bool, error) {
-	v, err := hVersion.NewVersion(version)
+	v, err := hashicorp.NewVersion(version)
 	if err != nil {
 		return false, err
 	}
@@ -59,7 +59,7 @@ func (s *semanticConstraint) isValid(constraint string) bool {
 	}
 
 	// Check if the constraint has a valid semantic version
-	_, err := hVersion.NewVersion(s.versionRaw)
+	_, err := hashicorp.NewVersion(s.versionRaw)
 	if err != nil {
 		log.Printf("invalid semantic version: %s", s.versionRaw)
 		return false

@@ -18,7 +18,7 @@ func (a *apkVersion) Check(constraints string) (bool, error) {
 
 	for _, constraint := range constraintSlice {
 		// Create a new semantic constraint
-		c, err := newSemanticConstraint(constraint)
+		c, err := NewSemanticConstraint(constraint)
 		if c == nil || err != nil {
 			// If the constraint is nil or an error occurred, skip this constraint
 			return false, err
