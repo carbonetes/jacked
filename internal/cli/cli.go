@@ -60,7 +60,7 @@ func Run(params types.Parameters) {
 		if err != nil {
 			log.Fatal(err)
 		}
-	case 2: // Tarball
+	case 2: // TarballdiggityParams
 		spinner.Set(fmt.Sprintf("Reading tarfile %s", params.Diggity.Input))
 		image, err := reader.ReadTarball(params.Diggity.Input)
 		if err != nil {

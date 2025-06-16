@@ -8,21 +8,20 @@ import (
 
 // TODO: Implement more CI logic
 func Run(ci types.CIConfiguration, cdx *cyclonedx.BOM) {
-	var totalComponents, totalVulnerabilities int
+	totalComponents := len(*cdx.Components)
 
-	if cdx.Components != nil {
-		totalComponents = len(*cdx.Components)
-	}
-	if cdx.Vulnerabilities != nil {
-		totalVulnerabilities = len(*cdx.Vulnerabilities)
-	}
-
-	if totalVulnerabilities == 0 {
-		log.Printf("\nPassed: %5v found components\n", totalComponents)
+	if cdx.Vulnerabilities == nil {
+		log.Infof("\nPassed: No Vulnerabilities Found.")
 		return
 	}
 
-	log.Printf("\nPackages: %9v\nVulnerabilities: %v", totalComponents, totalVulnerabilities)
+	totalVulns := len(*cdx.Vulnerabilities)
+	log.Printf("\nPackages: %9v\nVulnerabilities: %v", totalComponents, totalVulns)
+
+	if totalVulns == 0 {
+		log.Printf("\nPassed: %5v found components\n", totalComponents)
+		return
+	}
 
 	result := Evaluate(ci.FailCriteria.Severity, cdx)
 	log.Printf("\nTally Result")
@@ -37,8 +36,8 @@ func Run(ci types.CIConfiguration, cdx *cyclonedx.BOM) {
 	}
 
 	if !result.Passed {
-		log.Fatalf("\nFailed: %5v out of %v found vulnerabilities failed the assessment \n", len(result.Matches), totalVulnerabilities)
+		log.Fatalf("\nFailed: %5v out of %v found vulnerabilities failed the assessment \n", len(result.Matches), totalVulns)
+	} else {
+		log.Infof("\nPassed: %5v out of %v found vulnerabilities passed the assessment\n", totalVulns, totalVulns)
 	}
-
-	log.Infof("\nPassed: %5v out of %v found vulnerabilities passed the assessment\n", totalVulnerabilities, totalVulnerabilities)
 }
