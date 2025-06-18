@@ -83,8 +83,17 @@ func Create(bom *cyclonedx.BOM) table.Model {
 			log.Debug("Component not found for vulnerability: " + v.BOMRef)
 			continue
 		}
+		// Split the component into name and version
+		// Assuming the format is "name:version" or "name:epoch:upstream_version:build"
 		parts := strings.Split(component, ":")
-		name, version := parts[0], parts[1]
+		name := parts[0]
+		// the rest of the parts are the version
+		version := ""
+		if len(parts) > 2 {
+			version = strings.Join(parts[1:], ":")
+		} else if len(parts) == 2 {
+			version = parts[1]
+		}
 
 		severity := "UNKNOWN"
 		if v.Ratings != nil && len(*v.Ratings) > 0 {
