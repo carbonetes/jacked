@@ -1,11 +1,11 @@
-package cmd
+package command
 
 import (
 	"os"
 
+	"github.com/carbonetes/jacked/cmd/jacked/build"
 	"github.com/carbonetes/jacked/internal/helper"
 	"github.com/carbonetes/jacked/internal/log"
-	"github.com/carbonetes/jacked/internal/version"
 
 	"github.com/spf13/cobra"
 )
@@ -27,7 +27,7 @@ func init() {
 }
 
 func versionRun(c *cobra.Command, _ []string) {
-	info := version.GetBuild()
+	info := build.GetBuild()
 	if format == "json" {
 		output, err := helper.ToJSON(info)
 		if err != nil {

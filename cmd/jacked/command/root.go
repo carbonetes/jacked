@@ -1,16 +1,15 @@
-package cmd
+package command
 
 import (
 	"os"
 	"strings"
 
 	diggity "github.com/carbonetes/diggity/pkg/types"
-	"github.com/carbonetes/jacked/internal/cli"
+	"github.com/carbonetes/jacked/cmd/jacked/build"
 	"github.com/carbonetes/jacked/internal/helper"
 	"github.com/carbonetes/jacked/internal/log"
 	"github.com/carbonetes/jacked/internal/tea/progress"
 	"github.com/carbonetes/jacked/internal/tea/spinner"
-	"github.com/carbonetes/jacked/internal/version"
 	"github.com/carbonetes/jacked/pkg/config"
 	"github.com/carbonetes/jacked/pkg/types"
 	"github.com/spf13/cobra"
@@ -21,15 +20,15 @@ var root = &cobra.Command{
 	Args:  cobra.MaximumNArgs(1),
 	Short: "Jacked Vulnerability Analyzer",
 	Long:  `Jacked is an open-source vulnerability scanning tool designed to help you identify and mitigate security risks in your Container Images and File Systems.`,
-	Run:   run,
+	Run:   rootCmd,
 }
 
 // Main entry point
-func run(c *cobra.Command, args []string) {
+func rootCmd(c *cobra.Command, args []string) {
 	// if version flag is set, print the version and exit
 	versionArg, _ := c.Flags().GetBool("version")
 	if versionArg {
-		log.Print(version.GetBuild().Version)
+		log.Print(build.GetBuild().Version)
 		return
 	}
 
@@ -120,7 +119,7 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	// Run the analyzer with the parameters provided
-	cli.Run(params)
+	analyze(params)
 }
 
 // validatFormat validates the output format type provided by the user and returns true if it is valid else false

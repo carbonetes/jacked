@@ -1,4 +1,4 @@
-package cmd
+package command
 
 import (
 	"fmt"
@@ -45,4 +45,11 @@ func init() {
 	root.PersistentFlags().BoolP("help", "h", false, "")
 	root.PersistentFlags().Lookup("help").Hidden = true
 	root.SetHelpCommand(&cobra.Command{Hidden: true})
+}
+
+func Run() error {
+	if err := root.Execute(); err != nil {
+		return err
+	}
+	return nil
 }
