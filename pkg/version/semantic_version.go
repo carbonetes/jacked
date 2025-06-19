@@ -3,7 +3,6 @@ package version
 import (
 	"errors"
 	"regexp"
-	"strconv"
 
 	hashicorp "github.com/hashicorp/go-version"
 )
