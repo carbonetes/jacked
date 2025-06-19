@@ -32,7 +32,7 @@ func (a *apkVersion) checkOrConstraints(expression string) (bool, error) {
 		} else {
 			if satisfied, err := a.check(comparator); satisfied || err != nil {
 				if err != nil {
-					return false, fmt.Errorf(errCheckFormat, a.apkVer, comparator, err)
+					return false, fmt.Errorf(errCheckFormat, a.raw, comparator, err)
 				}
 				return true, nil // If single constraint matches, return true
 			}
@@ -48,11 +48,11 @@ func (a *apkVersion) checkAndConstraints(comparator string) (bool, error) {
 	}
 	if satisfied, err := a.check(constraints[0]); satisfied || err != nil {
 		if err != nil {
-			return false, fmt.Errorf(errCheckFormat, a.apkVer, constraints[0], err)
+			return false, fmt.Errorf(errCheckFormat, a.raw, constraints[0], err)
 		}
 		if satisfied, err = a.check(constraints[1]); satisfied || err != nil {
 			if err != nil {
-				return false, fmt.Errorf(errCheckFormat, a.apkVer, constraints[1], err)
+				return false, fmt.Errorf(errCheckFormat, a.raw, constraints[1], err)
 			}
 			return true, nil // If second constraint matches, return true
 		}
@@ -63,7 +63,7 @@ func (a *apkVersion) checkAndConstraints(comparator string) (bool, error) {
 func (a *apkVersion) checkSingleConstraint(expression string) (bool, error) {
 	if satisfied, err := a.check(expression); satisfied || err != nil {
 		if err != nil {
-			return false, fmt.Errorf(errCheckFormat, a.apkVer, expression, err)
+			return false, fmt.Errorf(errCheckFormat, a.raw, expression, err)
 		}
 		return true, nil // If single constraint matches, return true
 	}
