@@ -1,4 +1,4 @@
-package maven
+package rpm
 
 import (
 	"github.com/CycloneDX/cyclonedx-go"
@@ -9,18 +9,17 @@ import (
 	"github.com/carbonetes/jacked/pkg/version"
 )
 
+// apk Scanner implements scan.Scanner for dpkg packages.
 type Scanner struct {
 	store db.Store
 }
 
-// NewScanner creates a new Maven scanner with the given db.Store.
 func NewScanner(store db.Store) *Scanner {
 	return &Scanner{
 		store: store,
 	}
 }
 
-// Scan scans the Maven BOM for vulnerabilities and returns a slice of cyclonedx.Vulnerability.
 func (s *Scanner) Scan(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error) {
 	var results []cyclonedx.Vulnerability
 	if bom == nil || bom.Components == nil || len(*bom.Components) == 0 {
@@ -28,11 +27,7 @@ func (s *Scanner) Scan(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error) {
 	}
 
 	for _, c := range *bom.Components {
-		if c.Properties == nil {
-			continue
-		}
-
-		if helper.GetComponentType(c.Properties) != "java" {
+		if c.Properties == nil || helper.GetComponentType(c.Properties) != "rpm" {
 			continue
 		}
 
@@ -41,13 +36,9 @@ func (s *Scanner) Scan(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error) {
 		if upstream != "" {
 			keywords = append(keywords, upstream)
 		}
+		vulns := s.store.NVDMatchWithPackageNames(keywords)
 
-		vulns := s.store.NVDMatchWithKeywords(keywords)
-		if vulns == nil {
-			continue
-		}
-
-		mavenVersion, err := version.NewMavenVersion(c.Version)
+		rpmVersion, err := version.NewRPMVersion(c.Version)
 		if err != nil {
 			continue
 		}
@@ -57,19 +48,17 @@ func (s *Scanner) Scan(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error) {
 				continue
 			}
 
-			match, err := mavenVersion.Check(vuln.Constraints)
+			match, err := rpmVersion.Check(vuln.Constraints)
 			if err != nil {
-				log.Debugf("error checking dpkg version %s against constraint %s: %v", c.Version, vuln.Constraints, err)
+				log.Debugf("error checking rpm version %s against constraint %s: %v", c.Version, vuln.Constraints, err)
 				continue
 			}
 
 			if match {
-				vex := v3.ToVex(&vuln, &c, vuln.Constraints)
-				if vex != nil {
+				if vex := v3.ToVex(&vuln, &c, vuln.Constraints); vex != nil {
 					results = append(results, *vex)
 				}
 			}
-
 		}
 	}
 

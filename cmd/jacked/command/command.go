@@ -36,6 +36,9 @@ func init() {
 	// Version flag to print the version of jacked
 	root.Flags().BoolP("version", "v", false, "Print the version of jacked")
 
+	// Debug flag to enable debug mode
+	root.Flags().Bool("debug", false, "Enable debug mode (e.g. --debug)")
+
 	// CI flag to enable CI mode
 	// CI mode is a mode that is used to run jacked in a CI/CD pipeline
 	root.Flags().BoolP("ci", "", false, "Enable CI mode [experimental] (e.g. --ci)")

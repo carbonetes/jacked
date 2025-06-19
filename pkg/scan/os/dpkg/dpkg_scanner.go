@@ -51,7 +51,7 @@ func (s *Scanner) Scan(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error) {
 		if vulns == nil {
 			continue
 		}
-		
+
 		dpkgVersion, err := version.NewDpkgVersion(c.Version)
 		if err != nil {
 			continue
@@ -63,7 +63,7 @@ func (s *Scanner) Scan(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error) {
 
 			match, err := dpkgVersion.Check(vuln.Constraints)
 			if err != nil {
-				log.Errorf("error checking dpkg version %s against constraint %s: %v", c.Version, vuln.Constraints, err)
+				log.Debugf("error checking dpkg version %s against constraint %s: %v", c.Version, vuln.Constraints, err)
 				continue
 			}
 

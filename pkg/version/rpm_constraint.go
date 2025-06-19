@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/carbonetes/jacked/internal/helper"
-	apk "github.com/knqyf263/go-apk-version"
+	rpm "github.com/knqyf263/go-rpm-version"
 )
 
-func (a *apkVersion) Check(expression string) (bool, error) {
+func (a *rpmVersion) Check(expression string) (bool, error) {
 	if expression == "" {
 		return false, fmt.Errorf("constraints is empty")
 	}
@@ -19,7 +19,7 @@ func (a *apkVersion) Check(expression string) (bool, error) {
 	return a.checkSingleConstraint(expression)
 }
 
-func (a *apkVersion) checkOrConstraints(expression string) (bool, error) {
+func (a *rpmVersion) checkOrConstraints(expression string) (bool, error) {
 	comparators := helper.SplitConstraints(expression)
 	for _, comparator := range comparators {
 		if strings.Contains(comparator, ", ") {
@@ -39,7 +39,7 @@ func (a *apkVersion) checkOrConstraints(expression string) (bool, error) {
 	return false, nil // If no constraints match, return false
 }
 
-func (a *apkVersion) checkAndConstraints(comparator string) (bool, error) {
+func (a *rpmVersion) checkAndConstraints(comparator string) (bool, error) {
 	constraints := strings.Split(comparator, ", ")
 	if len(constraints) != 2 {
 		return false, fmt.Errorf("invalid constraint format: %s", comparator)
@@ -58,7 +58,7 @@ func (a *apkVersion) checkAndConstraints(comparator string) (bool, error) {
 	return false, nil
 }
 
-func (a *apkVersion) checkSingleConstraint(expression string) (bool, error) {
+func (a *rpmVersion) checkSingleConstraint(expression string) (bool, error) {
 	if satisfied, err := a.check(expression); satisfied || err != nil {
 		if err != nil {
 			return false, fmt.Errorf(errCheckFormat, a.raw, expression, err)
@@ -68,33 +68,25 @@ func (a *apkVersion) checkSingleConstraint(expression string) (bool, error) {
 	return false, nil // If no constraints match, return false
 }
 
-func (a *apkVersion) check(constraint string) (bool, error) {
+func (a *rpmVersion) check(constraint string) (bool, error) {
 	parts := strings.Split(constraint, " ")
 	if len(parts) != 2 {
 		return false, fmt.Errorf("invalid constraint format: %s", constraint)
 	}
 	operator := parts[0]
 	versionStr := parts[1]
-	v, err := apk.NewVersion(versionStr)
-	if err != nil {
-		return false, fmt.Errorf("failed to parse version: %s, error: %w", versionStr, err)
-	}
-
-	if a.apkVer == nil {
-		return false, fmt.Errorf("apk version is not initialized")
-	}
-
+	v := rpm.NewVersion(versionStr)
 	switch operator {
 	case "<":
-		return a.apkVer.LessThan(v), nil
+		return a.rpmVer.LessThan(v), nil
 	case "<=":
-		return a.apkVer.LessThan(v) || a.apkVer.Equal(v), nil
+		return a.rpmVer.LessThan(v) || a.rpmVer.Equal(v), nil
 	case ">":
-		return a.apkVer.GreaterThan(v), nil
+		return a.rpmVer.GreaterThan(v), nil
 	case ">=":
-		return a.apkVer.GreaterThan(v) || a.apkVer.Equal(v), nil
+		return a.rpmVer.GreaterThan(v) || a.rpmVer.Equal(v), nil
 	case "==", "=":
-		return a.apkVer.Equal(v), nil
+		return a.rpmVer.Equal(v), nil
 	}
 	return false, fmt.Errorf("unknown operator: %s", operator)
 }

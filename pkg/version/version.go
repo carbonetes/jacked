@@ -16,4 +16,5 @@ var (
 	NoVersionError = errors.New("no version provided, at least one version is required")
 	// InvalidConstraintError indicates that the constraint is invalid.
 	InvalidConstraintError = errors.New("invalid constraint, must be in the format 'operator version' where operator is one of '==', '!=', '<', '<=', '>', '>=' and version is a valid version string")
+	errCheckFormat         = "error checking version %v against constraint %v: %v"
 )

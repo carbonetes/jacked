@@ -57,7 +57,7 @@ func (s *Scanner) Scan(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error) {
 
 			match, err := apkVersion.Check(vuln.Constraints)
 			if err != nil {
-				log.Errorf("error checking apk version %s against constraint %s: %v", c.Version, vuln.Constraints, err)
+				log.Debugf("error checking apk version %s against constraint %s: %v", c.Version, vuln.Constraints, err)
 				continue
 			}
 

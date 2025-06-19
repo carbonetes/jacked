@@ -43,7 +43,12 @@ func init() {
 	log.SetFormatter(&easy.Formatter{
 		LogFormat: "%msg%\n",
 	})
-	log.SetLevel(logrus.DebugLevel)
+	log.SetLevel(logrus.InfoLevel)
+}
+
+func SetLevel(level logrus.Level) {
+	// Set the log level to the specified level
+	log.SetLevel(level)
 }
 
 // Print func prints the arguments to stdout
@@ -63,12 +68,12 @@ func Println(arg ...interface{}) {
 
 // Error func prints the arguments to stderr1
 func Error(arg ...interface{}) {
-	log.Error(arg...)
+	log.Debug(arg...)
 }
 
 // Errorf func prints the formatted arguments to stderr
 func Errorf(format string, args ...interface{}) {
-	log.Errorf(format, args...)
+	log.Debugf(format, args...)
 }
 
 // Info func prints the arguments to stdout

@@ -12,6 +12,7 @@ import (
 	"github.com/carbonetes/jacked/internal/tea/spinner"
 	"github.com/carbonetes/jacked/pkg/config"
 	"github.com/carbonetes/jacked/pkg/types"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -39,6 +40,7 @@ func rootCmd(c *cobra.Command, args []string) {
 	format, _ := c.Flags().GetString("output")
 	// scanners, _ := c.Flags().GetStringArray("scanners")
 	file, _ := c.Flags().GetString("file")
+	debug, _ := c.Flags().GetBool("debug")
 	skip, _ := c.Flags().GetBool("skip-db-update")
 	force, _ := c.Flags().GetBool("force-db-update")
 	ci, _ := c.Flags().GetBool("ci")
@@ -56,6 +58,10 @@ func rootCmd(c *cobra.Command, args []string) {
 		if len(failCriteria) > 0 {
 			log.Warn("CI mode is not enabled, fail criteria will not be used")
 		}
+	}
+
+	if debug {
+		log.SetLevel(logrus.DebugLevel)
 	}
 
 	if quiet {

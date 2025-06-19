@@ -57,7 +57,7 @@ func (m *Manager) Run(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error) {
 	// Check for errors from any scanner.
 	for err := range errCh {
 		if err != nil {
-			log.Errorf("error during scan: %v", err)
+			log.Debugf("error during scan: %v", err)
 			return nil, err // Return immediately on first error. (Subject to change based on error handling policy)
 		}
 	}
