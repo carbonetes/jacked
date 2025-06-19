@@ -22,7 +22,7 @@ import (
 // It checks if the database is up to date, then scans the target with diggity
 // It then gets the sbom from cdx mod and analyzes it to find vulnerabilities
 // Finally, it displays the results
-func Scan(params types.Parameters) {
+func analyze(params types.Parameters) {
 
 	// Check if the database is up to date
 	db.DBCheck(params.SkipDBUpdate, params.ForceDBUpdate)
@@ -77,7 +77,7 @@ func Scan(params types.Parameters) {
 
 	bom := cdx.Finalize(addr)
 	// Analyze sbom to find vulnerabilities
-	analyzer.AnalyzeCDX(bom)
+	analyzer.Analyze(bom)
 
 	if params.CI {
 		// Run CI

@@ -27,15 +27,22 @@ func (s *Scanner) Scan(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error) {
 	}
 
 	for _, c := range *bom.Components {
-		if c.Properties == nil {
+		if c.Properties == nil || helper.GetComponentType(c.Properties) != "apk" {
 			continue
 		}
-		if helper.GetComponentType(c.Properties) != "apk" {
-			continue
-		}
+
 		vulns := s.store.ApkSecDBMatch(c.Name)
-		if vulns == nil {
-			continue
+		upstream := helper.FindUpstream(c.BOMRef)
+
+		if upstream != "" {
+			upstreamVulns := s.store.ApkSecDBMatch(upstream)
+			if upstreamVulns != nil {
+				if vulns == nil {
+					vulns = upstreamVulns
+				} else {
+					*vulns = append(*vulns, *upstreamVulns...)
+				}
+			}
 		}
 
 		apkVersion, err := version.NewApkVersion(c.Version)
@@ -55,8 +62,7 @@ func (s *Scanner) Scan(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error) {
 			}
 
 			if match {
-				vex := v3.ToVex(&vuln, &c, vuln.Constraints)
-				if vex != nil {
+				if vex := v3.ToVex(&vuln, &c, vuln.Constraints); vex != nil {
 					results = append(results, *vex)
 				}
 			}

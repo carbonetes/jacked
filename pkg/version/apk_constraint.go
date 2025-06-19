@@ -3,37 +3,100 @@ package version
 import (
 	"fmt"
 	"strings"
+
+	"github.com/carbonetes/jacked/internal/helper"
+	apk "github.com/knqyf263/go-apk-version"
 )
 
-func (a *apkVersion) Check(constraints string) (bool, error) {
-	if len(constraints) == 0 {
+const errCheckFormat = "error checking apk version %s against constraint %s: %w"
+
+func (a *apkVersion) Check(expression string) (bool, error) {
+	if expression == "" {
 		return false, fmt.Errorf("constraints is empty")
 	}
 
-	// Split the constraints by comma
-	constraintSlice := []string{constraints}
-	if strings.Contains(constraints, " || ") {
-		constraintSlice = strings.Split(constraints, " || ")
+	if strings.Contains(expression, " || ") { // Handle OR constraints
+		return a.checkOrConstraints(expression)
 	}
+	return a.checkSingleConstraint(expression)
+}
 
-	for _, constraint := range constraintSlice {
-		// Create a new semantic constraint
-		c, err := NewSemanticConstraint(constraint)
-		if c == nil || err != nil {
-			// If the constraint is nil or an error occurred, skip this constraint
-			return false, err
-		}
-		// Check if the constraint is valid
-		if !c.isValid(constraint) {
-			// If the constraint is not valid, skip this constraint
-			return false, fmt.Errorf("invalid constraint: %s", constraint)
-		}
-		// Check if the apk version satisfies the constraint
-		if satisfied, err := c.check(a.semanticVersion); err == nil && satisfied {
-			// If the apk version satisfies the constraint, return true
-			return true, nil
+func (a *apkVersion) checkOrConstraints(expression string) (bool, error) {
+	comparators := helper.SplitConstraints(expression)
+	for _, comparator := range comparators {
+		if strings.Contains(comparator, ", ") {
+			satisfied, err := a.checkAndConstraints(comparator)
+			if satisfied || err != nil {
+				return satisfied, err
+			}
+		} else {
+			if satisfied, err := a.check(comparator); satisfied || err != nil {
+				if err != nil {
+					return false, fmt.Errorf(errCheckFormat, a.apkVer, comparator, err)
+				}
+				return true, nil // If single constraint matches, return true
+			}
 		}
 	}
+	return false, nil // If no constraints match, return false
+}
 
+func (a *apkVersion) checkAndConstraints(comparator string) (bool, error) {
+	constraints := strings.Split(comparator, ", ")
+	if len(constraints) != 2 {
+		return false, fmt.Errorf("invalid constraint format: %s", comparator)
+	}
+	if satisfied, err := a.check(constraints[0]); satisfied || err != nil {
+		if err != nil {
+			return false, fmt.Errorf(errCheckFormat, a.apkVer, constraints[0], err)
+		}
+		if satisfied, err = a.check(constraints[1]); satisfied || err != nil {
+			if err != nil {
+				return false, fmt.Errorf(errCheckFormat, a.apkVer, constraints[1], err)
+			}
+			return true, nil // If second constraint matches, return true
+		}
+	}
 	return false, nil
+}
+
+func (a *apkVersion) checkSingleConstraint(expression string) (bool, error) {
+	if satisfied, err := a.check(expression); satisfied || err != nil {
+		if err != nil {
+			return false, fmt.Errorf(errCheckFormat, a.apkVer, expression, err)
+		}
+		return true, nil // If single constraint matches, return true
+	}
+	return false, nil // If no constraints match, return false
+}
+
+func (a *apkVersion) check(constraint string) (bool, error) {
+	parts := strings.Split(constraint, " ")
+	if len(parts) != 2 {
+		return false, fmt.Errorf("invalid constraint format: %s", constraint)
+	}
+	operator := parts[0]
+	versionStr := parts[1]
+	v, err := apk.NewVersion(versionStr)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse version: %s, error: %w", versionStr, err)
+	}
+
+	if a.apkVer == nil {
+		return false, fmt.Errorf("apk version is not initialized")
+	}
+
+	switch operator {
+	case "<":
+		return a.apkVer.LessThan(v), nil
+	case "<=":
+		return a.apkVer.LessThan(v) || a.apkVer.Equal(v), nil
+	case ">":
+		return a.apkVer.GreaterThan(v), nil
+	case ">=":
+		return a.apkVer.GreaterThan(v) || a.apkVer.Equal(v), nil
+	case "==":
+		return a.apkVer.Equal(v), nil
+	}
+	return false, fmt.Errorf("unknown operator: %s", operator)
 }
