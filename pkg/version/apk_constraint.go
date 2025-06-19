@@ -8,7 +8,7 @@ import (
 	apk "github.com/knqyf263/go-apk-version"
 )
 
-const errCheckFormat = "error checking apk version %s against constraint %s: %w"
+const errCheckFormat = "error checking apk version %v against constraint %v: %v"
 
 func (a *apkVersion) Check(expression string) (bool, error) {
 	if expression == "" {
