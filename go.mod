@@ -8,6 +8,7 @@ require (
 	github.com/CycloneDX/cyclonedx-go v0.9.2
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/alexeyco/simpletable v1.0.0
+	github.com/aquasecurity/go-npm-version v0.0.1
 	github.com/aquasecurity/go-pep440-version v0.0.1
 	github.com/carbonetes/diggity v1.15.0
 	github.com/charmbracelet/bubbles v0.20.0
@@ -36,7 +37,6 @@ require (
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/aquasecurity/go-gem-version v0.0.0-20201115065557-8eed6fe000ce // indirect
-	github.com/aquasecurity/go-npm-version v0.0.1 // indirect
 	github.com/aquasecurity/go-version v0.0.1 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/harmonica v0.2.0 // indirect
