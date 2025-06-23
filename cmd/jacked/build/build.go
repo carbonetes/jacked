@@ -1,7 +1,20 @@
-package version
+package build
 
 import "runtime"
 
+// Build contains information about the build of the application.
+type Build struct {
+	Application string `json:"Application"`
+	Version     string `json:"Version"`
+	BuildDate   string `json:"BuildDate"`
+	GitCommit   string `json:"GitCommit"`
+	GitDesc     string `json:"GitDesc"`
+	GoVersion   string `json:"GoVersion"`
+	Compiler    string `json:"Compiler"`
+	Platform    string `json:"Platform"`
+}
+
+// Placeholder is used for default values when build information is not available.
 const placeholder string = "not available"
 
 // Variable has been set as "not available" as Default Value. Values provided as Built-Time Arguments.
@@ -16,6 +29,7 @@ var (
 	platform    string = runtime.GOOS + "/" + runtime.GOARCH
 )
 
+// GetBuild returns the build information of the application.
 func GetBuild() Build {
 	return Build{
 		Application: application, // Application Name

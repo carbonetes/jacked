@@ -25,3 +25,12 @@ func (s *Store) NVDMatchCVEsWithKeywords(keywords []string) *[]types.Vulnerabili
 
 	return vulnerabilities
 }
+
+func (s *Store) NVDMatchWithPackageNames(names []string) *[]types.Vulnerability {
+	vulnerabilities := new([]types.Vulnerability)
+	if err := db.NewSelect().Model(vulnerabilities).Where("package IN (?) AND source = 'nvd'", bun.In(names)).Scan(context.Background()); err != nil {
+		log.Fatal(err)
+	}
+
+	return vulnerabilities
+}
