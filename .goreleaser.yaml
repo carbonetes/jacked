@@ -13,6 +13,7 @@ before:
 builds:
   - id: linux-builds
     binary: jacked
+    dir: cmd/jacked
     goos:
       - linux
     goarch:
@@ -24,13 +25,14 @@ builds:
     mod_timestamp: '{{ .CommitTimestamp }}'
     ldflags:
       - |
-        -X github.com/carbonetes/jacked/internal/version.version={{.Version}}
-        -X github.com/carbonetes/jacked/internal/version.buildDate={{.Date}}
-        -X github.com/carbonetes/jacked/internal/version.gitCommit={{.Commit}}
-        -X github.com/carbonetes/jacked/internal/version.gitDesc={{.Summary}}
+        -X github.com/carbonetes/jacked/cmd/jacked/build.version={{.Version}}
+        -X github.com/carbonetes/jacked/cmd/jacked/build.buildDate={{.Date}}
+        -X github.com/carbonetes/jacked/cmd/jacked/build.gitCommit={{.Commit}}
+        -X github.com/carbonetes/jacked/cmd/jacked/build.gitDesc={{.Summary}}
 
   - id: darwin-builds
     binary: jacked
+    dir: cmd/jacked
     goos:
       - darwin
     goarch:
@@ -41,13 +43,14 @@ builds:
       - CGO_ENABLED=0
     ldflags:
       - |
-        -X github.com/carbonetes/jacked/internal/version.version={{.Version}}
-        -X github.com/carbonetes/jacked/internal/version.buildDate={{.Date}}
-        -X github.com/carbonetes/jacked/internal/version.gitCommit={{.Commit}}
-        -X github.com/carbonetes/jacked/internal/version.gitDesc={{.Summary}}
+        -X github.com/carbonetes/jacked/cmd/jacked/build.version={{.Version}}
+        -X github.com/carbonetes/jacked/cmd/jacked/build.buildDate={{.Date}}
+        -X github.com/carbonetes/jacked/cmd/jacked/build.gitCommit={{.Commit}}
+        -X github.com/carbonetes/jacked/cmd/jacked/build.gitDesc={{.Summary}}
 
   - id: windows-build
     binary: jacked
+    dir: cmd/jacked
     goos:
       - windows
     goarch:
@@ -57,10 +60,10 @@ builds:
       - CGO_ENABLED=0
     ldflags:
       - |
-        -X github.com/carbonetes/jacked/internal/version.version={{.Version}}
-        -X github.com/carbonetes/jacked/internal/version.buildDate={{.Date}}
-        -X github.com/carbonetes/jacked/internal/version.gitCommit={{.Commit}}
-        -X github.com/carbonetes/jacked/internal/version.gitDesc={{.Summary}}
+        -X github.com/carbonetes/jacked/cmd/jacked/build.version={{.Version}}
+        -X github.com/carbonetes/jacked/cmd/jacked/build.buildDate={{.Date}}
+        -X github.com/carbonetes/jacked/cmd/jacked/build.gitCommit={{.Commit}}
+        -X github.com/carbonetes/jacked/cmd/jacked/build.gitDesc={{.Summary}}
 
 archives:
   - id: tar-archives
