@@ -16,10 +16,6 @@ type semanticConstraint struct {
 	operator   string
 }
 
-type ConstraintNormalizer interface {
-	normalizer(constraintRaw string) (*semanticConstraint, error)	
-}
-
 func NewSemanticConstraint(constraintRaw string) (*semanticConstraint, error) {
 	if len(constraintRaw) == 0 {
 		return nil, fmt.Errorf("constraint is empty")

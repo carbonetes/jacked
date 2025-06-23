@@ -4,11 +4,15 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/carbonetes/jacked/internal/compare"
 	"github.com/carbonetes/jacked/internal/db"
+	"github.com/carbonetes/jacked/internal/log"
 	"github.com/carbonetes/jacked/pkg/scan"
+	"github.com/carbonetes/jacked/pkg/scan/generic"
 	"github.com/carbonetes/jacked/pkg/scan/golang"
 	"github.com/carbonetes/jacked/pkg/scan/maven"
+	"github.com/carbonetes/jacked/pkg/scan/npm"
 	"github.com/carbonetes/jacked/pkg/scan/os/apk"
 	"github.com/carbonetes/jacked/pkg/scan/os/dpkg"
+	"github.com/carbonetes/jacked/pkg/scan/os/rpm"
 )
 
 // AnalyzeCDX is a function that takes a CycloneDX BOM as input and analyzes it for vulnerabilities.
@@ -47,12 +51,16 @@ func Analyze(bom *cyclonedx.BOM) {
 		apk.NewScanner(db.Store{}),
 		maven.NewScanner(db.Store{}),
 		golang.NewScanner(db.Store{}),
-		// rpm.NewScanner(rpm.NewProvider(db.GetDB())),
+		rpm.NewScanner(db.Store{}),
+		npm.NewScanner(db.Store{}),
+		generic.NewScanner(db.Store{}),
 	)
 	vulns, err := scanManager.Run(bom)
 	if err != nil {
 		// Handle error as needed (log, return, etc.)
+		log.Debugf("error during scan: %v", err)
 		return
 	}
+
 	bom.Vulnerabilities = &vulns
 }
