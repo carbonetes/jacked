@@ -8,7 +8,7 @@ require (
 	github.com/CycloneDX/cyclonedx-go v0.9.2
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/alexeyco/simpletable v1.0.0
-	github.com/carbonetes/ci v1.0.0
+	github.com/carbonetes/ci v1.0.3
 	github.com/carbonetes/diggity v1.15.0
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.2.4
