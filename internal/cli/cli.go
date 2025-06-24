@@ -86,7 +86,7 @@ func Run(params types.Parameters) {
 
 	if params.CI {
 
-		api.SavePluginRepository(bom, params.Diggity.Input, params.Plugin, start, 1, 1)
+		api.SavePluginRepository(bom, params.Diggity.Input, params.Plugin, start, 1, 1, nil)
 
 		// Run CI
 		ci.Run(config.Config.CI, bom)
