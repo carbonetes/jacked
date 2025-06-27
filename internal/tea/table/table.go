@@ -23,21 +23,21 @@ var (
 )
 
 type model struct {
-	table         table.Model
-	duration      float64
+	table          table.Model
+	duration       float64
 	nonInteractive bool
 }
 
 type autoExitMsg struct{}
 
-func (m model) Init() tea.Cmd { 
+func (m model) Init() tea.Cmd {
 	if m.nonInteractive {
 		// Auto-exit after a short delay in non-interactive mode
 		return tea.Tick(time.Millisecond*100, func(t time.Time) tea.Msg {
 			return autoExitMsg{}
 		})
 	}
-	return nil 
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -61,7 +61,7 @@ func (m model) View() string {
 	if m.nonInteractive {
 		helpText = "Exiting..."
 	}
-	
+
 	if len(m.table.Rows()) == 0 {
 		return baseStyle.Render("No vulnerability had been found!") + fmt.Sprintf("\nDuration: %.3f sec", m.duration) + "\n" + helpStyle.Render(helpText)
 	}
