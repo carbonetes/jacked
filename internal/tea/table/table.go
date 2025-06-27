@@ -5,6 +5,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/carbonetes/jacked/internal/log"
@@ -18,33 +19,53 @@ var (
 	baseStyle = lipgloss.NewStyle().
 			BorderStyle(lipgloss.NormalBorder()).
 			BorderForeground(lipgloss.Color("245"))
+	NonInteractive = false // Add flag to control interactive mode
 )
 
 type model struct {
-	table    table.Model
-	duration float64
+	table         table.Model
+	duration      float64
+	nonInteractive bool
 }
 
-func (m model) Init() tea.Cmd { return nil }
+type autoExitMsg struct{}
+
+func (m model) Init() tea.Cmd { 
+	if m.nonInteractive {
+		// Auto-exit after a short delay in non-interactive mode
+		return tea.Tick(time.Millisecond*100, func(t time.Time) tea.Msg {
+			return autoExitMsg{}
+		})
+	}
+	return nil 
+}
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "esc":
+		case "esc", "q", "ctrl+c":
 			return m, tea.Quit
 		}
+	case autoExitMsg:
+		// Auto-exit in non-interactive mode
+		return m, tea.Quit
 	}
 	m.table, cmd = m.table.Update(msg)
 	return m, cmd
 }
 
 func (m model) View() string {
-	if len(m.table.Rows()) == 0 {
-		return baseStyle.Render("No vulnerability had been found!") + fmt.Sprintf("\nDuration: %.3f sec", m.duration) + "\n" + helpStyle.Render("Press esc to quit... 🐱🐓")
+	helpText := "Press esc to quit... 🐱🐓"
+	if m.nonInteractive {
+		helpText = "Exiting..."
 	}
-	return baseStyle.Render(m.table.View()) + fmt.Sprintf("\nDuration: %.3f sec", m.duration) + "\n" + helpStyle.Render("Press esc to quit... 🐱🐓")
+	
+	if len(m.table.Rows()) == 0 {
+		return baseStyle.Render("No vulnerability had been found!") + fmt.Sprintf("\nDuration: %.3f sec", m.duration) + "\n" + helpStyle.Render(helpText)
+	}
+	return baseStyle.Render(m.table.View()) + fmt.Sprintf("\nDuration: %.3f sec", m.duration) + "\n" + helpStyle.Render(helpText)
 }
 
 func Create(bom *cyclonedx.BOM) table.Model {
@@ -136,7 +157,15 @@ func Create(bom *cyclonedx.BOM) table.Model {
 }
 
 func Show(t table.Model, duration float64) {
-	m := model{table: t, duration: duration}
+	m := model{table: t, duration: duration, nonInteractive: NonInteractive}
+	if _, err := tea.NewProgram(m).Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(0)
+	}
+}
+
+func ShowNonInteractive(t table.Model, duration float64) {
+	m := model{table: t, duration: duration, nonInteractive: true}
 	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(0)

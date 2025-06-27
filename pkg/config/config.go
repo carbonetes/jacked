@@ -14,6 +14,42 @@ var Config types.Configuration
 
 var path string = os.Getenv("JACKED_CONFIG")
 
+// SetConfigPath allows setting a custom configuration file path
+func SetConfigPath(customPath string) {
+	path = customPath
+	os.Setenv("JACKED_CONFIG", path)
+}
+
+// ReloadConfig reloads the configuration from the current path
+func ReloadConfig() {
+	exist, err := helper.IsFileExists(path)
+	if err != nil {
+		log.Debug("Error checking if config file exists: ", err)
+	}
+
+	if !exist {
+		// Create the config file
+		MakeConfigFile(path)
+	}
+
+	// Load the config file
+	var config types.Configuration
+	ReadConfigFile(&config, path)
+
+	if config.Version != types.ConfigVersion {
+		newConfig := New()
+		err := mapstructure.Decode(config, &newConfig)
+		if err != nil {
+			log.Debug(err)
+		}
+		newConfig.Version = types.ConfigVersion
+		ReplaceConfigFile(newConfig, path)
+		Config = newConfig
+	} else {
+		Config = config
+	}
+}
+
 func init() {
 	// Load config from file
 	if path == "" {
@@ -51,12 +87,26 @@ func init() {
 
 }
 
+// GetConfigPath returns the current configuration file path
+func GetConfigPath() string {
+	return path
+}
+
+// DisplayConfig prints the current configuration for debugging
+func DisplayConfig() {
+	log.Debugf("Current config path: %s", path)
+	log.Debugf("Max concurrent scanners: %d", Config.Performance.MaxConcurrentScanners)
+	log.Debugf("Max file size: %d", Config.MaxFileSize)
+	log.Debugf("Cache enabled: %v", Config.Performance.EnableCaching)
+}
+
 // New creates a new configuration with default values
 func New() types.Configuration {
 	return types.Configuration{
 		// Set default values
 		Version:     types.ConfigVersion,
 		MaxFileSize: 52428800,
+		Performance: types.GetAdvancedPerformanceConfig(),
 	}
 }
 
