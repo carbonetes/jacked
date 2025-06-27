@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+.github
+
+# Documentation
+*.md
+docs/
+assets/
+
+# Development files
+.vscode/
+.goreleaser.yaml
+
+# Build artifacts
+bin/
+jacked
+jacked.exe
+jacked-*.exe
+*.tar
+*.tar.gz
+
+# Scripts
+*.sh
+Makefile
+
+# Test files
+*_test.go
+test-*
+
+# Configuration files (if they contain sensitive data)
+# config.yaml
+# .env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/

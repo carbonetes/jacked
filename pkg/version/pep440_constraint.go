@@ -8,7 +8,7 @@ import (
 
 func (v *PEP440Version) Check(constraints string) (bool, error) {
 	if len(constraints) == 0 {
-		return false, NoConstraintError
+		return false, ErrNoConstraint
 	}
 
 	// Split the constraints by commas
@@ -43,13 +43,13 @@ func (v *PEP440Version) Check(constraints string) (bool, error) {
 
 func normalizePEP440VersionConstraint(constraint string) (string, error) {
 	if len(constraint) == 0 {
-		return "", NoConstraintError
+		return "", ErrNoConstraint
 	}
 
 	// Extract the version part from the constraint
 	parts := strings.Split(constraint, " ")
 	if len(parts) != 2 {
-		return "", InvalidConstraintError
+		return "", ErrInvalidConstraint
 	}
 
 	versionPart := parts[1]
@@ -66,13 +66,13 @@ func normalizePEP440VersionConstraint(constraint string) (string, error) {
 // checkPEP440VersionConstraint checks if the given PEP 440 version satisfies the specified constraint.
 func checkPEP440VersionConstraint(pep440Ver *pep440_version.Version, constraint string) (bool, error) {
 	if len(constraint) == 0 {
-		return false, NoConstraintError
+		return false, ErrNoConstraint
 	}
 
 	// Split the constraint into operator and version
 	parts := strings.Split(constraint, " ")
 	if len(parts) != 2 {
-		return false, InvalidConstraintError
+		return false, ErrInvalidConstraint
 	}
 	operator := parts[0]
 	versionStr := parts[1]

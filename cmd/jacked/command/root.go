@@ -3,6 +3,7 @@ package command
 import (
 	"os"
 	"strings"
+	"time"
 
 	diggity "github.com/carbonetes/diggity/pkg/types"
 	"github.com/carbonetes/jacked/cmd/jacked/build"
@@ -50,6 +51,14 @@ func rootCmd(c *cobra.Command, args []string) {
 	ci, _ := c.Flags().GetBool("ci")
 	failCriteria, _ := c.Flags().GetString("fail-criteria")
 
+	// New optimization flags
+	maxConcurrency, _ := c.Flags().GetInt("max-concurrency")
+	scanTimeout, _ := c.Flags().GetDuration("scan-timeout")
+	enableCaching, _ := c.Flags().GetBool("enable-caching")
+	enableMetrics, _ := c.Flags().GetBool("enable-metrics")
+	showMetrics, _ := c.Flags().GetBool("show-metrics")
+	enableProfiling, _ := c.Flags().GetBool("enable-profiling")
+
 	// Handle custom config file path
 	if configFile != "" {
 		log.Debugf("Using custom config file: %s", configFile)
@@ -75,6 +84,9 @@ func rootCmd(c *cobra.Command, args []string) {
 		}
 		log.Debugf("Performance optimization level set to: %s", performance)
 	}
+
+	// Apply command line overrides to performance configuration
+	applyOptimizationOverrides(maxConcurrency, scanTimeout, enableCaching, enableMetrics, enableProfiling)
 
 	// If CI mode is enabled, suppress all output except for errors
 	if ci {
@@ -116,6 +128,7 @@ func rootCmd(c *cobra.Command, args []string) {
 		SkipDBUpdate:  skip,
 		ForceDBUpdate: force,
 		CI:            ci,
+		ShowMetrics:   showMetrics, // Add the show metrics flag
 		Diggity: diggity.Parameters{
 			OutputFormat: diggity.JSON,
 		},
@@ -162,6 +175,27 @@ func rootCmd(c *cobra.Command, args []string) {
 
 	// Run the analyzer with the parameters provided
 	analyze(params)
+}
+
+// applyOptimizationOverrides applies command line optimization overrides to the global configuration
+func applyOptimizationOverrides(maxConcurrency int, scanTimeout time.Duration, enableCaching, enableMetrics, enableProfiling bool) {
+	// Apply overrides to the global performance config
+	if maxConcurrency > 0 {
+		config.Config.Performance.MaxConcurrentScanners = maxConcurrency
+	}
+
+	if scanTimeout > 0 {
+		config.Config.Performance.ScanTimeout = scanTimeout
+	}
+
+	// Apply boolean settings
+	config.Config.Performance.EnableCaching = enableCaching
+	config.Config.Performance.EnableMetrics = enableMetrics
+
+	if enableProfiling {
+		config.Config.Performance.EnableMetrics = true // Profiling requires metrics
+		log.Debug("Profiling enabled - performance data will be collected")
+	}
 }
 
 // validatFormat validates the output format type provided by the user and returns true if it is valid else false

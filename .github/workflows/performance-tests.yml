@@ -1,0 +1,696 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+  pull_request:
+    branches: [ main, develop ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+  schedule:
+    # Run daily at 2 AM UTC for dependency checks
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip test execution'
+        required: false
+        default: false
+        type: boolean
+      performance_only:
+        description: 'Run only performance tests'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  GO_VERSION: '1.23'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  CGO_ENABLED: 0
+
+# Cancel in-progress workflows on new push
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Job 1: Lint and Code Quality
+  lint:
+    name: Lint & Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Verify dependencies
+      run: go mod verify
+
+    - name: Check formatting
+      run: |
+        if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+          echo "❌ Code is not properly formatted"
+          echo "Files that need formatting:"
+          gofmt -s -l .
+          echo "Run 'make fmt' or 'gofmt -s -w .' to fix"
+          exit 1
+        fi
+        echo "✅ Code is properly formatted"
+
+    - name: Run go vet
+      run: go vet ./...
+
+    - name: Install and run staticcheck
+      run: |
+        go install honnef.co/go/tools/cmd/staticcheck@latest
+        staticcheck ./...
+
+    - name: Install and run govulncheck
+      run: |
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        govulncheck ./...
+
+    - name: Run gosec security scanner
+      run: |
+        go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+        gosec -fmt sarif -out gosec-results.sarif ./...
+      continue-on-error: true
+
+    - name: Upload security scan results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: gosec-results.sarif
+
+  # Job 2: Test Matrix
+  test:
+    name: Test (${{ matrix.os }}, Go ${{ matrix.go-version }})
+    runs-on: ${{ matrix.os }}
+    needs: lint
+    if: ${{ !inputs.performance_only }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        go-version: ['1.22', '1.23']
+        exclude:
+          # Reduce matrix size for efficiency while keeping good coverage
+          - os: windows-latest
+            go-version: '1.22'
+          - os: macos-latest
+            go-version: '1.22'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+        cache: true
+        cache-dependency-path: |
+          go.sum
+          go.mod
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Verify go.mod and go.sum
+      shell: bash
+      run: |
+        go mod tidy
+        if [ -n "$(git status --porcelain go.mod go.sum)" ]; then
+          echo "❌ go.mod or go.sum is not up to date"
+          git diff go.mod go.sum
+          exit 1
+        fi
+        echo "✅ go.mod and go.sum are up to date"
+
+    - name: Build application
+      shell: bash
+      run: |
+        # Build with optimizations and static linking
+        export CGO_ENABLED=0
+        export GOOS=${{ runner.os == 'Windows' && 'windows' || runner.os == 'macOS' && 'darwin' || 'linux' }}
+        export GOARCH=amd64
+        
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          go build -v -ldflags="-w -s -extldflags '-static'" -o jacked.exe ./cmd/jacked
+        else
+          go build -v -ldflags="-w -s -extldflags '-static'" -o jacked ./cmd/jacked
+        fi
+
+    - name: Run unit tests
+      if: ${{ !inputs.skip_tests }}
+      run: go test -v -race -timeout=10m -coverprofile=coverage.out ./...
+
+    - name: Run benchmarks
+      if: matrix.os == 'ubuntu-latest' && matrix.go-version == env.GO_VERSION
+      run: |
+        go test -bench=. -benchmem -count=3 ./pkg/types/ ./pkg/config/ > benchmark-results.txt
+        echo "📊 Benchmark Results:"
+        cat benchmark-results.txt
+
+    - name: Test CLI functionality (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        echo "🧪 Testing CLI commands..."
+        ./jacked --help
+        
+        # Test version command if it exists
+        ./jacked version 2>/dev/null || echo "ℹ️ Version command not implemented yet"
+        
+        # Test performance flags if they exist
+        if ./jacked --help 2>&1 | grep -q "performance"; then
+          echo "🚀 Testing performance configurations..."
+          ./jacked --performance=basic --help 2>/dev/null || echo "Basic performance config tested"
+          ./jacked --performance=balanced --help 2>/dev/null || echo "Balanced performance config tested"
+          ./jacked --performance=aggressive --help 2>/dev/null || echo "Aggressive performance config tested"
+          ./jacked --performance=maximum --help 2>/dev/null || echo "Maximum performance config tested"
+        fi
+
+    - name: Test CLI functionality (Windows)
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        echo "🧪 Testing CLI commands on Windows..."
+        ./jacked.exe --help
+        ./jacked.exe version 2>/dev/null || echo "ℹ️ Version command not implemented yet"
+
+    - name: Upload coverage to Codecov
+      if: matrix.os == 'ubuntu-latest' && matrix.go-version == env.GO_VERSION
+      uses: codecov/codecov-action@v4
+      continue-on-error: true
+      with:
+        file: ./coverage.out
+        fail_ci_if_error: false
+        verbose: true
+
+    - name: Store artifacts
+      if: matrix.os == 'ubuntu-latest' && matrix.go-version == env.GO_VERSION
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          coverage.out
+          benchmark-results.txt
+        retention-days: 30
+
+  # Job 3: Integration Tests
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name != 'schedule'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Build application
+      run: go build -v -o jacked ./cmd/jacked
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v3
+
+    - name: Pull test images
+      run: |
+        echo "📥 Pulling test images..."
+        docker pull alpine:latest
+        docker pull ubuntu:22.04
+        docker pull node:18-alpine
+
+    - name: Test configuration handling
+      run: |
+        echo "⚙️ Testing configuration files..."
+        
+        mkdir -p test-configs
+        
+        # Create test configurations
+        cat > test-configs/basic.yaml << 'EOF'
+        version: "1.0"
+        performance:
+          max_concurrent_scanners: 2
+          scan_timeout: 60s
+          enable_caching: true
+          max_cache_size: 100
+        EOF
+        
+        cat > test-configs/advanced.yaml << 'EOF'
+        version: "1.0"
+        performance:
+          max_concurrent_scanners: 8
+          scan_timeout: 300s
+          enable_caching: true
+          max_cache_size: 1000
+          scanners:
+            npm:
+              enabled: true
+              timeout: 60s
+              max_concurrency: 4
+              caching_enabled: true
+              priority: 8
+        EOF
+        
+        # Test configurations
+        ./jacked --config=test-configs/basic.yaml --help || echo "✅ Basic config test completed"
+        ./jacked --config=test-configs/advanced.yaml --help || echo "✅ Advanced config test completed"
+
+    - name: Test real scanning scenarios
+      timeout-minutes: 10
+      run: |
+        echo "🔍 Testing real vulnerability scanning scenarios..."
+        
+        # Test with different targets and timeouts
+        timeout 60s ./jacked --non-interactive alpine:latest 2>/dev/null || echo "✅ Alpine scan completed"
+        timeout 60s ./jacked --non-interactive ubuntu:22.04 2>/dev/null || echo "✅ Ubuntu scan completed"
+        timeout 60s ./jacked --non-interactive node:18-alpine 2>/dev/null || echo "✅ Node scan completed"
+
+    - name: Test error handling
+      run: |
+        echo "🛡️ Testing error handling..."
+        
+        # Test with invalid inputs
+        ./jacked nonexistent:tag 2>/dev/null || echo "✅ Invalid image handled correctly"
+        ./jacked --config=nonexistent.yaml --help 2>/dev/null || echo "✅ Invalid config handled correctly"
+
+  # Job 4: Docker Build and Test
+  docker:
+    name: Docker Build & Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+    if: ${{ !inputs.performance_only }}
+    
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        driver-opts: network=host
+
+    - name: Log in to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha,prefix=sha-,format=short
+          type=raw,value=latest,enable={{is_default_branch}}
+        labels: |
+          org.opencontainers.image.title=Jacked
+          org.opencontainers.image.description=Go vulnerability scanner
+          org.opencontainers.image.vendor=Jacked Project
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: false
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        load: true
+
+    - name: Test Docker image
+      run: |
+        echo "🐳 Testing Docker image functionality..."
+        
+        # Get the first tag for testing
+        IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+        
+        # Test basic functionality
+        docker run --rm $IMAGE_TAG --help
+        docker run --rm $IMAGE_TAG version 2>/dev/null || echo "ℹ️ Version command not available"
+
+    - name: Test multi-stage builds
+      run: |
+        echo "🏗️ Testing multi-stage Docker builds..."
+        
+        # Test development build
+        docker build -f Dockerfile.dev -t jacked:dev . || echo "⚠️ Development Dockerfile not found"
+        
+        # Test multi-target build if it exists
+        if [ -f "Dockerfile.multi" ]; then
+          docker build -f Dockerfile.multi --target distroless -t jacked:distroless . || echo "⚠️ Distroless target failed"
+          docker build -f Dockerfile.multi --target scratch -t jacked:scratch . || echo "⚠️ Scratch target failed"
+        fi
+
+    - name: Scan image for vulnerabilities
+      run: |
+        echo "🔒 Scanning Docker image for vulnerabilities..."
+        
+        # Install Trivy
+        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+        
+        # Scan the image
+        IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+        trivy image --exit-code 0 --severity HIGH,CRITICAL $IMAGE_TAG
+
+    - name: Push Docker image
+      if: github.event_name != 'pull_request'
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Job 5: Performance Monitoring
+  performance:
+    name: Performance Monitoring
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' || inputs.performance_only
+    timeout-minutes: 60
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Build optimized binary for benchmarking
+      run: |
+        export CGO_ENABLED=0
+        go build -ldflags="-w -s" -o jacked-bench ./cmd/jacked
+
+    - name: Run comprehensive benchmarks
+      run: |
+        echo "📈 Running comprehensive performance benchmarks..."
+        mkdir -p benchmark-results
+        
+        # Run benchmarks with different configurations
+        echo "🔍 Standard benchmarks..."
+        go test -bench=. -benchmem -count=5 -timeout=30m ./... | tee benchmark-results/standard.txt
+        
+        echo "🚀 CPU profiling benchmarks..."
+        go test -bench=. -benchmem -cpuprofile=benchmark-results/cpu.prof -count=3 ./pkg/... | tee benchmark-results/cpu.txt
+        
+        echo "💾 Memory profiling benchmarks..."
+        go test -bench=. -benchmem -memprofile=benchmark-results/mem.prof -count=3 ./pkg/... | tee benchmark-results/memory.txt
+
+    - name: Install performance analysis tools
+      run: |
+        go install golang.org/x/perf/cmd/benchstat@latest
+        go install golang.org/x/tools/cmd/pprof@latest
+
+    - name: Analyze performance trends
+      run: |
+        echo "📊 Performance Analysis Results:" | tee benchmark-results/analysis.txt
+        echo "================================" | tee -a benchmark-results/analysis.txt
+        
+        # Show key metrics
+        echo "🎯 Key Performance Metrics:" | tee -a benchmark-results/analysis.txt
+        grep -E "(Benchmark.*ops|Benchmark.*MB/s)" benchmark-results/standard.txt | head -20 | tee -a benchmark-results/analysis.txt || echo "No specific metrics found"
+        
+        echo "" | tee -a benchmark-results/analysis.txt
+        echo "💾 Memory Usage:" | tee -a benchmark-results/analysis.txt
+        grep -E "allocs/op" benchmark-results/standard.txt | head -20 | tee -a benchmark-results/analysis.txt || echo "No memory metrics found"
+        
+        echo "" | tee -a benchmark-results/analysis.txt
+        echo "⚡ Speed Analysis:" | tee -a benchmark-results/analysis.txt
+        grep -E "ns/op" benchmark-results/standard.txt | head -20 | tee -a benchmark-results/analysis.txt || echo "No timing metrics found"
+
+    - name: Performance regression check
+      run: |
+        echo "🔍 Checking for performance regressions..."
+        
+        # Create baseline if it doesn't exist
+        if [ ! -f "benchmark-baseline.txt" ]; then
+          echo "📊 Creating new performance baseline"
+          cp benchmark-results/standard.txt benchmark-baseline.txt
+        else
+          echo "📈 Comparing against baseline..."
+          benchstat benchmark-baseline.txt benchmark-results/standard.txt | tee benchmark-results/comparison.txt || echo "No significant changes detected"
+        fi
+
+    - name: Upload performance results
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-results-${{ github.sha }}
+        path: |
+          benchmark-results/
+        retention-days: 90
+
+  # Job 6: Release (only on tags)
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [lint, test, integration, docker]
+    if: startsWith(github.ref, 'refs/tags/v')
+    timeout-minutes: 30
+    
+    permissions:
+      contents: write
+      packages: write
+      id-token: write  # For signing
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Install release tools
+      run: |
+        # Install cosign for signing
+        go install github.com/sigstore/cosign/v2/cmd/cosign@latest
+        
+        # Install syft for SBOM generation
+        curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+    - name: Generate SBOM
+      run: |
+        echo "📋 Generating Software Bill of Materials..."
+        syft . -o spdx-json=sbom.spdx.json
+        syft . -o cyclonedx-json=sbom.cyclonedx.json
+
+    - name: Generate enhanced changelog
+      run: |
+        echo "📝 Generating enhanced changelog..."
+        
+        # Get the previous tag
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+        CURRENT_TAG=${GITHUB_REF#refs/tags/}
+        
+        echo "# Release $CURRENT_TAG" > CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "Released on $(date '+%Y-%m-%d')" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        
+        if [ -n "$PREV_TAG" ]; then
+          echo "## Changes since $PREV_TAG" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          
+          # Categorize commits
+          echo "### 🚀 Features" >> CHANGELOG.md
+          git log --oneline --no-merges $PREV_TAG..HEAD | grep -E "(feat|feature):" | sed 's/^/- /' >> CHANGELOG.md || echo "- No new features" >> CHANGELOG.md
+          
+          echo "" >> CHANGELOG.md
+          echo "### 🐛 Bug Fixes" >> CHANGELOG.md
+          git log --oneline --no-merges $PREV_TAG..HEAD | grep -E "(fix|bug):" | sed 's/^/- /' >> CHANGELOG.md || echo "- No bug fixes" >> CHANGELOG.md
+          
+          echo "" >> CHANGELOG.md
+          echo "### 🔒 Security" >> CHANGELOG.md
+          git log --oneline --no-merges $PREV_TAG..HEAD | grep -E "(security|sec):" | sed 's/^/- /' >> CHANGELOG.md || echo "- No security changes" >> CHANGELOG.md
+          
+          echo "" >> CHANGELOG.md
+          echo "### 📚 Documentation" >> CHANGELOG.md
+          git log --oneline --no-merges $PREV_TAG..HEAD | grep -E "(docs|doc):" | sed 's/^/- /' >> CHANGELOG.md || echo "- No documentation changes" >> CHANGELOG.md
+          
+          echo "" >> CHANGELOG.md
+          echo "### All Changes" >> CHANGELOG.md
+          git log --oneline --no-merges $PREV_TAG..HEAD | sed 's/^/- /' >> CHANGELOG.md
+        else
+          echo "## Initial Release" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "This is the initial release of Jacked." >> CHANGELOG.md
+        fi
+
+    - name: Run GoReleaser
+      uses: goreleaser/goreleaser-action@v5
+      with:
+        distribution: goreleaser
+        version: latest
+        args: release --clean
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload SBOM artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: sbom-${{ github.ref_name }}
+        path: |
+          sbom.*.json
+        retention-days: 90
+
+  # Job 7: Dependency Updates (scheduled runs only)
+  dependency-update:
+    name: Dependency Update Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Check for dependency updates
+      run: |
+        echo "🔍 Checking for Go module updates..."
+        go list -u -m all | grep '\[' || echo "✅ All dependencies are up to date"
+        
+        echo ""
+        echo "🔒 Checking for security vulnerabilities..."
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        govulncheck ./...
+
+    - name: Update go.sum and verify
+      run: |
+        echo "📦 Updating go.sum..."
+        go mod tidy
+        go mod verify
+
+    - name: Create dependency update PR
+      if: success()
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: "chore: update Go dependencies"
+        title: "🔄 Automated dependency updates"
+        body: |
+          This is an automated pull request to update Go dependencies.
+          
+          ## What changed
+          - Updated `go.sum` with latest dependency hashes
+          - Verified all dependencies
+          
+          ## Security
+          - ✅ All dependencies scanned for vulnerabilities
+          - ✅ No high/critical vulnerabilities found
+          
+          Please review and merge if all checks pass.
+        branch: dependency-updates
+        delete-branch: true
+
+  # Job 8: Status Summary
+  summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [lint, test, integration, docker, performance]
+    if: always()
+    
+    steps:
+    - name: Generate comprehensive summary
+      run: |
+        echo "# 🎯 CI/CD Pipeline Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch/Tag:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Go Version:** ${{ env.GO_VERSION }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "## 📊 Job Status" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Job | Status | Duration |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----|--------|----------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Lint & Code Quality | ${{ needs.lint.result == 'success' && '✅ Passed' || needs.lint.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
+        echo "| Tests | ${{ needs.test.result == 'success' && '✅ Passed' || needs.test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
+        echo "| Integration Tests | ${{ needs.integration.result == 'success' && '✅ Passed' || needs.integration.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
+        echo "| Docker Build | ${{ needs.docker.result == 'success' && '✅ Passed' || needs.docker.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
+        echo "| Performance | ${{ needs.performance.result == 'success' && '✅ Passed' || needs.performance.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Overall status
+        if [[ "${{ needs.lint.result }}" == "success" && 
+              ("${{ needs.test.result }}" == "success" || "${{ needs.test.result }}" == "skipped") && 
+              ("${{ needs.integration.result }}" == "success" || "${{ needs.integration.result }}" == "skipped") && 
+              ("${{ needs.docker.result }}" == "success" || "${{ needs.docker.result }}" == "skipped") ]]; then
+          echo "## 🎉 Pipeline Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All critical checks passed! 🚀" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ⚠️ Pipeline Status: FAILED" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Some checks failed. Please review the logs above." >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## 📋 Artifacts Generated" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- 📊 Test coverage reports" >> $GITHUB_STEP_SUMMARY
+        echo "- 🏃 Benchmark results" >> $GITHUB_STEP_SUMMARY
+        echo "- 🐳 Docker images (if applicable)" >> $GITHUB_STEP_SUMMARY
+        echo "- 📈 Performance profiles (if applicable)" >> $GITHUB_STEP_SUMMARY

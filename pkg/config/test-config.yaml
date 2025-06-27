@@ -1,0 +1,70 @@
+version: "1.0"
+maxFileSize: 52428800
+registry:
+  username: ""
+  password: ""
+ci:
+  failCriteria:
+    vulnerability: []
+    severity: ""
+performance:
+  max_concurrent_scanners: 20
+  scan_timeout: 5m0s
+  enable_caching: true
+  cache_timeout: 15m0s
+  max_cache_size: 1000
+  max_db_connections: 40
+  max_idle_connections: 20
+  connection_timeout: 30s
+  batch_size: 50
+  enable_batch_processing: true
+  enable_memory_optimization: true
+  max_memory_usage_mb: 512
+  enable_progressive_scanning: true
+  component_thresholds:
+    small: 50
+    medium: 200
+    large: 500
+  enable_metrics: true
+  metrics_retention: 24h0m0s
+  scanners:
+    apk:
+      enabled: true
+      timeout: 2m0s
+      max_concurrency: 20
+      caching_enabled: true
+      priority: 9
+    dpkg:
+      enabled: true
+      timeout: 2m0s
+      max_concurrency: 20
+      caching_enabled: true
+      priority: 9
+    generic:
+      enabled: true
+      timeout: 4m0s
+      max_concurrency: 10
+      caching_enabled: true
+      priority: 5
+    maven:
+      enabled: true
+      timeout: 3m0s
+      max_concurrency: 20
+      caching_enabled: true
+      priority: 7
+    npm:
+      enabled: true
+      timeout: 2m0s
+      max_concurrency: 20
+      caching_enabled: true
+      priority: 8
+  enable_smart_deduplication: true
+  deduplication_accuracy_level: 3
+  enable_adaptive_concurrency: true
+  adaptive_concurrency_threshold: 0.8
+  enable_resource_monitoring: true
+  cpu_threshold: 85
+  memory_threshold: 80
+  enable_experimental_features: false
+  use_parallel_version_checking: true
+  enable_predictive_caching: false

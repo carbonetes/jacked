@@ -30,6 +30,14 @@ func init() {
 	// Performance optimization level flag
 	root.Flags().String("performance", "balanced", "Set performance optimization level (basic, balanced, aggressive, maximum)")
 
+	// Optimization flags for advanced users
+	root.Flags().Int("max-concurrency", 0, "Maximum number of concurrent scanners (0 = auto)")
+	root.Flags().Duration("scan-timeout", 0, "Maximum time for scanning operations (0 = default)")
+	root.Flags().Bool("enable-caching", true, "Enable vulnerability result caching")
+	root.Flags().Bool("enable-metrics", false, "Enable performance metrics collection")
+	root.Flags().Bool("show-metrics", false, "Show performance metrics after scan")
+	root.Flags().Bool("enable-profiling", false, "Enable CPU and memory profiling")
+
 	// Non-interactive mode flag
 	root.Flags().Bool("non-interactive", false, "Disable interactive table display (automatically exit)")
 

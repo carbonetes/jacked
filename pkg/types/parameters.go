@@ -25,6 +25,7 @@ type Parameters struct {
 	CI            bool
 	SkipDBUpdate  bool
 	ForceDBUpdate bool
+	ShowMetrics   bool // Add flag to show performance metrics
 
 	// Diggity tool parameters to be passed to the scan engine
 	Diggity diggity.Parameters

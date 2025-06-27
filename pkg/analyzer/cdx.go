@@ -7,15 +7,6 @@ import (
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/internal/log"
 	"github.com/carbonetes/jacked/pkg/scan"
-	"github.com/carbonetes/jacked/pkg/scan/generic"
-	"github.com/carbonetes/jacked/pkg/scan/golang"
-	"github.com/carbonetes/jacked/pkg/scan/maven"
-	"github.com/carbonetes/jacked/pkg/scan/npm"
-	"github.com/carbonetes/jacked/pkg/scan/os/apk"
-	"github.com/carbonetes/jacked/pkg/scan/os/dpkg"
-	"github.com/carbonetes/jacked/pkg/scan/os/rpm"
-	"github.com/carbonetes/jacked/pkg/scan/python"
-	"github.com/carbonetes/jacked/pkg/scan/rubygem"
 )
 
 // AnalyzeCDX is a function that takes a CycloneDX BOM as input and analyzes it for vulnerabilities.
@@ -60,18 +51,8 @@ func Analyze(bom *cyclonedx.BOM) {
 	// Initialize store instance
 	store := db.Store{}
 
-	// Create optimized scanner manager with all available scanners
-	scanManager := scan.NewManager(
-		dpkg.NewScanner(store),
-		apk.NewScanner(store),
-		maven.NewScanner(store),
-		golang.NewScanner(store),
-		rpm.NewScanner(store),
-		npm.NewScanner(store),
-		python.NewScanner(store),
-		rubygem.NewScanner(store),
-		generic.NewScanner(store),
-	)
+	// Create optimized scanner manager with new architecture
+	scanManager := scan.NewManager(store)
 
 	// Configure optimization settings based on BOM size
 	if componentCount > 100 {
