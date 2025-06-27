@@ -8,11 +8,18 @@ import (
 
 // TODO: Implement more CI logic
 func Run(ci types.CIConfiguration, cdx *cyclonedx.BOM) {
-	totalComponents := len(*cdx.Components)
-	totalVulnerabilities := len(*cdx.Vulnerabilities)
+	var totalComponents, totalVulnerabilities int
+
+	if cdx.Components != nil {
+		totalComponents = len(*cdx.Components)
+	}
+	if cdx.Vulnerabilities != nil {
+		totalVulnerabilities = len(*cdx.Vulnerabilities)
+	}
+
 	log.Printf("\nPackages: %9v\nVulnerabilities: %v", totalComponents, totalVulnerabilities)
-	if len(*cdx.Vulnerabilities) == 0 {
-		log.Printf("\nPassed: %5v found components\n", len(*cdx.Components))
+	if cdx.Vulnerabilities == nil || len(*cdx.Vulnerabilities) == 0 {
+		log.Printf("\nPassed: %5v found components\n", totalComponents)
 		return
 	}
 
