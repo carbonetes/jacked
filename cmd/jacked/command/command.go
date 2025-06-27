@@ -27,6 +27,15 @@ func init() {
 	// Output flag to specify the output format
 	root.Flags().StringP("output", "o", string(types.Table), "Supported output types are: "+types.GetAllOutputFormat())
 
+	// Performance optimization level flag
+	root.Flags().String("performance", "balanced", "Set performance optimization level (basic, balanced, aggressive, maximum)")
+
+	// Non-interactive mode flag
+	root.Flags().Bool("non-interactive", false, "Disable interactive table display (automatically exit)")
+
+	// Configuration file flag
+	root.Flags().StringP("config", "c", "", "Path to configuration file (default: $HOME/.jacked.yaml)")
+
 	// Scanners flag to specify the selected scanners to run
 	// root.Flags().StringArray("scanners", scanner.All, "Allow only selected scanners to run (e.g. --scanners apk,dpkg)")
 

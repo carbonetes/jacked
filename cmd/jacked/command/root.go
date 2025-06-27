@@ -10,6 +10,7 @@ import (
 	"github.com/carbonetes/jacked/internal/log"
 	"github.com/carbonetes/jacked/internal/tea/progress"
 	"github.com/carbonetes/jacked/internal/tea/spinner"
+	"github.com/carbonetes/jacked/internal/tea/table"
 	"github.com/carbonetes/jacked/pkg/config"
 	"github.com/carbonetes/jacked/pkg/types"
 	"github.com/sirupsen/logrus"
@@ -38,6 +39,9 @@ func rootCmd(c *cobra.Command, args []string) {
 	filesystem, _ := c.Flags().GetString("dir")
 	quiet, _ := c.Flags().GetBool("quiet")
 	format, _ := c.Flags().GetString("output")
+	performance, _ := c.Flags().GetString("performance")
+	configFile, _ := c.Flags().GetString("config")
+	nonInteractive, _ := c.Flags().GetBool("non-interactive")
 	// scanners, _ := c.Flags().GetStringArray("scanners")
 	file, _ := c.Flags().GetString("file")
 	debug, _ := c.Flags().GetBool("debug")
@@ -46,9 +50,36 @@ func rootCmd(c *cobra.Command, args []string) {
 	ci, _ := c.Flags().GetBool("ci")
 	failCriteria, _ := c.Flags().GetString("fail-criteria")
 
+	// Handle custom config file path
+	if configFile != "" {
+		log.Debugf("Using custom config file: %s", configFile)
+		config.SetConfigPath(configFile)
+		// Reload config from the custom path
+		config.ReloadConfig()
+	}
+
+	// Handle performance optimization level (only if explicitly set)
+	if c.Flags().Changed("performance") {
+		switch performance {
+		case "basic":
+			config.Config.Performance = config.GetConfigForOptimizationLevel(types.OptimizationBasic)
+		case "balanced":
+			config.Config.Performance = config.GetConfigForOptimizationLevel(types.OptimizationBalanced)
+		case "aggressive":
+			config.Config.Performance = config.GetConfigForOptimizationLevel(types.OptimizationAggressive)
+		case "maximum":
+			config.Config.Performance = config.GetConfigForOptimizationLevel(types.OptimizationMaximum)
+		default:
+			log.Warnf("Invalid performance level '%s', using balanced", performance)
+			config.Config.Performance = config.GetConfigForOptimizationLevel(types.OptimizationBalanced)
+		}
+		log.Debugf("Performance optimization level set to: %s", performance)
+	}
+
 	// If CI mode is enabled, suppress all output except for errors
 	if ci {
 		quiet = true
+		nonInteractive = true // Also enable non-interactive mode in CI
 		if len(failCriteria) == 0 || !types.IsValidSeverity(failCriteria) {
 			log.Warn("CI mode is enabled, but no valid fail criteria is provided")
 			log.Warn("Default fail criteria will be used: 'critical' severity vulnerabilities will fail the build")
@@ -71,6 +102,11 @@ func rootCmd(c *cobra.Command, args []string) {
 		// If quiet mode is not enabled, enable the spinner and progress bar
 		spinner.Skip = false
 		progress.Skip = false
+	}
+
+	// Set non-interactive mode for table display
+	if nonInteractive {
+		table.NonInteractive = true
 	}
 
 	params := types.Parameters{

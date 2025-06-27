@@ -1,11 +1,17 @@
 package db
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 	"os"
 	"path"
+	"runtime"
+	"sync"
+	"time"
 
 	"github.com/carbonetes/jacked/internal/log"
+	"github.com/carbonetes/jacked/pkg/types"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/sqliteshim"
@@ -24,6 +30,16 @@ var (
 	dbDirectory  = path.Join(userCache, filename)
 	dbFile       = filename + "." + filetype
 	dbFilepath   = os.Getenv("JACKED_DB")
+
+	// Connection pool settings
+	maxOpenConns = runtime.NumCPU() * 2
+	maxIdleConns = runtime.NumCPU()
+
+	// Cache for frequently accessed vulnerabilities
+	vulnCache     = make(map[string]*[]types.Vulnerability)
+	cacheMutex    sync.RWMutex
+	cacheTimeout  = 15 * time.Minute
+	lastCacheTime = make(map[string]time.Time)
 )
 
 type Store struct{}
@@ -33,14 +49,20 @@ func init() {
 		dbFilepath = path.Join(dbDirectory, dbFile)
 		os.Setenv("JACKED_DB", dbFilepath)
 	}
-
 }
 
+// Load initializes the database connection with optimized settings
 func Load() {
 	sqldb, err := sql.Open(sqliteshim.ShimName, dbFilepath)
 	if err != nil {
 		log.Fatalf("error establishing database connection: %v", err)
 	}
+
+	// Configure connection pool for better performance
+	sqldb.SetMaxOpenConns(maxOpenConns)
+	sqldb.SetMaxIdleConns(maxIdleConns)
+	sqldb.SetConnMaxLifetime(30 * time.Minute)
+	sqldb.SetConnMaxIdleTime(5 * time.Minute)
 
 	db = bun.NewDB(sqldb, sqlitedialect.New())
 
@@ -48,8 +70,145 @@ func Load() {
 	if err := db.Ping(); err != nil {
 		log.Fatalf("error pinging database: %v", err)
 	}
+
+	// Enable performance optimizations
+	optimizeDatabase()
+
+	log.Debug("Database connection pool initialized with optimizations")
 }
 
 func GetDB() *bun.DB {
 	return db
+}
+
+// optimizeDatabase applies SQLite performance optimizations
+func optimizeDatabase() {
+	optimizations := []string{
+		"PRAGMA journal_mode = WAL",    // Write-Ahead Logging for better concurrency
+		"PRAGMA synchronous = NORMAL",  // Balance between safety and performance
+		"PRAGMA cache_size = -64000",   // 64MB cache
+		"PRAGMA temp_store = MEMORY",   // Store temp tables in memory
+		"PRAGMA mmap_size = 268435456", // 256MB memory map
+		"PRAGMA optimize",              // Optimize query planner
+	}
+
+	for _, pragma := range optimizations {
+		if _, err := db.Exec(pragma); err != nil {
+			log.Debugf("Failed to apply optimization %s: %v", pragma, err)
+		}
+	}
+}
+
+// getCachedVulnerabilities retrieves vulnerabilities from cache if available and fresh
+func getCachedVulnerabilities(cacheKey string) (*[]types.Vulnerability, bool) {
+	cacheMutex.RLock()
+	defer cacheMutex.RUnlock()
+
+	if data, exists := vulnCache[cacheKey]; exists {
+		if lastUpdate, timeExists := lastCacheTime[cacheKey]; timeExists {
+			if time.Since(lastUpdate) < cacheTimeout {
+				return data, true
+			}
+		}
+	}
+
+	return nil, false
+}
+
+// setCachedVulnerabilities stores vulnerabilities in cache
+func setCachedVulnerabilities(cacheKey string, data *[]types.Vulnerability) {
+	cacheMutex.Lock()
+	defer cacheMutex.Unlock()
+
+	vulnCache[cacheKey] = data
+	lastCacheTime[cacheKey] = time.Now()
+}
+
+// BatchVulnerabilityLookup performs optimized batch vulnerability lookups
+func (s *Store) BatchVulnerabilityLookup(packages []string, source string) map[string]*[]types.Vulnerability {
+	if len(packages) == 0 {
+		return make(map[string]*[]types.Vulnerability)
+	}
+
+	results := make(map[string]*[]types.Vulnerability)
+	uncachedPackages := make([]string, 0, len(packages))
+
+	// Check cache first
+	for _, pkg := range packages {
+		cacheKey := fmt.Sprintf("%s:%s", source, pkg)
+		if cached, found := getCachedVulnerabilities(cacheKey); found {
+			results[pkg] = cached
+		} else {
+			uncachedPackages = append(uncachedPackages, pkg)
+		}
+	}
+
+	// Batch query for uncached packages
+	if len(uncachedPackages) > 0 {
+		batchResults := s.batchQueryVulnerabilities(uncachedPackages, source)
+
+		// Cache and merge results
+		for pkg, vulns := range batchResults {
+			cacheKey := fmt.Sprintf("%s:%s", source, pkg)
+			setCachedVulnerabilities(cacheKey, vulns)
+			results[pkg] = vulns
+		}
+	}
+
+	return results
+}
+
+// batchQueryVulnerabilities performs optimized batch database queries
+func (s *Store) batchQueryVulnerabilities(packages []string, source string) map[string]*[]types.Vulnerability {
+	if len(packages) == 0 {
+		return make(map[string]*[]types.Vulnerability)
+	}
+
+	vulnerabilities := make([]types.Vulnerability, 0)
+	query := db.NewSelect().
+		Model(&vulnerabilities).
+		Where("package IN (?) AND source = ?", bun.In(packages), source)
+
+	if err := query.Scan(context.Background()); err != nil {
+		log.Debugf("Error in batch vulnerability lookup: %v", err)
+		return make(map[string]*[]types.Vulnerability)
+	}
+
+	// Group results by package
+	results := make(map[string]*[]types.Vulnerability)
+	for _, pkg := range packages {
+		results[pkg] = &[]types.Vulnerability{}
+	}
+
+	for _, vuln := range vulnerabilities {
+		if packageVulns, exists := results[vuln.Package]; exists {
+			*packageVulns = append(*packageVulns, vuln)
+		}
+	}
+
+	return results
+}
+
+// ClearCache manually clears the vulnerability cache
+func ClearCache() {
+	cacheMutex.Lock()
+	defer cacheMutex.Unlock()
+
+	vulnCache = make(map[string]*[]types.Vulnerability)
+	lastCacheTime = make(map[string]time.Time)
+
+	log.Debug("Vulnerability cache cleared")
+}
+
+// GetCacheStats returns cache statistics for monitoring
+func GetCacheStats() map[string]interface{} {
+	cacheMutex.RLock()
+	defer cacheMutex.RUnlock()
+
+	return map[string]interface{}{
+		"cache_size":     len(vulnCache),
+		"cache_timeout":  cacheTimeout.String(),
+		"max_open_conns": maxOpenConns,
+		"max_idle_conns": maxIdleConns,
+	}
 }

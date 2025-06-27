@@ -18,11 +18,37 @@ import (
 	"github.com/carbonetes/jacked/pkg/types"
 )
 
+// applyPerformanceOptimizations configures the system based on performance settings
+func applyPerformanceOptimizations() {
+	perfConfig := config.Config.Performance
+
+	// Display config info for debugging
+	config.DisplayConfig()
+
+	// Validate and apply performance configuration
+	err := perfConfig.PerformanceConfig.Validate()
+	if err != nil {
+		log.Debugf("Performance configuration validation failed: %v", err)
+		return
+	}
+
+	log.Debugf("Applying performance optimizations - Max Scanners: %d, Caching: %v, Batch Processing: %v",
+		perfConfig.MaxConcurrentScanners,
+		perfConfig.EnableCaching,
+		perfConfig.EnableBatchProcessing)
+
+	// The actual performance optimizations would be applied here
+	// For now, we just validate and log the configuration
+}
+
 // New is the main function for the analyzer
 // It checks if the database is up to date, then scans the target with diggity
 // It then gets the sbom from cdx mod and analyzes it to find vulnerabilities
 // Finally, it displays the results
 func analyze(params types.Parameters) {
+
+	// Apply performance optimizations from configuration
+	applyPerformanceOptimizations()
 
 	// Check if the database is up to date
 	db.DBCheck(params.SkipDBUpdate, params.ForceDBUpdate)
