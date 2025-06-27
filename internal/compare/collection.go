@@ -8,8 +8,7 @@ import (
 
 var lock = &sync.Mutex{}
 
-
-// addVex will append the incoming vulnerabilities from all comparer. 
+// addVex will append the incoming vulnerabilities from all comparer.
 // Mutex is used to prevent cases where multiple goroutines are trying to append to the same slice.
 func addVex(vex *[]cyclonedx.Vulnerability, incoming *[]cyclonedx.Vulnerability) *[]cyclonedx.Vulnerability {
 	lock.Lock()

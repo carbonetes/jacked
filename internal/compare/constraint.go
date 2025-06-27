@@ -75,7 +75,6 @@ func MatchGenericConstraint(packageVersion *string, constraints string) (bool, s
 	return false, ""
 }
 
-
 // try to normalize the version string to a valid semver string
 func normalizeConstraint(constraint string) string {
 	if strings.Contains(constraint, ", ") {
@@ -99,7 +98,6 @@ func normalizeConstraint(constraint string) string {
 	}
 	return constraint
 }
-
 
 // remove any non-numeric characters from the version string and try to normalize it to a valid semver string
 func normalizeVersion(version string) string {

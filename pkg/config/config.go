@@ -21,18 +21,18 @@ func isValidParentDir(filePath string) bool {
 	if filePath == "" {
 		return false
 	}
-	
+
 	dir := filepath.Dir(filePath)
 	if dir == "." || dir == "/" {
 		return true // Current dir or root are typically valid
 	}
-	
+
 	// Check if parent directory exists
 	info, err := os.Stat(dir)
 	if err != nil {
 		return false
 	}
-	
+
 	return info.IsDir()
 }
 
@@ -61,7 +61,7 @@ func ReloadConfig() error {
 		if !isValidParentDir(path) {
 			return fmt.Errorf("invalid config path (parent directory does not exist): %s", path)
 		}
-		
+
 		// Create the config file
 		MakeConfigFile(path)
 	}
@@ -181,7 +181,7 @@ func ReadConfigFile(config *types.Configuration, path string) error {
 		log.Debug(err)
 		return err
 	}
-	
+
 	return nil
 }
 

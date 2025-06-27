@@ -268,7 +268,7 @@ func TestConfigPathHandling(t *testing.T) {
 			// Reset global config state for each test
 			originalConfig := Config
 			defer func() { Config = originalConfig }()
-			
+
 			SetConfigPath(tt.configPath)
 			err := ReloadConfig()
 

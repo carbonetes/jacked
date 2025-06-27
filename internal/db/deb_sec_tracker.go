@@ -34,5 +34,3 @@ func (s *Store) DebSecTrackerMatchWithKeywordsAndDistroVersion(keywords []string
 
 	return vulnerabilities
 }
-
-

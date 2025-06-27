@@ -13,6 +13,8 @@ help:
 	@echo "  test-unit         - Run unit tests only"
 	@echo "  test-integration  - Run integration tests"
 	@echo "  test-performance  - Run performance tests with real scanning"
+	@echo "  test-all          - Run comprehensive test suite"
+	@echo "  test-config       - Test configuration validation"
 	@echo "  bench             - Run benchmarks"
 	@echo "  coverage          - Generate code coverage report"
 	@echo "  lint              - Run linting tools"
@@ -20,6 +22,13 @@ help:
 	@echo "  vet               - Run go vet"
 	@echo "  clean             - Clean build artifacts"
 	@echo "  install           - Install jacked binary to GOPATH/bin"
+	@echo "  dev-setup         - Set up development environment"
+	@echo "  pre-commit        - Quick validation before commit"
+	@echo "  ci                - CI/CD pipeline simulation"
+	@echo "  perf-regression   - Performance regression testing"
+	@echo "  release           - Create release builds"
+	@echo "  docs-check        - Check documentation"
+	@echo "  validate          - Full validation pipeline"
 
 # Build the jacked binary
 build:
@@ -110,6 +119,7 @@ clean:
 	rm -f coverage.out coverage.html
 	rm -f test-config.yaml invalid-config.yaml
 	rm -f bench-results.txt
+	rm -f dist/
 	@echo "Cleanup complete!"
 
 # Development commands
@@ -147,31 +157,27 @@ release: clean fmt vet test
 test-config:
 	@echo "Testing configuration validation..."
 	# Create valid config
-	@cat > test-config.yaml << EOF
-	version: "1.0"
-	performance:
-	  max_concurrent_scanners: 8
-	  scan_timeout: 300s
-	  enable_caching: true
-	  max_cache_size: 1000
-	  scanners:
-	    npm:
-	      enabled: true
-	      timeout: 120s
-	      max_concurrency: 8
-	      caching_enabled: true
-	      priority: 8
-	EOF
+	@echo 'version: "1.0"' > test-config.yaml
+	@echo 'performance:' >> test-config.yaml
+	@echo '  max_concurrent_scanners: 8' >> test-config.yaml
+	@echo '  scan_timeout: 300s' >> test-config.yaml
+	@echo '  enable_caching: true' >> test-config.yaml
+	@echo '  max_cache_size: 1000' >> test-config.yaml
+	@echo '  scanners:' >> test-config.yaml
+	@echo '    npm:' >> test-config.yaml
+	@echo '      enabled: true' >> test-config.yaml
+	@echo '      timeout: 120s' >> test-config.yaml
+	@echo '      max_concurrency: 8' >> test-config.yaml
+	@echo '      caching_enabled: true' >> test-config.yaml
+	@echo '      priority: 8' >> test-config.yaml
 	./jacked --config=test-config.yaml --help > /dev/null
 	@echo "Valid config test passed!"
 	
 	# Create invalid config
-	@cat > invalid-config.yaml << EOF
-	version: "1.0"
-	performance:
-	  max_concurrent_scanners: invalid_number
-	  scan_timeout: not_a_duration
-	EOF
+	@echo 'version: "1.0"' > invalid-config.yaml
+	@echo 'performance:' >> invalid-config.yaml
+	@echo '  max_concurrent_scanners: invalid_number' >> invalid-config.yaml
+	@echo '  scan_timeout: not_a_duration' >> invalid-config.yaml
 	./jacked --config=invalid-config.yaml --help > /dev/null || echo "Invalid config handled correctly"
 	rm -f test-config.yaml invalid-config.yaml
 	@echo "Configuration validation tests completed!"
