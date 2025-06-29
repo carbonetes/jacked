@@ -1,6 +1,7 @@
 package command
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -12,18 +13,21 @@ import (
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/internal/log"
 	"github.com/carbonetes/jacked/internal/metrics"
-	"github.com/carbonetes/jacked/internal/presenter"
-	"github.com/carbonetes/jacked/internal/tea/spinner"
+	"github.com/carbonetes/jacked/internal/ui"
 	"github.com/carbonetes/jacked/pkg/analyzer"
 	"github.com/carbonetes/jacked/pkg/ci"
 	"github.com/carbonetes/jacked/pkg/config"
 	"github.com/carbonetes/jacked/pkg/types"
 )
 
-// analyze is the main analyzer function using optimized scanning
+// analyze is the main analyzer function
 func analyze(params types.Parameters) {
-	// Use optimized scanning by default with automatic optimization level detection
-	runOptimizedAnalysisWithParams(params)
+	// Use simple analysis by default, or optimized if performance config is set
+	if config.Config.Performance.MaxConcurrentScanners > 0 {
+		runOptimizedAnalysisWithParams(params)
+	} else {
+		runSimpleAnalysis(params)
+	}
 }
 
 // runOptimizedAnalysisWithParams runs optimized analysis using existing Parameters structure
@@ -65,12 +69,8 @@ func loadPerformanceConfigFromParams(params types.Parameters) types.AdvancedPerf
 }
 
 // runOptimizedScanWithParams runs optimized scan using existing Parameters structure
+// runOptimizedScanWithParams runs optimized scan using existing Parameters structure
 func runOptimizedScanWithParams(params types.Parameters, perfConfig types.AdvancedPerformanceConfig) {
-	// Check if the database is up to date
-	log.Debug("Checking database status...")
-	db.DBCheck(params.SkipDBUpdate, params.ForceDBUpdate)
-	db.Load()
-
 	start := time.Now()
 
 	// Set up metrics recording if enabled
@@ -82,10 +82,45 @@ func runOptimizedScanWithParams(params types.Parameters, perfConfig types.Advanc
 		}()
 	}
 
-	// Generate BOM using diggity
+	// Determine UI mode and run complete workflow
+	scanMode := ui.ModeAuto
+	if params.NonInteractive {
+		scanMode = ui.ModeNonInteractive
+	} else if params.Quiet {
+		scanMode = ui.ModeQuiet
+	}
+
+	// Run the complete workflow (database update, BOM generation, scanning) with enhanced visuals
+	err := ui.RunCompleteNonInteractiveWorkflow(context.Background(), params, scanMode, perfConfig)
+	if err != nil {
+		log.Debugf("Workflow failed: %v", err)
+		if !params.Quiet {
+			fmt.Println("❌ Scanning failed")
+		}
+		return
+	}
+
+	// Generate BOM after workflow
 	bom := generateBOMFromParams(params)
 	if bom == nil {
-		log.Fatal("Failed to generate BOM")
+		log.Error("Failed to generate BOM")
+		return
+	}
+
+	// Run vulnerability analysis with UI
+	err = ui.ScanWithUI(context.Background(), bom, params, scanMode)
+	if err != nil {
+		log.Debugf("Scanning failed: %v", err)
+		if !params.Quiet {
+			fmt.Println("❌ Scanning failed")
+		}
+		return
+	}
+
+	// Record metrics
+	vulnCount := 0
+	if bom.Vulnerabilities != nil {
+		vulnCount = len(*bom.Vulnerabilities)
 	}
 
 	componentCount := 0
@@ -93,22 +128,8 @@ func runOptimizedScanWithParams(params types.Parameters, perfConfig types.Advanc
 		componentCount = len(*bom.Components)
 	}
 
-	log.Debugf("Generated BOM with %d components", componentCount)
-
-	// Run optimized vulnerability analysis
-	scanStart := time.Now()
-	analyzer.Analyze(bom)
-	scanDuration := time.Since(scanStart)
-
-	vulnCount := 0
-	if bom.Vulnerabilities != nil {
-		vulnCount = len(*bom.Vulnerabilities)
-	}
-
-	log.Debugf("Found %d vulnerabilities in %v", vulnCount, scanDuration)
-
-	// Record detailed metrics
 	if perfConfig.EnableMetrics {
+		scanDuration := time.Since(start)
 		metrics.GetGlobalMetrics().RecordScan(scanDuration, componentCount, vulnCount)
 	}
 
@@ -119,10 +140,41 @@ func runOptimizedScanWithParams(params types.Parameters, perfConfig types.Advanc
 	}
 
 	elapsed := time.Since(start).Seconds()
-	spinner.Done()
 
-	// Display results using existing presenter
-	presenter.Display(params, elapsed, bom)
+	// Display results using UI module instead of presenter
+	if params.Quiet || len(params.File) > 0 {
+		ui.DisplayResults(params, elapsed, bom)
+	}
+}
+
+// runSimpleAnalysis provides a simple, direct analysis path - replaces cli.Run
+func runSimpleAnalysis(params types.Parameters) {
+	// Check if the database is up to date
+	db.DBCheck(params.SkipDBUpdate, params.ForceDBUpdate)
+	db.Load()
+	start := time.Now()
+
+	// Generate BOM
+	bom := generateBOMFromParams(params)
+	if bom == nil {
+		log.Error("Failed to generate BOM")
+		return
+	}
+
+	// Analyze BOM for vulnerabilities
+	analyzer.AnalyzeCDX(bom)
+
+	// Handle CI mode
+	if params.CI {
+		ci.Run(config.Config.CI, bom)
+		os.Exit(0)
+	}
+
+	elapsed := time.Since(start).Seconds()
+	log.Debug("Analysis complete")
+
+	// Display results using UI module
+	ui.DisplayResults(params, elapsed, bom)
 }
 
 // generateBOMFromParams generates BOM using existing diggity parameters
@@ -141,7 +193,9 @@ func generateBOMFromParams(params types.Parameters) *cyclonedx.BOM {
 	cdx.New(addr)
 	switch params.Diggity.ScanType {
 	case 1: // Image
-		spinner.Set(fmt.Sprintf("Fetching %s from remote registry", params.Diggity.Input))
+		if !params.Quiet {
+			log.Infof("Fetching %s from remote registry", params.Diggity.Input)
+		}
 		// Pull and read image from registry
 		image, ref, err := reader.GetImage(diggityParams.Input, nil)
 		if err != nil {
@@ -157,7 +211,9 @@ func generateBOMFromParams(params types.Parameters) *cyclonedx.BOM {
 			return nil
 		}
 	case 2: // Tarball
-		spinner.Set(fmt.Sprintf("Reading tarfile %s", params.Diggity.Input))
+		if !params.Quiet {
+			log.Infof("📦 Reading tarfile %s", params.Diggity.Input)
+		}
 		image, err := reader.ReadTarball(params.Diggity.Input)
 		if err != nil {
 			log.Debugf("Error reading tarball: %v", err)
@@ -169,7 +225,9 @@ func generateBOMFromParams(params types.Parameters) *cyclonedx.BOM {
 			return nil
 		}
 	case 3: // Filesystem
-		spinner.Set(fmt.Sprintf("Reading directory %s", params.Diggity.Input))
+		if !params.Quiet {
+			log.Infof("📁 Reading directory %s", params.Diggity.Input)
+		}
 		err := reader.FilesystemScanHandler(diggityParams.Input, addr)
 		if err != nil {
 			log.Debugf("Error scanning filesystem: %v", err)

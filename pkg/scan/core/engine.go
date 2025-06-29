@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -184,8 +185,21 @@ func (e *ScanEngine) selectRelevantScanners(bom *cyclonedx.BOM) []Scanner {
 	for _, component := range *bom.Components {
 		if component.Properties != nil {
 			for _, prop := range *component.Properties {
-				if prop.Name == "component:type" {
+				// Check for diggity:package:type (primary) and component:type (fallback)
+				if prop.Name == "diggity:package:type" || prop.Name == "component:type" {
 					componentTypes[prop.Value] = true
+				}
+			}
+		}
+
+		// Also try to extract type from PURL if available
+		if component.BOMRef != "" && strings.HasPrefix(component.BOMRef, "pkg:") {
+			parts := strings.Split(component.BOMRef, "/")
+			if len(parts) > 0 {
+				typeWithPkg := parts[0]
+				if strings.HasPrefix(typeWithPkg, "pkg:") {
+					ecosystem := strings.TrimPrefix(typeWithPkg, "pkg:")
+					componentTypes[ecosystem] = true
 				}
 			}
 		}

@@ -212,3 +212,42 @@ func GetCacheStats() map[string]interface{} {
 		"max_idle_conns": maxIdleConns,
 	}
 }
+
+// GetVulnerabilityByID retrieves a vulnerability by its CVE ID from the database
+func (s *Store) GetVulnerabilityByID(id string) (*types.Vulnerability, error) {
+	if id == "" {
+		return nil, fmt.Errorf("vulnerability ID cannot be empty")
+	}
+
+	// Check cache first
+	cacheKey := fmt.Sprintf("vuln:id:%s", id)
+	if cached, found := getCachedVulnerabilities(cacheKey); found && len(*cached) > 0 {
+		return &(*cached)[0], nil
+	}
+
+	var vuln types.Vulnerability
+	err := db.NewSelect().
+		Model(&vuln).
+		Where("cve = ?", id).
+		Limit(1).
+		Scan(context.Background())
+
+	if err != nil {
+		// Try searching by other potential ID fields if CVE doesn't work
+		err = db.NewSelect().
+			Model(&vuln).
+			Where("id = ? OR cve = ? OR package LIKE ?", id, id, "%"+id+"%").
+			Limit(1).
+			Scan(context.Background())
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("vulnerability not found: %v", err)
+	}
+
+	// Cache the result
+	vulnList := []types.Vulnerability{vuln}
+	setCachedVulnerabilities(cacheKey, &vulnList)
+
+	return &vuln, nil
+}

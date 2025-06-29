@@ -19,13 +19,14 @@ const (
 )
 
 type Parameters struct {
-	Quiet         bool
-	Format        Format
-	File          string
-	CI            bool
-	SkipDBUpdate  bool
-	ForceDBUpdate bool
-	ShowMetrics   bool // Add flag to show performance metrics
+	Quiet          bool
+	Format         Format
+	File           string
+	CI             bool
+	SkipDBUpdate   bool
+	ForceDBUpdate  bool
+	ShowMetrics    bool // Add flag to show performance metrics
+	NonInteractive bool // Add flag to control interactive mode
 
 	// Diggity tool parameters to be passed to the scan engine
 	Diggity diggity.Parameters

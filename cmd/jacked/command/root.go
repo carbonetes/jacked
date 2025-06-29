@@ -9,9 +9,6 @@ import (
 	"github.com/carbonetes/jacked/cmd/jacked/build"
 	"github.com/carbonetes/jacked/internal/helper"
 	"github.com/carbonetes/jacked/internal/log"
-	"github.com/carbonetes/jacked/internal/tea/progress"
-	"github.com/carbonetes/jacked/internal/tea/spinner"
-	"github.com/carbonetes/jacked/internal/tea/table"
 	"github.com/carbonetes/jacked/pkg/config"
 	"github.com/carbonetes/jacked/pkg/types"
 	"github.com/sirupsen/logrus"
@@ -110,25 +107,23 @@ func rootCmd(c *cobra.Command, args []string) {
 	if quiet {
 		// If quiet mode is enabled, force the output format to JSON to avoid any issues
 		format = string(types.JSON)
-	} else {
-		// If quiet mode is not enabled, enable the spinner and progress bar
-		spinner.Skip = false
-		progress.Skip = false
 	}
 
-	// Set non-interactive mode for table display
+	// Set non-interactive mode (placeholder for future use)
 	if nonInteractive {
-		table.NonInteractive = true
+		// Non-interactive mode logic can be added here in the future
+		log.Debug("Non-interactive mode enabled")
 	}
 
 	params := types.Parameters{
-		Format:        types.Format(format),
-		Quiet:         quiet,
-		File:          file,
-		SkipDBUpdate:  skip,
-		ForceDBUpdate: force,
-		CI:            ci,
-		ShowMetrics:   showMetrics, // Add the show metrics flag
+		Format:         types.Format(format),
+		Quiet:          quiet,
+		File:           file,
+		SkipDBUpdate:   skip,
+		ForceDBUpdate:  force,
+		CI:             ci,
+		ShowMetrics:    showMetrics,    // Add the show metrics flag
+		NonInteractive: nonInteractive, // Add the non-interactive flag
 		Diggity: diggity.Parameters{
 			OutputFormat: diggity.JSON,
 		},

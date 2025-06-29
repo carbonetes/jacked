@@ -7,7 +7,6 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/pkg/scan/core"
-	"github.com/carbonetes/jacked/pkg/scan/factory"
 )
 
 // Manager provides backward compatibility with the new scanning architecture
@@ -32,13 +31,9 @@ func NewManager(store db.Store) *Manager {
 
 	engine := core.NewScanEngine(config)
 
-	// Register all scanners using the factory
-	scannerFactory := factory.NewScannerFactory(store)
-	scanners := scannerFactory.CreateAllScanners()
-
-	for _, scanner := range scanners {
-		engine.RegisterScanner(scanner)
-	}
+	// Register the matcher scanner which handles all ecosystems
+	matcherScanner := NewMatcherScanner(store, nil)
+	engine.RegisterScanner(matcherScanner)
 
 	return &Manager{engine: engine}
 }
