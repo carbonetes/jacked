@@ -15,6 +15,7 @@ import (
 
 const (
 	DefaultConfigFilename = ".jacked.yaml"
+	ErrorGeneratingConfig = "Error generating default config file: "
 )
 
 // Configuration is the unified configuration structure for all Jacked settings
@@ -159,8 +160,13 @@ func ReloadConfig() error {
 			return fmt.Errorf("invalid config path (parent directory does not exist): %s", path)
 		}
 
-		// Create the config file
-		MakeConfigFile(path)
+		// Create the config file with detailed comments and documentation
+		err = GenerateDefaultConfigFile(path)
+		if err != nil {
+			log.Debug(ErrorGeneratingConfig, err)
+			// Fallback to simple config creation
+			MakeConfigFile(path)
+		}
 	}
 
 	// Load the config file
@@ -191,8 +197,13 @@ func init() {
 	}
 
 	if !exist {
-		// Create the config file
-		MakeConfigFile(path)
+		// Create the config file with detailed comments and documentation
+		err = GenerateDefaultConfigFile(path)
+		if err != nil {
+			log.Debug(ErrorGeneratingConfig, err)
+			// Fallback to simple config creation
+			MakeConfigFile(path)
+		}
 	}
 
 	// Load the config file
@@ -252,6 +263,20 @@ func ReadConfigFile(config *Configuration, path string) error {
 		return err
 	}
 
+	// Validate and fill missing fields
+	if ValidateAndFillConfig(config) {
+		log.Debug("Config file has missing fields, regenerating with complete configuration...")
+
+		// Regenerate the config file with all fields and comments
+		err = GenerateDefaultConfigFile(path)
+		if err != nil {
+			log.Debug(ErrorGeneratingConfig, err)
+			// Continue with the filled config even if file regeneration fails
+		} else {
+			log.Debug("Config file regenerated successfully with complete configuration")
+		}
+	}
+
 	return nil
 }
 
@@ -268,9 +293,15 @@ func ReplaceConfigFile(config Configuration, path string) {
 		}
 	}
 
-	err = helper.WriteYAML(config, path)
+	// Use GenerateDefaultConfigFile for better documented output
+	err = GenerateDefaultConfigFile(path)
 	if err != nil {
-		log.Debug(err)
+		log.Debug(ErrorGeneratingConfig, err)
+		// Fallback to simple YAML generation
+		err = helper.WriteYAML(config, path)
+		if err != nil {
+			log.Debug(err)
+		}
 	}
 }
 
@@ -452,3 +483,59 @@ func GetAdvancedPerformanceConfig() PerformanceConfig {
 // Legacy type aliases for backward compatibility
 type AdvancedPerformanceConfig = PerformanceConfig
 type LegacyPerformanceConfig = PerformanceConfig
+
+// ValidateAndFillConfig validates the configuration and fills missing fields with defaults
+func ValidateAndFillConfig(config *Configuration) bool {
+	hasChanges := false
+	defaultConfig := GetDefaultConfiguration()
+
+	// Check and fill missing Performance fields
+	if config.Performance.MaxConcurrentScanners == 0 {
+		config.Performance.MaxConcurrentScanners = defaultConfig.Performance.MaxConcurrentScanners
+		hasChanges = true
+	}
+
+	if config.Performance.CacheTimeout == 0 {
+		config.Performance.CacheTimeout = defaultConfig.Performance.CacheTimeout
+		hasChanges = true
+	}
+
+	if config.Performance.MaxCacheSize == 0 {
+		config.Performance.MaxCacheSize = defaultConfig.Performance.MaxCacheSize
+		hasChanges = true
+	}
+
+	if config.Performance.MaxDBConnections == 0 {
+		config.Performance.MaxDBConnections = defaultConfig.Performance.MaxDBConnections
+		hasChanges = true
+	}
+
+	if config.Performance.MaxIdleConnections == 0 {
+		config.Performance.MaxIdleConnections = defaultConfig.Performance.MaxIdleConnections
+		hasChanges = true
+	}
+
+	if config.Performance.ConnectionTimeout == 0 {
+		config.Performance.ConnectionTimeout = defaultConfig.Performance.ConnectionTimeout
+		hasChanges = true
+	}
+
+	if config.Performance.BatchSize == 0 {
+		config.Performance.BatchSize = defaultConfig.Performance.BatchSize
+		hasChanges = true
+	}
+
+	// Check and fill missing MaxFileSize
+	if config.MaxFileSize == 0 {
+		config.MaxFileSize = defaultConfig.MaxFileSize
+		hasChanges = true
+	}
+
+	// Check and fill missing CI configuration
+	if config.CI.FailCriteria.Severity == "" {
+		config.CI.FailCriteria.Severity = defaultConfig.CI.FailCriteria.Severity
+		hasChanges = true
+	}
+
+	return hasChanges
+}

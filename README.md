@@ -22,7 +22,8 @@ Jacked is an open-source vulnerability scanning tool designed to help you identi
 ## Key Features:
 
 - **Comprehensive Vulnerability Scanning**: Jacked thoroughly examines your container images and file systems to pinpoint potential security risks and vulnerabilities. This comprehensive approach ensures the robustness and security of your deployed container images and codebases.
-- **Tailored Configuration**: Customize Jacked to align with your specific security preferences. Tailor the tool to suit your organization's unique requirements and security policies.
+- **Intelligent Configuration Management**: Jacked features automatic configuration validation, missing field detection, and comprehensive documentation generation. Configuration files are automatically created with helpful comments and maintained with complete settings.
+- **Tailored Configuration**: Customize Jacked to align with your specific security preferences. Tailor the tool to suit your organization's unique requirements and security policies with well-documented configuration options.
 - **Cross-Platform Compatibility**: Jacked seamlessly integrates with major operating systems and supports various package types. It offers flexibility and compatibility to fit into your existing workflow.
 - **Diggity Integration**: Enhance your security posture by leveraging Jacked's compatibility with Diggity. This integration provides SBOM (Software Bill of Materials) Container Image and File System support.
 - **Integration-Friendly**: Seamlessly integrate Jacked into your CI/CD pipelines and DevOps workflows to automate vulnerability analysis.
@@ -50,6 +51,7 @@ Jacked provides comprehensive vulnerability scanning for a wide range of package
 
 **Additional Support:**
 
+- **Advanced matching algorithms** with CPE (Common Platform Enumeration) support
 - **Generic Package Scanning**: Supports any package ecosystem through generic vulnerability matching
 - **Custom Package Types**: Extensible architecture allows for additional ecosystem support
 - **Cross-Platform Compatibility**: Works with packages from various sources and registries
@@ -62,7 +64,7 @@ Jacked provides comprehensive vulnerability scanning for a wide range of package
 - **GitHub Security Advisories (GHSA)**: Real-time security alerts from GitHub
 - **Alpine Security Database**: Alpine Linux specific vulnerabilities
 - **Debian Security Tracker**: Debian/Ubuntu package vulnerabilities
-- **Advanced matching algorithms** with CPE (Common Platform Enumeration) support
+
 
 With Jacked, you can fortify your software applications against security threats, streamline your vulnerability management process, and deliver software that is secure, compliant, and reliable.
 
@@ -119,6 +121,8 @@ Verify that Jacked is installed correctly by running:
 ```sh
 jacked --version
 ```
+
+**First Run Setup**: When you first run Jacked, it will automatically create a comprehensive configuration file at `~/.jacked.yaml` with detailed documentation and all available settings. You can customize this configuration file to match your specific needs.
 
 # Getting Started
 
@@ -240,12 +244,32 @@ jacked [flag]
 jacked config [flag]
 ```
 
-| Config Flags     | Descriptions                                  |
-| :--------------- | :-------------------------------------------- |
-| `-d`,`--display` | Display the content of the configuration file |
-| `-h`,`--help`    | Help for configuration                        |
-| `-p`,`--path`    | Display the path of the configuration file    |
-| `-r`,`--reset`   | Restore the default configuration file        |
+| Config Flags        | Descriptions                                                     |
+| :------------------ | :--------------------------------------------------------------- |
+| `display`           | Display the content of the configuration file                   |
+| `generate [path]`   | Generate a default configuration file with documentation        |
+| `path`              | Display the path of the configuration file                      |
+| `reset`             | Restore the default configuration file with full documentation  |
+| `-h`,`--help`       | Help for configuration commands                                  |
+
+**Configuration Management Examples:**
+
+```bash
+# View current configuration
+jacked config display
+
+# Reset configuration to documented defaults
+jacked config reset
+
+# Generate a new config file in current directory
+jacked config generate
+
+# Generate a config file at specific path
+jacked config generate /path/to/my-config.yaml
+
+# Show configuration file location
+jacked config path
+```
 
 ```
 jacked db [flag]
@@ -266,32 +290,82 @@ jacked version [flag] [string]
 
 ## Configuration
 
-Customize Jacked to match your preferences by modifying its configuration options. You can find the configuration file in `<HOME>/.jacked.yaml`.
+Jacked provides comprehensive configuration management with automatic validation and documentation generation. The configuration file is located at `<HOME>/.jacked.yaml` by default.
 
-Here are some of the key configuration options along with their default values:
+### Automatic Configuration Management
+
+Jacked automatically:
+- **Creates a documented configuration file** when none exists
+- **Validates existing configuration** and fills missing fields
+- **Regenerates configuration** with complete documentation when incomplete configurations are detected
+- **Provides helpful comments** explaining each configuration option
+
+### Configuration File Structure
+
+The configuration file includes comprehensive documentation and all implemented features:
 
 ```yaml
-# Performance optimization settings
+# Legacy field for backward compatibility (file size limit in bytes)
+maxFileSize: 52428800
+
+# Performance Configuration
+# Controls scanning performance and resource usage
 performance:
+  # Number of concurrent scanners (default: number of CPU cores)
   max_concurrent_scanners: 4
-  scan_timeout: 5m
+  
+  # Enable result caching to speed up repeated scans
   enable_caching: true
-  cache_timeout: 24h
+  
+  # Cache expiration time
+  cache_timeout: "1h0m0s"
+  
+  # Maximum number of cached items
   max_cache_size: 1000
+  
+  # Database connection settings
   max_db_connections: 10
   max_idle_connections: 5
-  connection_timeout: 30s
+  connection_timeout: "30s"
+  
+  # Batch processing settings
   batch_size: 100
   enable_batch_processing: true
 
-# CI/CD integration settings
+# CI/CD Integration Configuration
 ci:
+  # Criteria for failing CI builds
   fail_criteria:
-    severity: "medium"
+    # Fail if vulnerabilities of this severity or higher are found
+    # Options: "low", "medium", "high", "critical"
+    severity: "high"
 
-# Maximum file size for processing
-maxFileSize: 10485760
+# Note: This configuration only includes fields that are actually implemented
+# in the codebase. Many advanced features shown in documentation may not
+# yet be fully implemented.
 ```
+
+### Configuration Validation
+
+If you have an incomplete configuration file, Jacked will automatically:
+1. Detect missing required fields
+2. Fill in default values for missing fields
+3. Regenerate the configuration file with complete documentation
+4. Preserve your custom values while adding missing ones
+
+### Custom Configuration Files
+
+You can specify a custom configuration file path:
+
+```bash
+# Use a specific config file
+jacked --config=/path/to/custom-config.yaml [command]
+
+# Set via environment variable
+export JACKED_CONFIG=/path/to/custom-config.yaml
+jacked [command]
+```
+
 
 ## Contributing
 
