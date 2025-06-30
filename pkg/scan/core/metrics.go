@@ -49,6 +49,12 @@ func (m *SimpleMetricsCollector) RecordScan(scannerType string, duration time.Du
 	metrics.LastScan = time.Now()
 }
 
+// RecordAnalysis records metrics for an analysis operation
+func (m *SimpleMetricsCollector) RecordAnalysis(analyzerType string, duration time.Duration, componentCount, vulnCount int) {
+	// For simplicity, treat analysis the same as scans
+	m.RecordScan(analyzerType, duration, componentCount, vulnCount)
+}
+
 // RecordError records an error for a scanner
 func (m *SimpleMetricsCollector) RecordError(scannerType string, err error) {
 	m.mutex.Lock()

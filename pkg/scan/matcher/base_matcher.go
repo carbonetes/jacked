@@ -7,7 +7,7 @@ import (
 
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/pkg/scan/matchertypes"
-	"github.com/carbonetes/jacked/pkg/types"
+	"github.com/carbonetes/jacked/pkg/model"
 )
 
 // Type aliases for types not already defined in engine.go
@@ -229,7 +229,7 @@ func (m *BaseMatcher) searchByEcosystem(ecosystem, packageName, distroType, dist
 	// This would interface with the actual vulnerability database
 	// For now, we'll create a simplified implementation
 
-	var dbVulns *[]types.Vulnerability
+	var dbVulns *[]model.Vulnerability
 
 	// Use existing database methods
 	switch ecosystem {
@@ -333,7 +333,7 @@ func determineNamespace(ecosystem, distroType string) string {
 	}
 }
 
-func determineFixState(vuln types.Vulnerability) FixState {
+func determineFixState(vuln model.Vulnerability) FixState {
 	if len(vuln.Fixes) > 0 && vuln.Fixes[0] != "" {
 		return matchertypes.FixStateFixed
 	}
@@ -341,7 +341,7 @@ func determineFixState(vuln types.Vulnerability) FixState {
 }
 
 // getFixedVersion extracts the fixed version from vulnerability data
-func getFixedVersion(vuln types.Vulnerability) string {
+func getFixedVersion(vuln model.Vulnerability) string {
 	if len(vuln.Fixes) > 0 {
 		return vuln.Fixes[0]
 	}
@@ -349,7 +349,7 @@ func getFixedVersion(vuln types.Vulnerability) string {
 }
 
 // getCVSSScore extracts CVSS score from vulnerability data
-func getCVSSScore(vuln types.Vulnerability) float64 {
+func getCVSSScore(vuln model.Vulnerability) float64 {
 	if len(vuln.CVSS) > 0 {
 		return vuln.CVSS[0].Score
 	}

@@ -20,14 +20,16 @@ import (
 	"github.com/carbonetes/jacked/pkg/scan/matcher/ruby"
 	"github.com/carbonetes/jacked/pkg/scan/matcher/stock"
 	"github.com/carbonetes/jacked/pkg/scan/matchertypes"
-	"github.com/carbonetes/jacked/pkg/types"
+	"github.com/carbonetes/jacked/pkg/model"
 )
 
 // MatcherScanner implements the core.Scanner interface using the new matcher engine
 type MatcherScanner struct {
-	engine *matcher.Engine
-	config matchertypes.MatcherConfig
-	store  db.Store // Add store for vulnerability enrichment
+	engine          *matcher.Engine
+	config          matchertypes.MatcherConfig
+	store           db.Store            // Add store for vulnerability enrichment
+	extendedMatcher *MatcherIntegration // Optional extended matcher
+	useExtendedMode bool                // Flag to enable extended matching
 }
 
 // StoreVulnerabilityProvider adapts the db.Store to the VulnerabilityProvider interface
@@ -53,23 +55,30 @@ func (p *StoreVulnerabilityProvider) Close() error {
 }
 
 // NewMatcherScanner creates a new scanner that uses the matcher engine
-func NewMatcherScanner(store db.Store, config *matcher.MatcherConfig) *MatcherScanner {
+func NewMatcherScanner(store db.Store, config *matchertypes.MatcherConfig) *MatcherScanner {
+	return NewMatcherScannerWithConfig(store, config)
+}
+
+// NewMatcherScannerWithConfig creates a scanner with custom matching configuration
+func NewMatcherScannerWithConfig(store db.Store, config *matchertypes.MatcherConfig) *MatcherScanner {
 	// Use default config if none provided
 	if config == nil {
-		config = &matcher.MatcherConfig{
+		config = &matchertypes.MatcherConfig{
+			UseCPEs:            true,
 			MaxConcurrency:     4,
 			Timeout:            "5m",
-			EnableCaching:      false,
+			EnableCaching:      true,
 			EnableMetrics:      false,
 			NormalizeByCVE:     true,
 			CPEMatching:        true,
 			DeduplicateResults: true,
-			DefaultIgnoreRules: []matcher.IgnoreRule{},
+			DefaultIgnoreRules: []matchertypes.IgnoreRule{},
 		}
 	}
 
 	// Create a vulnerability provider that can interface with the store
-	// provider := &StoreVulnerabilityProvider{store: store} // TODO: Add provider support later
+	provider := &StoreVulnerabilityProvider{store: store}
+	_ = provider // Will be used when provider support is fully implemented
 	engine := matcher.NewEngine(*config)
 
 	// Register all available matchers
@@ -86,11 +95,14 @@ func NewMatcherScanner(store db.Store, config *matcher.MatcherConfig) *MatcherSc
 	engine.RegisterMatcher(dpkg.NewMatcher(store))
 	engine.RegisterMatcher(rpm.NewMatcher(store))
 
-	return &MatcherScanner{
-		engine: engine,
-		config: *config,
-		store:  store,
+	scanner := &MatcherScanner{
+		engine:          engine,
+		config:          *config,
+		store:           store,
+		useExtendedMode: false,
 	}
+
+	return scanner
 }
 
 // Type returns the scanner type identifier
@@ -120,19 +132,42 @@ func (s *MatcherScanner) Scan(ctx context.Context, bom *cyclonedx.BOM) ([]cyclon
 		return []cyclonedx.Vulnerability{}, nil
 	}
 
-	// Configure match options
-	opts := matcher.MatchOptions{
-		IgnoreRules:         s.config.DefaultIgnoreRules,
-		NormalizeByCVE:      s.config.NormalizeByCVE,
-		CPEMatching:         s.config.CPEMatching,
-		MaxConcurrency:      s.config.MaxConcurrency,
-		Timeout:             s.config.Timeout,
-		EnableProgressTrack: true,
-		DeduplicateResults:  s.config.DeduplicateResults,
+	var results *matcher.MatchResults
+	var err error
+
+	if s.useExtendedMode && s.extendedMatcher != nil {
+		// Use extended matcher
+		log.Debug("Using extended vulnerability matching")
+
+		// Configure extended match options
+		extendedOpts := matchertypes.MatchOptions{
+			IgnoreRules:         s.config.DefaultIgnoreRules,
+			NormalizeByCVE:      s.config.NormalizeByCVE,
+			CPEMatching:         s.config.CPEMatching,
+			MaxConcurrency:      s.config.MaxConcurrency,
+			Timeout:             s.config.Timeout,
+			EnableProgressTrack: true,
+			DeduplicateResults:  s.config.DeduplicateResults,
+		}
+
+		// Run extended matcher
+		extendedResults, err := s.extendedMatcher.GetExtendedMatcher().FindMatches(ctx, packages, extendedOpts)
+		if err != nil {
+			log.Warnf("Extended matcher failed, falling back to standard matcher: %v", err)
+			// Fall back to standard matcher
+			if results, err = s.engine.FindMatches(ctx, packages, s.getStandardMatchOptions()); err != nil {
+				return nil, err
+			}
+		} else {
+			// Convert extended results to standard results format
+			results = s.convertExtendedResults(extendedResults)
+		}
+	} else {
+		// Use standard matcher
+		log.Debug("Using standard vulnerability matching")
+		results, err = s.engine.FindMatches(ctx, packages, s.getStandardMatchOptions())
 	}
 
-	// Run the matcher engine
-	results, err := s.engine.FindMatches(ctx, packages, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -142,6 +177,28 @@ func (s *MatcherScanner) Scan(ctx context.Context, bom *cyclonedx.BOM) ([]cyclon
 
 	log.Debugf("Matcher scanner found %d vulnerabilities", len(vulnerabilities))
 	return vulnerabilities, nil
+}
+
+// getStandardMatchOptions returns standard match options
+func (s *MatcherScanner) getStandardMatchOptions() matcher.MatchOptions {
+	return matcher.MatchOptions{
+		IgnoreRules:         s.config.DefaultIgnoreRules,
+		NormalizeByCVE:      s.config.NormalizeByCVE,
+		CPEMatching:         s.config.CPEMatching,
+		MaxConcurrency:      s.config.MaxConcurrency,
+		Timeout:             s.config.Timeout,
+		EnableProgressTrack: true,
+		DeduplicateResults:  s.config.DeduplicateResults,
+	}
+}
+
+// convertExtendedResults converts advanced match results to standard format
+func (s *MatcherScanner) convertExtendedResults(extendedResults *matchertypes.MatchResults) *matcher.MatchResults {
+	return &matcher.MatchResults{
+		Matches:        extendedResults.Matches,
+		IgnoredMatches: extendedResults.IgnoredMatches,
+		Summary:        extendedResults.Summary,
+	}
 }
 
 // convertBOMToPackages converts CycloneDX BOM components to matcher packages
@@ -338,8 +395,8 @@ func (s *MatcherScanner) matchToVulnerability(match matcher.Match, component cyc
 }
 
 // convertMatcherVulnToDBVuln converts a matcher vulnerability to internal vulnerability type
-func (s *MatcherScanner) convertMatcherVulnToDBVuln(matcherVuln matchertypes.Vulnerability, component cyclonedx.Component) types.Vulnerability {
-	dbVuln := types.Vulnerability{
+func (s *MatcherScanner) convertMatcherVulnToDBVuln(matcherVuln matchertypes.Vulnerability, component cyclonedx.Component) model.Vulnerability {
+	dbVuln := model.Vulnerability{
 		Package:     matcherVuln.PackageName,
 		Constraints: matcherVuln.VersionConstraint,
 		Source:      matcherVuln.Namespace,
@@ -356,7 +413,7 @@ func (s *MatcherScanner) convertMatcherVulnToDBVuln(matcherVuln matchertypes.Vul
 }
 
 // enrichFromDatabase enriches vulnerability with database data
-func (s *MatcherScanner) enrichFromDatabase(dbVuln *types.Vulnerability, matcherID string) {
+func (s *MatcherScanner) enrichFromDatabase(dbVuln *model.Vulnerability, matcherID string) {
 	if dbRecord, err := s.store.GetVulnerabilityByID(matcherID); err == nil && dbRecord != nil {
 		// Use actual CVE from database, not database ID
 		dbVuln.CVE = s.getActualCVE(dbRecord, matcherID)
@@ -376,7 +433,7 @@ func (s *MatcherScanner) enrichFromDatabase(dbVuln *types.Vulnerability, matcher
 }
 
 // extractSeverityFromCVSS extracts severity from CVSS data or falls back to database severity
-func (s *MatcherScanner) extractSeverityFromCVSS(dbRecord *types.Vulnerability) string {
+func (s *MatcherScanner) extractSeverityFromCVSS(dbRecord *model.Vulnerability) string {
 	// First check CVSS data for severity
 	if len(dbRecord.CVSS) > 0 {
 		for _, cvss := range dbRecord.CVSS {
@@ -396,7 +453,7 @@ func (s *MatcherScanner) extractSeverityFromCVSS(dbRecord *types.Vulnerability) 
 }
 
 // getActualCVE returns the actual CVE or falls back to the ID
-func (s *MatcherScanner) getActualCVE(dbRecord *types.Vulnerability, fallbackID string) string {
+func (s *MatcherScanner) getActualCVE(dbRecord *model.Vulnerability, fallbackID string) string {
 	if dbRecord.CVE != "" {
 		return dbRecord.CVE
 	}
@@ -404,7 +461,7 @@ func (s *MatcherScanner) getActualCVE(dbRecord *types.Vulnerability, fallbackID 
 }
 
 // enrichFromMatcher enriches vulnerability with matcher data for missing fields
-func (s *MatcherScanner) enrichFromMatcher(dbVuln *types.Vulnerability, matcherVuln matchertypes.Vulnerability) {
+func (s *MatcherScanner) enrichFromMatcher(dbVuln *model.Vulnerability, matcherVuln matchertypes.Vulnerability) {
 	// Extract description from advisories if not already set
 	if dbVuln.Description == "" {
 		s.extractDescriptionFromAdvisories(dbVuln, matcherVuln)
@@ -427,14 +484,14 @@ func (s *MatcherScanner) enrichFromMatcher(dbVuln *types.Vulnerability, matcherV
 }
 
 // extractDescriptionFromAdvisories extracts description from matcher advisories
-func (s *MatcherScanner) extractDescriptionFromAdvisories(dbVuln *types.Vulnerability, matcherVuln matchertypes.Vulnerability) {
+func (s *MatcherScanner) extractDescriptionFromAdvisories(dbVuln *model.Vulnerability, matcherVuln matchertypes.Vulnerability) {
 	if len(matcherVuln.Advisories) > 0 && matcherVuln.Advisories[0].Description != "" {
 		dbVuln.Description = matcherVuln.Advisories[0].Description
 	}
 }
 
 // extractSeverityFromMetadata extracts severity from matcher metadata
-func (s *MatcherScanner) extractSeverityFromMetadata(dbVuln *types.Vulnerability, matcherVuln matchertypes.Vulnerability) {
+func (s *MatcherScanner) extractSeverityFromMetadata(dbVuln *model.Vulnerability, matcherVuln matchertypes.Vulnerability) {
 	if severity, exists := matcherVuln.Metadata["severity"]; exists {
 		if severityStr, ok := severity.(string); ok {
 			dbVuln.Severity = severityStr
@@ -443,17 +500,17 @@ func (s *MatcherScanner) extractSeverityFromMetadata(dbVuln *types.Vulnerability
 }
 
 // extractFixFromMatcher extracts fix information from matcher
-func (s *MatcherScanner) extractFixFromMatcher(dbVuln *types.Vulnerability, matcherVuln matchertypes.Vulnerability) {
+func (s *MatcherScanner) extractFixFromMatcher(dbVuln *model.Vulnerability, matcherVuln matchertypes.Vulnerability) {
 	if matcherVuln.Fix.State == matchertypes.FixStateFixed && matcherVuln.Fix.Version != "" {
 		dbVuln.Fixes = []string{matcherVuln.Fix.Version}
 	}
 }
 
 // extractReferencesFromAdvisories extracts references from matcher advisories
-func (s *MatcherScanner) extractReferencesFromAdvisories(dbVuln *types.Vulnerability, matcherVuln matchertypes.Vulnerability) {
+func (s *MatcherScanner) extractReferencesFromAdvisories(dbVuln *model.Vulnerability, matcherVuln matchertypes.Vulnerability) {
 	for _, advisory := range matcherVuln.Advisories {
 		if advisory.Link != "" {
-			dbVuln.References = append(dbVuln.References, types.Reference{
+			dbVuln.References = append(dbVuln.References, model.Reference{
 				URL:    advisory.Link,
 				Source: advisory.ID,
 			})
@@ -474,7 +531,7 @@ func (s *MatcherScanner) enrichVulnerabilityDataFromDB(vex *cyclonedx.Vulnerabil
 }
 
 // enhanceDescription updates the description if empty or generic
-func (s *MatcherScanner) enhanceDescription(vex *cyclonedx.Vulnerability, dbVuln *types.Vulnerability) {
+func (s *MatcherScanner) enhanceDescription(vex *cyclonedx.Vulnerability, dbVuln *model.Vulnerability) {
 	if vex.Description == "" || vex.Description == "Alpine security advisory - details available online" {
 		if dbVuln.Description != "" {
 			vex.Description = dbVuln.Description
@@ -483,7 +540,7 @@ func (s *MatcherScanner) enhanceDescription(vex *cyclonedx.Vulnerability, dbVuln
 }
 
 // enhanceSeverity updates the severity if not set or unknown
-func (s *MatcherScanner) enhanceSeverity(vex *cyclonedx.Vulnerability, dbVuln *types.Vulnerability) {
+func (s *MatcherScanner) enhanceSeverity(vex *cyclonedx.Vulnerability, dbVuln *model.Vulnerability) {
 	if vex.Ratings == nil || len(*vex.Ratings) == 0 || (*vex.Ratings)[0].Severity == "" {
 		if dbVuln.Severity != "" && dbVuln.Severity != "unknown" {
 			rating := cyclonedx.VulnerabilityRating{
@@ -496,7 +553,7 @@ func (s *MatcherScanner) enhanceSeverity(vex *cyclonedx.Vulnerability, dbVuln *t
 }
 
 // addAdditionalReferences adds database references to the VEX
-func (s *MatcherScanner) addAdditionalReferences(vex *cyclonedx.Vulnerability, dbVuln *types.Vulnerability) {
+func (s *MatcherScanner) addAdditionalReferences(vex *cyclonedx.Vulnerability, dbVuln *model.Vulnerability) {
 	if len(dbVuln.References) > 0 && vex.References != nil {
 		for _, ref := range dbVuln.References {
 			*vex.References = append(*vex.References, cyclonedx.VulnerabilityReference{

@@ -8,7 +8,7 @@ import (
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/internal/helper"
 	v3 "github.com/carbonetes/jacked/pkg/model/cdx"
-	"github.com/carbonetes/jacked/pkg/types"
+	"github.com/carbonetes/jacked/pkg/model"
 )
 
 // ComponentScanner provides a base implementation for component-specific scanners
@@ -133,7 +133,7 @@ func (s *ComponentScanner) processComponent(component cyclonedx.Component) ([]cy
 }
 
 // getVulnerabilities retrieves vulnerabilities for a component (to be overridden by specific scanners)
-func (s *ComponentScanner) getVulnerabilities(component cyclonedx.Component) *[]types.Vulnerability {
+func (s *ComponentScanner) getVulnerabilities(component cyclonedx.Component) *[]model.Vulnerability {
 	// Default implementation - try NVD match with keywords
 	upstream := helper.FindUpstream(component.BOMRef)
 	keywords := []string{component.Name}
@@ -146,7 +146,7 @@ func (s *ComponentScanner) getVulnerabilities(component cyclonedx.Component) *[]
 
 // VulnerabilityProvider defines interface for getting vulnerabilities for specific scanner types
 type VulnerabilityProvider interface {
-	GetVulnerabilities(component cyclonedx.Component) *[]types.Vulnerability
+	GetVulnerabilities(component cyclonedx.Component) *[]model.Vulnerability
 }
 
 // CustomComponentScanner allows for custom vulnerability retrieval logic
@@ -164,6 +164,6 @@ func NewCustomComponentScanner(scannerType, componentType string, store db.Store
 }
 
 // getVulnerabilities uses the custom provider
-func (s *CustomComponentScanner) getVulnerabilities(component cyclonedx.Component) *[]types.Vulnerability {
+func (s *CustomComponentScanner) getVulnerabilities(component cyclonedx.Component) *[]model.Vulnerability {
 	return s.provider.GetVulnerabilities(component)
 }

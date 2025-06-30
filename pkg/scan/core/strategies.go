@@ -49,6 +49,12 @@ func (s *SequentialStrategy) Execute(ctx context.Context, scanners []Scanner, bo
 	return results, nil
 }
 
+// ExecuteAnalysis runs analyzers sequentially (not used in current implementation)
+func (s *SequentialStrategy) ExecuteAnalysis(ctx context.Context, analyzers []Analyzer, sbom *cyclonedx.BOM) ([]AnalysisResult, error) {
+	// Not implemented yet - placeholder for future analyzer support
+	return []AnalysisResult{}, nil
+}
+
 // ConcurrentStrategy executes scanners concurrently with controlled parallelism
 type ConcurrentStrategy struct {
 	maxConcurrency int
@@ -103,4 +109,10 @@ func (s *ConcurrentStrategy) Execute(ctx context.Context, scanners []Scanner, bo
 
 	wg.Wait()
 	return results, nil
+}
+
+// ExecuteAnalysis runs analyzers concurrently (not used in current implementation)
+func (s *ConcurrentStrategy) ExecuteAnalysis(ctx context.Context, analyzers []Analyzer, sbom *cyclonedx.BOM) ([]AnalysisResult, error) {
+	// Not implemented yet - placeholder for future analyzer support
+	return []AnalysisResult{}, nil
 }

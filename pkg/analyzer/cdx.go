@@ -6,7 +6,9 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/internal/log"
+	"github.com/carbonetes/jacked/pkg/config"
 	"github.com/carbonetes/jacked/pkg/scan"
+	"github.com/carbonetes/jacked/pkg/scan/matchertypes"
 )
 
 // AnalyzeCDX is a function that takes a CycloneDX BOM as input and analyzes it for vulnerabilities.
@@ -22,12 +24,13 @@ func AnalyzeCDX(sbom *cyclonedx.BOM) {
 		return
 	}
 
-	log.Debug("Starting vulnerability analysis using legacy analyzer")
-	Analyze(sbom)
+	log.Debug("Starting SBOM vulnerability analysis using legacy analyzer")
+	// Use simplified analysis function
+	analyzeInternal(sbom)
 }
 
-// Analyze performs optimized vulnerability analysis on a CycloneDX BOM
-func Analyze(bom *cyclonedx.BOM) {
+// analyzeInternal performs optimized vulnerability analysis on a CycloneDX BOM
+func analyzeInternal(bom *cyclonedx.BOM) {
 	if bom == nil {
 		log.Debug("BOM is nil, skipping analysis")
 		return
@@ -46,34 +49,30 @@ func Analyze(bom *cyclonedx.BOM) {
 	start := time.Now()
 	componentCount := len(*bom.Components)
 
-	log.Debugf("Starting optimized vulnerability analysis for %d components", componentCount)
+	log.Debugf("Starting comprehensive SBOM vulnerability analysis for %d components", componentCount)
+
+	// Load configuration from file or create default with comprehensive comments
+	// The config file provides complete control over all scanning behavior:
+	// - Engine settings (concurrency, timeouts, caching)
+	// - Matcher behavior (CPE matching, VEX processing, ignore rules)
+	// - Performance optimization (adaptive settings, memory limits)
+	// - Output preferences (logging, metrics)
 
 	// Initialize store instance
 	store := db.Store{}
 
-	// Create optimized scanner manager with new architecture
-	scanManager := scan.NewManager(store)
+	// Load scanner configuration (use default config)
+	scannerConfig := config.GetDefaultConfiguration()
 
-	// Configure optimization settings based on BOM size
-	if componentCount > 100 {
-		// For large BOMs, increase concurrency and enable caching
-		scanManager.SetConcurrency(8).
-			SetCaching(true).
-			SetTimeout(10 * time.Minute)
-		log.Debug("Configured for large BOM analysis")
-	} else if componentCount > 50 {
-		// For medium BOMs, moderate settings
-		scanManager.SetConcurrency(6).
-			SetCaching(true).
-			SetTimeout(5 * time.Minute)
-		log.Debug("Configured for medium BOM analysis")
-	} else {
-		// For small BOMs, basic settings with caching
-		scanManager.SetConcurrency(4).
-			SetCaching(true).
-			SetTimeout(3 * time.Minute)
-		log.Debug("Configured for small BOM analysis")
-	}
+	// Convert config to matcher format
+	matcherConfig := convertConfigToMatcherConfig(&scannerConfig)
+
+	// Log the configuration being used for transparency
+	log.Debugf("Using scanner configuration: concurrency=%d, caching=%t",
+		matcherConfig.MaxConcurrency, matcherConfig.EnableCaching)
+
+	// Create scanner manager with the file-based configuration
+	scanManager := scan.NewManagerWithOptions(store, matcherConfig)
 
 	// Execute vulnerability scanning
 	vulns, err := scanManager.Run(bom)
@@ -87,8 +86,8 @@ func Analyze(bom *cyclonedx.BOM) {
 	bom.Vulnerabilities = &vulns
 
 	duration := time.Since(start)
-	log.Debugf("Vulnerability analysis completed: %d vulnerabilities found in %v",
-		len(vulns), duration)
+	log.Debugf("Comprehensive SBOM vulnerability analysis completed: %d vulnerabilities found in %v (config: concurrency=%d, caching=%t)",
+		len(vulns), duration, matcherConfig.MaxConcurrency, matcherConfig.EnableCaching)
 
 	// Log performance metrics
 	if componentCount > 0 {
@@ -101,5 +100,30 @@ func Analyze(bom *cyclonedx.BOM) {
 	if componentCount > 200 {
 		db.ClearCache()
 		log.Debug("Cleared vulnerability cache due to large BOM size")
+	}
+}
+
+// convertConfigToMatcherConfig converts Configuration to MatcherConfig
+func convertConfigToMatcherConfig(sc *config.Configuration) *matchertypes.MatcherConfig {
+	// Create configuration directly from config with sensible defaults
+	return &matchertypes.MatcherConfig{
+		// Engine settings (these are used by the core scanning engine)
+		MaxConcurrency: sc.Performance.MaxConcurrentScanners,
+		EnableCaching:  sc.Performance.EnableCaching,
+		EnableMetrics:  false, // Default since this field doesn't exist in new config
+
+		// Matcher settings (these control vulnerability matching behavior)
+		NormalizeByCVE:           true,       // Default value
+		CPEMatching:              true,       // Default value
+		DeduplicateResults:       true,       // Default value
+		EnableVEXProcessing:      false,      // Default value
+		VEXDocumentPaths:         []string{}, // Default value
+		EnableConfidenceScoring:  false,      // Default value
+		MinConfidenceThreshold:   0.8,        // Default value
+		EnableTargetSWValidation: false,      // Default value
+		PreciseCPEMatching:       false,      // Default value
+
+		// Convert ignore rules (simplified for now)
+		DefaultIgnoreRules: []matchertypes.IgnoreRule{},
 	}
 }

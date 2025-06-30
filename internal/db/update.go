@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/carbonetes/jacked/cmd/jacked/ui/progress"
 	"github.com/carbonetes/jacked/internal/log"
 	"github.com/google/uuid"
 )
@@ -33,7 +34,7 @@ func download(url string, statusMsg string) string {
 
 	defer resp.Body.Close()
 
-	log.Infof("🔄 %s", statusMsg)
+	progress.Download(resp, out, statusMsg)
 
 	if resp.StatusCode != http.StatusOK {
 		log.Debugf("Error downloading database: %v", resp.Status)
@@ -44,8 +45,6 @@ func download(url string, statusMsg string) string {
 		log.Debugf("Error copying downloaded data into output tar file: %v", err)
 	}
 	defer out.Close()
-
-	log.Infof("✅ Database downloaded successfully")
 
 	return tempFile
 }
@@ -96,10 +95,11 @@ func extractTarGz(target, extractionPath string) error {
 				return err
 			}
 			out, err := os.Create(path)
+			progress.Extract(tarReader, int(header.Size), out, "Extracting "+header.Name)
 			if err != nil {
 				return err
 			}
-			log.Debugf("📦 Extracting %s", header.Name)
+
 			if _, err := io.Copy(io.MultiWriter(out), tarReader); err != nil {
 				return err
 			}

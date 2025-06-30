@@ -8,7 +8,7 @@ import (
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/pkg/scan/matcher/version"
 	"github.com/carbonetes/jacked/pkg/scan/matchertypes"
-	"github.com/carbonetes/jacked/pkg/types"
+	"github.com/carbonetes/jacked/pkg/model"
 )
 
 // Matcher provides common functionality for all vulnerability matchers
@@ -98,7 +98,7 @@ func (m *Matcher) findEcosystemMatches(ctx context.Context, pkg matchertypes.Pac
 	var matches []matchertypes.Match
 
 	// Query vulnerabilities using the appropriate store method based on ecosystem
-	var vulnerabilities *[]types.Vulnerability
+	var vulnerabilities *[]model.Vulnerability
 
 	switch pkg.Ecosystem {
 	case "npm":
@@ -215,7 +215,7 @@ func (m *Matcher) isVersionMatch(packageVersion, constraintStr string) bool {
 }
 
 // convertToMatcherVuln converts a database vulnerability to a matcher vulnerability
-func (m *Matcher) convertToMatcherVuln(dbVuln types.Vulnerability, ecosystem string) matchertypes.Vulnerability {
+func (m *Matcher) convertToMatcherVuln(dbVuln model.Vulnerability, ecosystem string) matchertypes.Vulnerability {
 	var relatedVulns []matchertypes.VulnerabilityRef
 	for _, advisory := range dbVuln.Advisories {
 		relatedVulns = append(relatedVulns, matchertypes.VulnerabilityRef{
@@ -276,7 +276,7 @@ func (m *Matcher) determineNamespace(ecosystem, distro string) string {
 }
 
 // determineFixState determines the fix state based on available fixes
-func (m *Matcher) determineFixState(vuln types.Vulnerability) matchertypes.FixState {
+func (m *Matcher) determineFixState(vuln model.Vulnerability) matchertypes.FixState {
 	if len(vuln.Fixes) > 0 {
 		return matchertypes.FixStateFixed
 	}
@@ -284,7 +284,7 @@ func (m *Matcher) determineFixState(vuln types.Vulnerability) matchertypes.FixSt
 }
 
 // getFixedVersion gets the fixed version from vulnerability data
-func (m *Matcher) getFixedVersion(vuln types.Vulnerability) string {
+func (m *Matcher) getFixedVersion(vuln model.Vulnerability) string {
 	if len(vuln.Fixes) > 0 {
 		return vuln.Fixes[0]
 	}
@@ -292,7 +292,7 @@ func (m *Matcher) getFixedVersion(vuln types.Vulnerability) string {
 }
 
 // getCVSSScore extracts the CVSS score from vulnerability data
-func (m *Matcher) getCVSSScore(vuln types.Vulnerability) float64 {
+func (m *Matcher) getCVSSScore(vuln model.Vulnerability) float64 {
 	if len(vuln.CVSS) > 0 {
 		return vuln.CVSS[0].Score
 	}

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/carbonetes/jacked/internal/log"
-	"github.com/carbonetes/jacked/pkg/types"
+	"github.com/carbonetes/jacked/pkg/model"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/sqliteshim"
@@ -36,7 +36,7 @@ var (
 	maxIdleConns = runtime.NumCPU()
 
 	// Cache for frequently accessed vulnerabilities
-	vulnCache     = make(map[string]*[]types.Vulnerability)
+	vulnCache     = make(map[string]*[]model.Vulnerability)
 	cacheMutex    sync.RWMutex
 	cacheTimeout  = 15 * time.Minute
 	lastCacheTime = make(map[string]time.Time)
@@ -100,7 +100,7 @@ func optimizeDatabase() {
 }
 
 // getCachedVulnerabilities retrieves vulnerabilities from cache if available and fresh
-func getCachedVulnerabilities(cacheKey string) (*[]types.Vulnerability, bool) {
+func getCachedVulnerabilities(cacheKey string) (*[]model.Vulnerability, bool) {
 	cacheMutex.RLock()
 	defer cacheMutex.RUnlock()
 
@@ -116,7 +116,7 @@ func getCachedVulnerabilities(cacheKey string) (*[]types.Vulnerability, bool) {
 }
 
 // setCachedVulnerabilities stores vulnerabilities in cache
-func setCachedVulnerabilities(cacheKey string, data *[]types.Vulnerability) {
+func setCachedVulnerabilities(cacheKey string, data *[]model.Vulnerability) {
 	cacheMutex.Lock()
 	defer cacheMutex.Unlock()
 
@@ -125,12 +125,12 @@ func setCachedVulnerabilities(cacheKey string, data *[]types.Vulnerability) {
 }
 
 // BatchVulnerabilityLookup performs optimized batch vulnerability lookups
-func (s *Store) BatchVulnerabilityLookup(packages []string, source string) map[string]*[]types.Vulnerability {
+func (s *Store) BatchVulnerabilityLookup(packages []string, source string) map[string]*[]model.Vulnerability {
 	if len(packages) == 0 {
-		return make(map[string]*[]types.Vulnerability)
+		return make(map[string]*[]model.Vulnerability)
 	}
 
-	results := make(map[string]*[]types.Vulnerability)
+	results := make(map[string]*[]model.Vulnerability)
 	uncachedPackages := make([]string, 0, len(packages))
 
 	// Check cache first
@@ -159,25 +159,25 @@ func (s *Store) BatchVulnerabilityLookup(packages []string, source string) map[s
 }
 
 // batchQueryVulnerabilities performs optimized batch database queries
-func (s *Store) batchQueryVulnerabilities(packages []string, source string) map[string]*[]types.Vulnerability {
+func (s *Store) batchQueryVulnerabilities(packages []string, source string) map[string]*[]model.Vulnerability {
 	if len(packages) == 0 {
-		return make(map[string]*[]types.Vulnerability)
+		return make(map[string]*[]model.Vulnerability)
 	}
 
-	vulnerabilities := make([]types.Vulnerability, 0)
+	vulnerabilities := make([]model.Vulnerability, 0)
 	query := db.NewSelect().
 		Model(&vulnerabilities).
 		Where("package IN (?) AND source = ?", bun.In(packages), source)
 
 	if err := query.Scan(context.Background()); err != nil {
 		log.Debugf("Error in batch vulnerability lookup: %v", err)
-		return make(map[string]*[]types.Vulnerability)
+		return make(map[string]*[]model.Vulnerability)
 	}
 
 	// Group results by package
-	results := make(map[string]*[]types.Vulnerability)
+	results := make(map[string]*[]model.Vulnerability)
 	for _, pkg := range packages {
-		results[pkg] = &[]types.Vulnerability{}
+		results[pkg] = &[]model.Vulnerability{}
 	}
 
 	for _, vuln := range vulnerabilities {
@@ -194,7 +194,7 @@ func ClearCache() {
 	cacheMutex.Lock()
 	defer cacheMutex.Unlock()
 
-	vulnCache = make(map[string]*[]types.Vulnerability)
+	vulnCache = make(map[string]*[]model.Vulnerability)
 	lastCacheTime = make(map[string]time.Time)
 
 	log.Debug("Vulnerability cache cleared")
@@ -214,7 +214,7 @@ func GetCacheStats() map[string]interface{} {
 }
 
 // GetVulnerabilityByID retrieves a vulnerability by its CVE ID from the database
-func (s *Store) GetVulnerabilityByID(id string) (*types.Vulnerability, error) {
+func (s *Store) GetVulnerabilityByID(id string) (*model.Vulnerability, error) {
 	if id == "" {
 		return nil, fmt.Errorf("vulnerability ID cannot be empty")
 	}
@@ -225,7 +225,7 @@ func (s *Store) GetVulnerabilityByID(id string) (*types.Vulnerability, error) {
 		return &(*cached)[0], nil
 	}
 
-	var vuln types.Vulnerability
+	var vuln model.Vulnerability
 	err := db.NewSelect().
 		Model(&vuln).
 		Where("cve = ?", id).
@@ -246,7 +246,7 @@ func (s *Store) GetVulnerabilityByID(id string) (*types.Vulnerability, error) {
 	}
 
 	// Cache the result
-	vulnList := []types.Vulnerability{vuln}
+	vulnList := []model.Vulnerability{vuln}
 	setCachedVulnerabilities(cacheKey, &vulnList)
 
 	return &vuln, nil

@@ -4,15 +4,112 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
+	"time"
 
 	"github.com/carbonetes/jacked/internal/helper"
 	"github.com/carbonetes/jacked/internal/log"
-	"github.com/carbonetes/jacked/pkg/types"
-	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v2"
 )
 
-var Config types.Configuration
+const (
+	DefaultConfigFilename = ".jacked.yaml"
+)
+
+// Configuration is the unified configuration structure for all Jacked settings
+type Configuration struct {
+	// Legacy field for backward compatibility
+	MaxFileSize int `yaml:"maxFileSize,omitempty"`
+
+	// Performance configuration - the main configuration used by the app
+	Performance PerformanceConfig `yaml:"performance"`
+
+	// CI configuration for CI/CD pipeline integration
+	CI CIConfiguration `yaml:"ci,omitempty"`
+}
+
+// PerformanceConfig controls performance optimization settings
+type PerformanceConfig struct {
+	// Legacy fields that are actually used in the codebase
+	MaxConcurrentScanners int           `yaml:"max_concurrent_scanners"`
+	ScanTimeout           time.Duration `yaml:"scan_timeout,omitempty"`
+	EnableCaching         bool          `yaml:"enable_caching"`
+	CacheTimeout          time.Duration `yaml:"cache_timeout"`
+	MaxCacheSize          int           `yaml:"max_cache_size"`
+	MaxDBConnections      int           `yaml:"max_db_connections"`
+	MaxIdleConnections    int           `yaml:"max_idle_connections"`
+	ConnectionTimeout     time.Duration `yaml:"connection_timeout"`
+	BatchSize             int           `yaml:"batch_size"`
+	EnableBatchProcessing bool          `yaml:"enable_batch_processing"`
+
+	// Experimental features for backward compatibility
+	EnableExperimentalFeatures bool                             `yaml:"enable_experimental_features,omitempty"`
+	Scanners                   map[string]ScannerSpecificConfig `yaml:"scanners,omitempty"`
+}
+
+// ScannerSpecificConfig for backward compatibility
+type ScannerSpecificConfig struct {
+	Enabled        bool          `yaml:"enabled"`
+	Timeout        time.Duration `yaml:"timeout"`
+	MaxConcurrency int           `yaml:"max_concurrency"`
+	CachingEnabled bool          `yaml:"caching_enabled"`
+	Priority       int           `yaml:"priority"`
+}
+
+// CIConfiguration for CI/CD integration
+type CIConfiguration struct {
+	FailCriteria FailCriteria `yaml:"fail_criteria,omitempty"`
+}
+
+// FailCriteria defines when CI should fail
+type FailCriteria struct {
+	Severity string `yaml:"severity,omitempty"` // "low", "medium", "high", "critical"
+}
+
+// OptimizationLevel for backward compatibility
+type OptimizationLevel int
+
+const (
+	OptimizationBasic OptimizationLevel = iota
+	OptimizationBalanced
+	OptimizationAggressive
+	OptimizationMaximum
+)
+
+// String returns string representation of optimization level
+func (o OptimizationLevel) String() string {
+	switch o {
+	case OptimizationBasic:
+		return "basic"
+	case OptimizationBalanced:
+		return "balanced"
+	case OptimizationAggressive:
+		return "aggressive"
+	case OptimizationMaximum:
+		return "maximum"
+	default:
+		return "balanced"
+	}
+}
+
+// ParseOptimizationLevel parses optimization level from string
+func ParseOptimizationLevel(s string) (OptimizationLevel, error) {
+	switch s {
+	case "basic":
+		return OptimizationBasic, nil
+	case "balanced":
+		return OptimizationBalanced, nil
+	case "aggressive":
+		return OptimizationAggressive, nil
+	case "maximum":
+		return OptimizationMaximum, nil
+	default:
+		return OptimizationBalanced, fmt.Errorf("unknown optimization level: %s", s)
+	}
+}
+
+var Config Configuration
 
 var path string = os.Getenv("JACKED_CONFIG")
 
@@ -67,27 +164,14 @@ func ReloadConfig() error {
 	}
 
 	// Load the config file
-	var config types.Configuration
+	var config Configuration
 	err = ReadConfigFile(&config, path)
 	if err != nil {
 		log.Debug("Error reading config file in ReloadConfig: ", err)
 		return err
 	}
 
-	if config.Version != types.ConfigVersion {
-		newConfig := New()
-		err := mapstructure.Decode(config, &newConfig)
-		if err != nil {
-			log.Debug(err)
-			return err
-		}
-		newConfig.Version = types.ConfigVersion
-		ReplaceConfigFile(newConfig, path)
-		Config = newConfig
-	} else {
-		Config = config
-	}
-
+	Config = config
 	return nil
 }
 
@@ -96,7 +180,7 @@ func init() {
 	if path == "" {
 		// Set the default path
 		home, _ := os.UserHomeDir()
-		defaultPath := home + string(os.PathSeparator) + ".jacked.yaml"
+		defaultPath := home + string(os.PathSeparator) + DefaultConfigFilename
 		path = defaultPath
 		os.Setenv("JACKED_CONFIG", path)
 	}
@@ -112,7 +196,7 @@ func init() {
 	}
 
 	// Load the config file
-	var config types.Configuration
+	var config Configuration
 	err = ReadConfigFile(&config, path)
 	if err != nil {
 		log.Debug("Error reading config file in init: ", err)
@@ -121,15 +205,6 @@ func init() {
 		return
 	}
 
-	if config.Version != types.ConfigVersion {
-		newConfig := New()
-		err := mapstructure.Decode(config, &newConfig)
-		if err != nil {
-			log.Debug(err)
-		}
-		newConfig.Version = types.ConfigVersion
-		ReplaceConfigFile(newConfig, path)
-	}
 	Config = config
 
 }
@@ -148,13 +223,8 @@ func DisplayConfig() {
 }
 
 // New creates a new configuration with default values
-func New() types.Configuration {
-	return types.Configuration{
-		// Set default values
-		Version:     types.ConfigVersion,
-		MaxFileSize: 52428800,
-		Performance: types.GetAdvancedPerformanceConfig(),
-	}
+func New() Configuration {
+	return GetDefaultConfiguration()
 }
 
 // MakeConfigFile creates a new configuration file with default values
@@ -169,7 +239,7 @@ func MakeConfigFile(path string) {
 	}
 }
 
-func ReadConfigFile(config *types.Configuration, path string) error {
+func ReadConfigFile(config *Configuration, path string) error {
 	configFile, err := os.ReadFile(path)
 	if err != nil {
 		log.Debug(err)
@@ -185,7 +255,7 @@ func ReadConfigFile(config *types.Configuration, path string) error {
 	return nil
 }
 
-func ReplaceConfigFile(config types.Configuration, path string) {
+func ReplaceConfigFile(config Configuration, path string) {
 	exist, err := helper.IsFileExists(path)
 	if err != nil {
 		log.Debug(err)
@@ -215,23 +285,170 @@ func LoadConfigFromPath(configPath string) error {
 		return os.ErrNotExist
 	}
 
-	var config types.Configuration
+	var config Configuration
 	err = ReadConfigFile(&config, configPath)
 	if err != nil {
 		return err
 	}
 
-	if config.Version != types.ConfigVersion {
-		newConfig := New()
-		err := mapstructure.Decode(config, &newConfig)
-		if err != nil {
-			return err
+	Config = config
+	return nil
+}
+
+// InitializeConfig handles all configuration setup
+func InitializeConfig(configFile, performance string, performanceChanged bool) *Configuration {
+	// Handle custom config file path
+	if configFile != "" {
+		log.Debugf("Using custom config file: %s", configFile)
+		SetConfigPath(configFile)
+		// Reload config from the custom path
+		if err := ReloadConfig(); err != nil {
+			log.Warnf("Failed to reload config: %v", err)
 		}
-		newConfig.Version = types.ConfigVersion
-		Config = newConfig
-	} else {
-		Config = config
+	}
+
+	// Handle performance optimization level (only if explicitly set)
+	if performanceChanged {
+		ApplyPerformanceLevel(performance)
+	}
+
+	return &Config
+}
+
+// ApplyPerformanceLevel sets the performance configuration based on the specified level
+func ApplyPerformanceLevel(performance string) {
+	var level OptimizationLevel
+	switch performance {
+	case "basic":
+		level = OptimizationBasic
+	case "balanced":
+		level = OptimizationBalanced
+	case "aggressive":
+		level = OptimizationAggressive
+	case "maximum":
+		level = OptimizationMaximum
+	default:
+		log.Warnf("Invalid performance level '%s', using balanced", performance)
+		level = OptimizationBalanced
+	}
+
+	Config.Performance = GetConfigForOptimizationLevel(level)
+	log.Debugf("Performance optimization level set to: %s", performance)
+}
+
+// SetupFailCriteria configures the fail criteria for CI mode
+func SetupFailCriteria(failCriteria string) {
+	if len(failCriteria) > 0 {
+		failCriteria = strings.ToLower(failCriteria)
+		Config.CI.FailCriteria.Severity = failCriteria
+	}
+}
+
+// GetDefaultConfiguration returns a Configuration with sensible defaults
+func GetDefaultConfiguration() Configuration {
+	return Configuration{
+		MaxFileSize: 52428800, // Legacy field: 50MB
+		Performance: PerformanceConfig{
+			MaxConcurrentScanners: runtime.NumCPU(),
+			EnableCaching:         true,
+			CacheTimeout:          1 * time.Hour,
+			MaxCacheSize:          1000,
+			MaxDBConnections:      10,
+			MaxIdleConnections:    5,
+			ConnectionTimeout:     30 * time.Second,
+			BatchSize:             100,
+			EnableBatchProcessing: true,
+		},
+		CI: CIConfiguration{
+			FailCriteria: FailCriteria{
+				Severity: "high", // Default to failing on high severity
+			},
+		},
+	}
+}
+
+// GenerateDefaultConfigFile creates a minimal configuration file with only implemented features
+func GenerateDefaultConfigFile(filePath string) error {
+	config := GetDefaultConfiguration()
+
+	// Generate YAML with only the fields that are actually used
+	yamlContent := fmt.Sprintf(`# Jacked Vulnerability Scanner Configuration
+# This is a minimal configuration with only implemented features
+# 
+# For documentation, visit: https://github.com/carbonetes/jacked
+
+# Legacy field for backward compatibility (file size limit in bytes)
+maxFileSize: %d
+
+# Performance Configuration
+# Controls scanning performance and resource usage
+performance:
+  # Number of concurrent scanners (default: number of CPU cores)
+  max_concurrent_scanners: %d
+  
+  # Enable result caching to speed up repeated scans
+  enable_caching: %t
+  
+  # Cache expiration time
+  cache_timeout: "%s"
+  
+  # Maximum number of cached items
+  max_cache_size: %d
+  
+  # Database connection settings
+  max_db_connections: %d
+  max_idle_connections: %d
+  connection_timeout: "%s"
+  
+  # Batch processing settings
+  batch_size: %d
+  enable_batch_processing: %t
+
+# CI/CD Integration Configuration
+ci:
+  # Criteria for failing CI builds
+  fail_criteria:
+    # Fail if vulnerabilities of this severity or higher are found
+    # Options: "low", "medium", "high", "critical"
+    severity: "%s"
+
+# Note: This configuration only includes fields that are actually implemented
+# in the codebase. Many advanced features shown in documentation may not
+# yet be fully implemented.
+`,
+		config.MaxFileSize,
+		config.Performance.MaxConcurrentScanners, config.Performance.EnableCaching,
+		config.Performance.CacheTimeout, config.Performance.MaxCacheSize,
+		config.Performance.MaxDBConnections, config.Performance.MaxIdleConnections,
+		config.Performance.ConnectionTimeout, config.Performance.BatchSize,
+		config.Performance.EnableBatchProcessing, config.CI.FailCriteria.Severity)
+
+	// Ensure directory exists
+	dir := filepath.Dir(filePath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dir, err)
+	}
+
+	// Write file
+	if err := os.WriteFile(filePath, []byte(yamlContent), 0644); err != nil {
+		return fmt.Errorf("failed to write config file %s: %w", filePath, err)
 	}
 
 	return nil
 }
+
+// Legacy function aliases for backward compatibility
+
+// GetDefaultScannerConfig returns the default configuration (alias for GetDefaultConfiguration)
+func GetDefaultScannerConfig() Configuration {
+	return GetDefaultConfiguration()
+}
+
+// GetAdvancedPerformanceConfig returns the performance section of the default configuration
+func GetAdvancedPerformanceConfig() PerformanceConfig {
+	return GetDefaultConfiguration().Performance
+}
+
+// Legacy type aliases for backward compatibility
+type AdvancedPerformanceConfig = PerformanceConfig
+type LegacyPerformanceConfig = PerformanceConfig

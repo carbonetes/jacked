@@ -102,6 +102,7 @@ type MatchDetail struct {
 type IgnoredMatch struct {
 	Match              Match        `json:"match"`
 	AppliedIgnoreRules []IgnoreRule `json:"applied_ignore_rules"`
+	Reason             string       `json:"reason,omitempty"`
 }
 
 // IgnoreRule defines criteria for ignoring vulnerability matches
@@ -112,6 +113,39 @@ type IgnoreRule struct {
 	FixState      string `json:"fix_state,omitempty"`
 	Language      string `json:"language,omitempty"`
 	Locations     string `json:"locations,omitempty"`
+	Reason        string `json:"reason,omitempty"`
+}
+
+// DetailedIgnoreRule provides comprehensive ignore rule capabilities
+type DetailedIgnoreRule struct {
+	// Package matching
+	PackageName        string `json:"package_name,omitempty"`
+	PackageNamePattern string `json:"package_name_pattern,omitempty"`
+	PackageVersion     string `json:"package_version,omitempty"`
+	PackageType        string `json:"package_type,omitempty"`
+
+	// Vulnerability matching
+	CVE             string  `json:"cve,omitempty"`
+	CVEPattern      string  `json:"cve_pattern,omitempty"`
+	CVSS            float64 `json:"cvss,omitempty"`
+	MaxCVSSScore    float64 `json:"max_cvss_score,omitempty"`
+	MinCVSSScore    float64 `json:"min_cvss_score,omitempty"`
+	Severity        string  `json:"severity,omitempty"`
+	SeverityPattern string  `json:"severity_pattern,omitempty"`
+
+	// Fix state matching
+	FixState      string `json:"fix_state,omitempty"`
+	IgnoreUnfixed bool   `json:"ignore_unfixed"`
+
+	// Conditional logic
+	MatchType string `json:"match_type,omitempty"` // "AND", "OR", "NOT"
+
+	// Metadata
+	Reason    string            `json:"reason,omitempty"`
+	Namespace string            `json:"namespace,omitempty"`
+	Expiry    string            `json:"expiry,omitempty"`
+	Tags      []string          `json:"tags,omitempty"`
+	Metadata  map[string]string `json:"metadata,omitempty"`
 }
 
 // MatchResults contains the results of a vulnerability matching operation
@@ -148,6 +182,16 @@ type MatchOptions struct {
 	Timeout             string        `json:"timeout"`
 	EnableProgressTrack bool          `json:"enable_progress_track"`
 	DeduplicateResults  bool          `json:"deduplicate_results"`
+
+	// VEX and filtering options
+	VEXDocumentPaths         []string             `json:"vex_document_paths,omitempty"`
+	EnableVEXProcessing      bool                 `json:"enable_vex_processing"`
+	DetailedIgnoreRules      []DetailedIgnoreRule `json:"detailed_ignore_rules,omitempty"`
+	MinSeverityFilter        Severity             `json:"min_severity_filter,omitempty"`
+	EnableConfidenceScoring  bool                 `json:"enable_confidence_scoring"`
+	MinConfidenceThreshold   float64              `json:"min_confidence_threshold"`
+	EnableTargetSWValidation bool                 `json:"enable_target_sw_validation"`
+	PreciseCPEMatching       bool                 `json:"precise_cpe_matching"`
 }
 
 // MatcherConfig provides configuration for vulnerability matchers
@@ -162,6 +206,16 @@ type MatcherConfig struct {
 	DeduplicateResults bool
 	ExclusionProviders []string
 	DefaultIgnoreRules []IgnoreRule
+
+	// VEX and filtering options
+	EnableVEXProcessing      bool                 `json:"enable_vex_processing"`
+	VEXDocumentPaths         []string             `json:"vex_document_paths"`
+	DetailedIgnoreRules      []DetailedIgnoreRule `json:"detailed_ignore_rules"`
+	EnableConfidenceScoring  bool                 `json:"enable_confidence_scoring"`
+	MinConfidenceThreshold   float64              `json:"min_confidence_threshold"`
+	EnableTargetSWValidation bool                 `json:"enable_target_sw_validation"`
+	PreciseCPEMatching       bool                 `json:"precise_cpe_matching"`
+	MinSeverityFilter        Severity             `json:"min_severity_filter"`
 }
 
 // MatcherType identifies different types of vulnerability matchers
@@ -248,3 +302,46 @@ const (
 	LowSeverity      Severity = "low"
 	UnknownSeverity  Severity = "unknown"
 )
+
+// VEX-related types for Vulnerability Exploitability eXchange
+type VEXStatus string
+
+const (
+	VEXStatusAffected           VEXStatus = "affected"
+	VEXStatusNotAffected        VEXStatus = "not_affected"
+	VEXStatusFixed              VEXStatus = "fixed"
+	VEXStatusUnderInvestigation VEXStatus = "under_investigation"
+)
+
+// VEXJustification provides reasoning for VEX status
+type VEXJustification string
+
+const (
+	ComponentNotPresent                         VEXJustification = "component_not_present"
+	VulnerableCodeNotPresent                    VEXJustification = "vulnerable_code_not_present"
+	VulnerableCodeNotInExecutePath              VEXJustification = "vulnerable_code_not_in_execute_path"
+	VulnerableCodeCannotBeControlledByAdversary VEXJustification = "vulnerable_code_cannot_be_controlled_by_adversary"
+	InlineMitigationsAlreadyExist               VEXJustification = "inline_mitigations_already_exist"
+)
+
+// VEXDocument represents a VEX document structure
+type VEXDocument struct {
+	ID         string         `json:"id"`
+	DocumentID string         `json:"document_id,omitempty"`
+	Author     string         `json:"author,omitempty"`
+	AuthorRole string         `json:"author_role,omitempty"`
+	Timestamp  string         `json:"timestamp,omitempty"`
+	Version    string         `json:"version,omitempty"`
+	Statements []VEXStatement `json:"statements"`
+}
+
+// VEXStatement represents a single VEX statement
+type VEXStatement struct {
+	VulnerabilityID string           `json:"vulnerability_id"`
+	Products        []string         `json:"products,omitempty"`
+	Status          VEXStatus        `json:"status"`
+	Justification   VEXJustification `json:"justification,omitempty"`
+	ImpactStatement string           `json:"impact_statement,omitempty"`
+	ActionStatement string           `json:"action_statement,omitempty"`
+	Timestamp       string           `json:"timestamp,omitempty"`
+}

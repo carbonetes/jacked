@@ -7,7 +7,7 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 )
 
-// Scanner defines the core interface for vulnerability scanning
+// Scanner defines the core interface for vulnerability scanning of raw inputs
 type Scanner interface {
 	// Scan processes a BOM and returns vulnerabilities
 	Scan(ctx context.Context, bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error)
@@ -19,9 +19,22 @@ type Scanner interface {
 	SupportsComponent(componentType string) bool
 }
 
-// ExecutionStrategy defines how scanners are executed
+// Analyzer defines the interface for SBOM vulnerability analysis
+type Analyzer interface {
+	// Analyze processes an SBOM and returns vulnerabilities with rich context
+	Analyze(ctx context.Context, sbom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error)
+
+	// Type returns the analyzer type identifier
+	Type() string
+
+	// SupportsFormat checks if analyzer can handle an SBOM format
+	SupportsFormat(format string) bool
+}
+
+// ExecutionStrategy defines how scanners and analyzers are executed
 type ExecutionStrategy interface {
 	Execute(ctx context.Context, scanners []Scanner, bom *cyclonedx.BOM) ([]ScanResult, error)
+	ExecuteAnalysis(ctx context.Context, analyzers []Analyzer, sbom *cyclonedx.BOM) ([]AnalysisResult, error)
 }
 
 // CacheProvider defines caching interface
@@ -35,6 +48,7 @@ type CacheProvider interface {
 // MetricsCollector defines metrics collection interface
 type MetricsCollector interface {
 	RecordScan(scannerType string, duration time.Duration, componentCount, vulnCount int)
+	RecordAnalysis(analyzerType string, duration time.Duration, componentCount, vulnCount int)
 	RecordError(scannerType string, err error)
 	GetMetrics() map[string]interface{}
 }
@@ -51,6 +65,17 @@ type ScanResult struct {
 	Duration        time.Duration             `json:"duration"`
 	ComponentCount  int                       `json:"component_count"`
 	Error           error                     `json:"error,omitempty"`
+}
+
+// AnalysisResult encapsulates SBOM analysis results with metadata
+type AnalysisResult struct {
+	AnalyzerType    string                    `json:"analyzer_type"`
+	Vulnerabilities []cyclonedx.Vulnerability `json:"vulnerabilities"`
+	Duration        time.Duration             `json:"duration"`
+	ComponentCount  int                       `json:"component_count"`
+	Error           error                     `json:"error,omitempty"`
+	SBOMFormat      string                    `json:"sbom_format"`
+	Metadata        map[string]interface{}    `json:"metadata"`
 }
 
 // ScanConfig holds configuration for scanning operations

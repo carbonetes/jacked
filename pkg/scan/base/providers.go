@@ -4,7 +4,7 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/internal/helper"
-	"github.com/carbonetes/jacked/pkg/types"
+	"github.com/carbonetes/jacked/pkg/model"
 )
 
 // APKVulnerabilityProvider provides vulnerabilities for APK packages
@@ -16,7 +16,7 @@ func NewAPKVulnerabilityProvider(store db.Store) *APKVulnerabilityProvider {
 	return &APKVulnerabilityProvider{store: store}
 }
 
-func (p *APKVulnerabilityProvider) GetVulnerabilities(component cyclonedx.Component) *[]types.Vulnerability {
+func (p *APKVulnerabilityProvider) GetVulnerabilities(component cyclonedx.Component) *[]model.Vulnerability {
 	vulns := p.store.ApkSecDBMatch(component.Name)
 
 	// Also check upstream packages
@@ -44,7 +44,7 @@ func NewDpkgVulnerabilityProvider(store db.Store) *DpkgVulnerabilityProvider {
 	return &DpkgVulnerabilityProvider{store: store}
 }
 
-func (p *DpkgVulnerabilityProvider) GetVulnerabilities(component cyclonedx.Component) *[]types.Vulnerability {
+func (p *DpkgVulnerabilityProvider) GetVulnerabilities(component cyclonedx.Component) *[]model.Vulnerability {
 	vulns := p.store.DebSecTrackerMatch(component.Name)
 
 	// Also check upstream packages
@@ -72,7 +72,7 @@ func NewRPMVulnerabilityProvider(store db.Store) *RPMVulnerabilityProvider {
 	return &RPMVulnerabilityProvider{store: store}
 }
 
-func (p *RPMVulnerabilityProvider) GetVulnerabilities(component cyclonedx.Component) *[]types.Vulnerability {
+func (p *RPMVulnerabilityProvider) GetVulnerabilities(component cyclonedx.Component) *[]model.Vulnerability {
 	upstream := helper.FindUpstream(component.BOMRef)
 	keywords := []string{component.Name}
 	if upstream != "" {
@@ -90,7 +90,7 @@ func NewKeywordVulnerabilityProvider(store db.Store) *KeywordVulnerabilityProvid
 	return &KeywordVulnerabilityProvider{store: store}
 }
 
-func (p *KeywordVulnerabilityProvider) GetVulnerabilities(component cyclonedx.Component) *[]types.Vulnerability {
+func (p *KeywordVulnerabilityProvider) GetVulnerabilities(component cyclonedx.Component) *[]model.Vulnerability {
 	upstream := helper.FindUpstream(component.BOMRef)
 	keywords := []string{component.Name}
 	if upstream != "" {

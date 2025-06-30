@@ -6,21 +6,21 @@ import (
 	"strings"
 
 	"github.com/carbonetes/jacked/internal/log"
-	"github.com/carbonetes/jacked/pkg/types"
+	"github.com/carbonetes/jacked/pkg/model"
 	"github.com/uptrace/bun"
 )
 
 // NVDMatchWithKeywords performs optimized vulnerability lookup with caching
-func (s *Store) NVDMatchWithKeywords(keywords []string) *[]types.Vulnerability {
+func (s *Store) NVDMatchWithKeywords(keywords []string) *[]model.Vulnerability {
 	if len(keywords) == 0 {
-		return &[]types.Vulnerability{}
+		return &[]model.Vulnerability{}
 	}
 
 	// Use batch lookup for better performance
 	results := s.BatchVulnerabilityLookup(keywords, "nvd")
 
 	// Merge all results
-	var allVulns []types.Vulnerability
+	var allVulns []model.Vulnerability
 	for _, vulns := range results {
 		if vulns != nil {
 			allVulns = append(allVulns, *vulns...)
@@ -31,9 +31,9 @@ func (s *Store) NVDMatchWithKeywords(keywords []string) *[]types.Vulnerability {
 }
 
 // NVDMatchCVEsWithKeywords looks up vulnerabilities by CVE IDs
-func (s *Store) NVDMatchCVEsWithKeywords(keywords []string) *[]types.Vulnerability {
+func (s *Store) NVDMatchCVEsWithKeywords(keywords []string) *[]model.Vulnerability {
 	if len(keywords) == 0 {
-		return &[]types.Vulnerability{}
+		return &[]model.Vulnerability{}
 	}
 
 	// Check cache first
@@ -42,7 +42,7 @@ func (s *Store) NVDMatchCVEsWithKeywords(keywords []string) *[]types.Vulnerabili
 		return cached
 	}
 
-	vulnerabilities := new([]types.Vulnerability)
+	vulnerabilities := new([]model.Vulnerability)
 
 	// Use batched query for better performance
 	const batchSize = 100
@@ -53,7 +53,7 @@ func (s *Store) NVDMatchCVEsWithKeywords(keywords []string) *[]types.Vulnerabili
 		}
 
 		batch := keywords[i:end]
-		var batchVulns []types.Vulnerability
+		var batchVulns []model.Vulnerability
 
 		if err := db.NewSelect().
 			Model(&batchVulns).
@@ -73,16 +73,16 @@ func (s *Store) NVDMatchCVEsWithKeywords(keywords []string) *[]types.Vulnerabili
 }
 
 // NVDMatchWithPackageNames performs optimized package name lookup
-func (s *Store) NVDMatchWithPackageNames(names []string) *[]types.Vulnerability {
+func (s *Store) NVDMatchWithPackageNames(names []string) *[]model.Vulnerability {
 	if len(names) == 0 {
-		return &[]types.Vulnerability{}
+		return &[]model.Vulnerability{}
 	}
 
 	// Use batch lookup for better performance
 	results := s.BatchVulnerabilityLookup(names, "nvd")
 
 	// Merge all results
-	var allVulns []types.Vulnerability
+	var allVulns []model.Vulnerability
 	for _, vulns := range results {
 		if vulns != nil {
 			allVulns = append(allVulns, *vulns...)
@@ -93,9 +93,9 @@ func (s *Store) NVDMatchWithPackageNames(names []string) *[]types.Vulnerability 
 }
 
 // NVDBatchLookup performs highly optimized batch vulnerability lookup
-func (s *Store) NVDBatchLookup(packages []string, useCaching bool) map[string]*[]types.Vulnerability {
+func (s *Store) NVDBatchLookup(packages []string, useCaching bool) map[string]*[]model.Vulnerability {
 	if len(packages) == 0 {
-		return make(map[string]*[]types.Vulnerability)
+		return make(map[string]*[]model.Vulnerability)
 	}
 
 	if useCaching {
@@ -103,11 +103,11 @@ func (s *Store) NVDBatchLookup(packages []string, useCaching bool) map[string]*[
 	}
 
 	// Direct database lookup without caching
-	results := make(map[string]*[]types.Vulnerability)
+	results := make(map[string]*[]model.Vulnerability)
 
 	// Initialize results map
 	for _, pkg := range packages {
-		results[pkg] = &[]types.Vulnerability{}
+		results[pkg] = &[]model.Vulnerability{}
 	}
 
 	// Query in batches for memory efficiency
@@ -119,7 +119,7 @@ func (s *Store) NVDBatchLookup(packages []string, useCaching bool) map[string]*[
 		}
 
 		batch := packages[i:end]
-		vulnerabilities := make([]types.Vulnerability, 0)
+		vulnerabilities := make([]model.Vulnerability, 0)
 
 		query := db.NewSelect().
 			Model(&vulnerabilities).
@@ -142,9 +142,9 @@ func (s *Store) NVDBatchLookup(packages []string, useCaching bool) map[string]*[
 }
 
 // NVDMatchWithConstraints performs filtered vulnerability lookup with constraint matching
-func (s *Store) NVDMatchWithConstraints(packages []string, constraints map[string]string) *[]types.Vulnerability {
+func (s *Store) NVDMatchWithConstraints(packages []string, constraints map[string]string) *[]model.Vulnerability {
 	if len(packages) == 0 {
-		return &[]types.Vulnerability{}
+		return &[]model.Vulnerability{}
 	}
 
 	// Create cache key including constraints
@@ -153,7 +153,7 @@ func (s *Store) NVDMatchWithConstraints(packages []string, constraints map[strin
 		return cached
 	}
 
-	vulnerabilities := new([]types.Vulnerability)
+	vulnerabilities := new([]model.Vulnerability)
 
 	// Build query with constraint filtering
 	query := db.NewSelect().
@@ -179,7 +179,7 @@ func (s *Store) NVDMatchWithConstraints(packages []string, constraints map[strin
 
 	if err := query.Scan(context.Background()); err != nil {
 		log.Debugf("Error in NVD constrained lookup: %v", err)
-		return &[]types.Vulnerability{}
+		return &[]model.Vulnerability{}
 	}
 
 	// Cache the results

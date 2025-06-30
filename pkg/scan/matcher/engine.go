@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -36,6 +37,7 @@ type Engine struct {
 	matchers         []matchertypes.VulnerabilityMatcher
 	exclusionFilters []ExclusionFilter
 	config           matchertypes.MatcherConfig
+	extended         extendedProcessors
 }
 
 // temporary dummy types to avoid interface conflicts
@@ -48,11 +50,40 @@ type ExclusionFilter interface {
 
 // NewEngine creates a new vulnerability matching engine
 func NewEngine(config matchertypes.MatcherConfig) *Engine {
-	return &Engine{
+	engine := &Engine{
 		provider:         &dummyProvider{},
 		matchers:         make([]matchertypes.VulnerabilityMatcher, 0),
 		exclusionFilters: make([]ExclusionFilter, 0),
 		config:           config,
+		extended:         extendedProcessors{},
+	}
+
+	// Initialize extended processors
+	engine.initializeExtendedProcessors()
+
+	return engine
+}
+
+// initializeExtendedProcessors sets up extended matching capabilities
+func (e *Engine) initializeExtendedProcessors() {
+	var vexProcessor *VEXProcessor
+
+	// Initialize VEX processor if enabled
+	if e.config.EnableVEXProcessing {
+		if processor, err := NewVEXProcessor(e.config.VEXDocumentPaths); err == nil {
+			vexProcessor = processor
+		} else {
+			log.Warnf("Failed to initialize VEX processor: %v", err)
+		}
+	}
+
+	e.extended = extendedProcessors{
+		vexProcessor:           vexProcessor,
+		detailedIgnoreRules:    e.config.DetailedIgnoreRules,
+		confidenceScoring:      e.config.EnableConfidenceScoring,
+		minConfidenceThreshold: e.config.MinConfidenceThreshold,
+		targetSWValidation:     e.config.EnableTargetSWValidation,
+		minSeverityFilter:      e.config.MinSeverityFilter,
 	}
 }
 
@@ -92,8 +123,59 @@ func (e *Engine) FindMatches(ctx context.Context, packages []Package, opts Match
 		return nil, fmt.Errorf("failed to search database for matches: %w", err)
 	}
 
+	// Apply all filtering and processing
+	matches, ignoredMatches := e.processMatches(allMatches, opts)
+
+	// Check severity threshold
+	if opts.FailSeverity != nil {
+		if e.hasSeverityAtOrAbove(*opts.FailSeverity, matches) {
+			return nil, NewSeverityThresholdError(*opts.FailSeverity)
+		}
+	}
+
+	// Finalize results
+	e.finalizeResults(results, matches, ignoredMatches, startTime, packages)
+
+	log.Debugf("vulnerability matching completed: found %d matches across %d packages",
+		len(matches), len(packages))
+
+	return results, nil
+}
+
+// processMatches applies all filtering and processing to matches
+func (e *Engine) processMatches(allMatches []Match, opts MatchOptions) ([]Match, []IgnoredMatch) {
+	matches := allMatches
+	var ignoredMatches []IgnoredMatch
+
 	// Apply ignore rules
-	matches, ignoredMatches := e.applyIgnoreRules(allMatches, opts.IgnoreRules)
+	matches, ignored := e.applyIgnoreRules(matches, opts.IgnoreRules)
+	ignoredMatches = append(ignoredMatches, ignored...)
+
+	// Apply enhanced ignore rules
+	if len(e.extended.detailedIgnoreRules) > 0 || len(opts.DetailedIgnoreRules) > 0 {
+		matches, ignored = e.applyDetailedIgnoreRules(matches, e.extended.detailedIgnoreRules, opts.DetailedIgnoreRules)
+		ignoredMatches = append(ignoredMatches, ignored...)
+	}
+
+	// Apply VEX processing if enabled
+	if e.extended.vexProcessor != nil && e.extended.vexProcessor.enabled {
+		matches, ignored = e.applyVEXProcessing(matches)
+		ignoredMatches = append(ignoredMatches, ignored...)
+	}
+
+	// Apply confidence scoring filter
+	if e.extended.confidenceScoring && e.extended.minConfidenceThreshold > 0 {
+		matches = e.filterByConfidence(matches, e.extended.minConfidenceThreshold)
+	}
+
+	// Apply minimum severity filter
+	if e.extended.minSeverityFilter != "" || opts.MinSeverityFilter != "" {
+		minSeverity := e.extended.minSeverityFilter
+		if opts.MinSeverityFilter != "" {
+			minSeverity = opts.MinSeverityFilter
+		}
+		matches = e.filterBySeverity(matches, minSeverity)
+	}
 
 	// Normalize by CVE if requested
 	if opts.NormalizeByCVE || e.config.NormalizeByCVE {
@@ -105,14 +187,11 @@ func (e *Engine) FindMatches(ctx context.Context, packages []Package, opts Match
 		matches = e.deduplicateMatches(matches)
 	}
 
-	// Check severity threshold
-	if opts.FailSeverity != nil {
-		if e.hasSeverityAtOrAbove(*opts.FailSeverity, matches) {
-			return nil, NewSeverityThresholdError(*opts.FailSeverity)
-		}
-	}
+	return matches, ignoredMatches
+}
 
-	// Populate results
+// finalizeResults populates the final results structure
+func (e *Engine) finalizeResults(results *MatchResults, matches []Match, ignoredMatches []IgnoredMatch, startTime time.Time, packages []Package) {
 	results.Matches = matches
 	results.IgnoredMatches = ignoredMatches
 	results.Summary.TotalMatches = len(matches)
@@ -128,11 +207,6 @@ func (e *Engine) FindMatches(ctx context.Context, packages []Package, opts Match
 
 	// Calculate severity and fix state summaries
 	e.calculateSummaryStats(results)
-
-	log.Debugf("vulnerability matching completed: found %d matches across %d packages",
-		len(matches), len(packages))
-
-	return results, nil
 }
 
 // searchDBForMatches searches the vulnerability database for matches
@@ -475,25 +549,25 @@ func (e *Engine) deduplicateMatches(matches []Match) []Match {
 	return deduplicated
 }
 
-// hasSeverityAtOrAbove checks if any match has severity at or above threshold
+// hasSeverityAtOrAbove checks if matches contain vulnerabilities at or above specified severity
 func (e *Engine) hasSeverityAtOrAbove(threshold Severity, matches []Match) bool {
-	severityOrder := map[Severity]int{
-		matchertypes.UnknownSeverity:  0,
-		matchertypes.LowSeverity:      1,
-		matchertypes.MediumSeverity:   2,
-		matchertypes.HighSeverity:     3,
-		matchertypes.CriticalSeverity: 4,
+	severityOrder := map[string]int{
+		"negligible": 0,
+		"low":        1,
+		"medium":     2,
+		"high":       3,
+		"critical":   4,
 	}
 
-	thresholdValue := severityOrder[threshold]
+	thresholdLevel, exists := severityOrder[string(threshold)]
+	if !exists {
+		return false
+	}
 
 	for _, match := range matches {
-		if severity, exists := match.Vulnerability.Metadata["severity"]; exists {
-			if sev, ok := severity.(string); ok {
-				if severityOrder[Severity(sev)] >= thresholdValue {
-					return true
-				}
-			}
+		severity := e.extractSeverity(match.Vulnerability)
+		if level, exists := severityOrder[severity]; exists && level >= thresholdLevel {
+			return true
 		}
 	}
 
@@ -541,11 +615,415 @@ func (e SeverityThresholdError) Error() string {
 }
 
 // NewSeverityThresholdError creates a new severity threshold error
-func NewSeverityThresholdError(threshold Severity) error {
-	return SeverityThresholdError{Threshold: threshold}
+func NewSeverityThresholdError(severity Severity) error {
+	return fmt.Errorf("vulnerability severity %s meets or exceeds failure threshold", severity)
 }
 
 // IsFatalError checks if an error is fatal
 func IsFatalError(err error) bool {
 	return strings.Contains(err.Error(), "fatal")
+}
+
+// Advanced matching processors
+type extendedProcessors struct {
+	vexProcessor           *VEXProcessor
+	detailedIgnoreRules    []matchertypes.DetailedIgnoreRule
+	confidenceScoring      bool
+	minConfidenceThreshold float64
+	targetSWValidation     bool
+	minSeverityFilter      matchertypes.Severity
+}
+
+// VEXProcessor handles VEX document processing
+type VEXProcessor struct {
+	documents []matchertypes.VEXDocument
+	enabled   bool
+}
+
+// NewVEXProcessor creates a new VEX processor
+func NewVEXProcessor(documentPaths []string) (*VEXProcessor, error) {
+	processor := &VEXProcessor{
+		enabled: true, // Allow enabling VEX processor even without initial documents
+	}
+
+	// Load VEX documents (simplified implementation)
+	for _, path := range documentPaths {
+		log.Debugf("Loading VEX document from: %s", path)
+		// VEX document loading would be implemented here
+		// For now, we'll create a placeholder document
+		doc := matchertypes.VEXDocument{
+			ID:         path,
+			DocumentID: path,
+			Author:     "system",
+			Statements: []matchertypes.VEXStatement{},
+		}
+		processor.documents = append(processor.documents, doc)
+	}
+
+	return processor, nil
+}
+
+// Advanced processing methods
+
+// applyDetailedIgnoreRules applies enhanced ignore rules to matches
+func (e *Engine) applyDetailedIgnoreRules(matches []Match, engineRules, optRules []matchertypes.DetailedIgnoreRule) ([]Match, []IgnoredMatch) {
+	var filteredMatches []Match
+	var ignoredMatches []IgnoredMatch
+
+	// Combine rules from engine config and options
+	allRules := append(engineRules, optRules...)
+	if len(allRules) == 0 {
+		return matches, ignoredMatches
+	}
+
+	for _, match := range matches {
+		ignored := false
+		var matchedRule *matchertypes.DetailedIgnoreRule
+
+		for _, rule := range allRules {
+			if e.matchesDetailedIgnoreRule(match, rule) {
+				ignored = true
+				matchedRule = &rule
+				break
+			}
+		}
+
+		if ignored {
+			ignoredMatch := IgnoredMatch{
+				Match: match,
+				AppliedIgnoreRules: []IgnoreRule{{
+					Vulnerability: matchedRule.CVE,
+					Package:       matchedRule.PackageName,
+					Reason:        matchedRule.Reason,
+				}},
+			}
+			ignoredMatches = append(ignoredMatches, ignoredMatch)
+		} else {
+			filteredMatches = append(filteredMatches, match)
+		}
+	}
+
+	return filteredMatches, ignoredMatches
+}
+
+// matchesDetailedIgnoreRule checks if a match should be ignored based on enhanced rule
+func (e *Engine) matchesDetailedIgnoreRule(match Match, rule matchertypes.DetailedIgnoreRule) bool {
+	return e.matchesPackageCriteria(match, rule) &&
+		e.matchesVulnerabilityCriteria(match, rule) &&
+		e.matchesFixStateCriteria(match, rule)
+}
+
+// matchesPackageCriteria checks if the match meets package-related ignore criteria
+func (e *Engine) matchesPackageCriteria(match Match, rule matchertypes.DetailedIgnoreRule) bool {
+	// Package name matching
+	if rule.PackageName != "" && match.Package.Name != rule.PackageName {
+		return false
+	}
+
+	if rule.PackageNamePattern != "" {
+		if matched, err := filepath.Match(rule.PackageNamePattern, match.Package.Name); err != nil || !matched {
+			return false
+		}
+	}
+
+	// Package version matching
+	if rule.PackageVersion != "" && match.Package.Version != rule.PackageVersion {
+		return false
+	}
+
+	return true
+}
+
+// matchesVulnerabilityCriteria checks if the match meets vulnerability-related ignore criteria
+func (e *Engine) matchesVulnerabilityCriteria(match Match, rule matchertypes.DetailedIgnoreRule) bool {
+	return e.matchesCVECriteria(match, rule) &&
+		e.matchesCVSSCriteria(match, rule) &&
+		e.matchesSeverityCriteria(match, rule)
+}
+
+// matchesCVECriteria checks CVE-related matching criteria
+func (e *Engine) matchesCVECriteria(match Match, rule matchertypes.DetailedIgnoreRule) bool {
+	// CVE matching
+	if rule.CVE != "" && match.Vulnerability.ID != rule.CVE {
+		return false
+	}
+
+	if rule.CVEPattern != "" {
+		if matched, err := filepath.Match(rule.CVEPattern, match.Vulnerability.ID); err != nil || !matched {
+			return false
+		}
+	}
+
+	return true
+}
+
+// matchesCVSSCriteria checks CVSS score criteria
+func (e *Engine) matchesCVSSCriteria(match Match, rule matchertypes.DetailedIgnoreRule) bool {
+	cvssScore := e.getCVSSScore(match.Vulnerability)
+
+	if rule.MaxCVSSScore > 0 && cvssScore > rule.MaxCVSSScore {
+		return false
+	}
+
+	if rule.MinCVSSScore > 0 && cvssScore < rule.MinCVSSScore {
+		return false
+	}
+
+	return true
+}
+
+// matchesSeverityCriteria checks severity-related criteria
+func (e *Engine) matchesSeverityCriteria(match Match, rule matchertypes.DetailedIgnoreRule) bool {
+	vulnSeverity := e.extractSeverity(match.Vulnerability)
+
+	if rule.Severity != "" && vulnSeverity != rule.Severity {
+		return false
+	}
+
+	if rule.SeverityPattern != "" {
+		if matched, err := filepath.Match(rule.SeverityPattern, vulnSeverity); err != nil || !matched {
+			return false
+		}
+	}
+
+	return true
+}
+
+// matchesFixStateCriteria checks if the match meets fix state criteria
+func (e *Engine) matchesFixStateCriteria(match Match, rule matchertypes.DetailedIgnoreRule) bool {
+	// Fix state matching
+	if rule.IgnoreUnfixed && match.Vulnerability.Fix.State != "fixed" {
+		return true
+	}
+
+	return true
+}
+
+// getCVSSScore extracts CVSS score from vulnerability metadata
+func (e *Engine) getCVSSScore(vuln Vulnerability) float64 {
+	if vuln.Metadata == nil {
+		return 0.0
+	}
+
+	// Try CVSS v3 first
+	if score := e.extractCVSSFromVersion(vuln.Metadata, "cvssV3"); score > 0 {
+		return score
+	}
+
+	// Try CVSS v2
+	if score := e.extractCVSSFromVersion(vuln.Metadata, "cvssV2"); score > 0 {
+		return score
+	}
+
+	// Try generic cvss field
+	return e.extractGenericCVSS(vuln.Metadata)
+}
+
+// extractCVSSFromVersion extracts CVSS score from specific version metadata
+func (e *Engine) extractCVSSFromVersion(metadata map[string]interface{}, versionKey string) float64 {
+	if cvssData, exists := metadata[versionKey]; exists {
+		if cvssMap, ok := cvssData.(map[string]interface{}); ok {
+			if score, exists := cvssMap["baseScore"]; exists {
+				if scoreFloat, ok := score.(float64); ok {
+					return scoreFloat
+				}
+			}
+		}
+	}
+	return 0.0
+}
+
+// extractGenericCVSS extracts CVSS score from generic cvss field
+func (e *Engine) extractGenericCVSS(metadata map[string]interface{}) float64 {
+	if cvss, exists := metadata["cvss"]; exists {
+		if scoreFloat, ok := cvss.(float64); ok {
+			return scoreFloat
+		}
+		if cvssMap, ok := cvss.(map[string]interface{}); ok {
+			if score, exists := cvssMap["score"]; exists {
+				if scoreFloat, ok := score.(float64); ok {
+					return scoreFloat
+				}
+			}
+		}
+	}
+	return 0.0
+}
+
+// applyVEXProcessing applies VEX document filtering to matches
+func (e *Engine) applyVEXProcessing(matches []Match) ([]Match, []IgnoredMatch) {
+	var filteredMatches []Match
+	var ignoredMatches []IgnoredMatch
+
+	if e.extended.vexProcessor == nil || !e.extended.vexProcessor.enabled {
+		return matches, ignoredMatches
+	}
+
+	for _, match := range matches {
+		if e.shouldIgnoreByVEX(match) {
+			ignoredMatch := IgnoredMatch{
+				Match:  match,
+				Reason: "Excluded by VEX document",
+			}
+			ignoredMatches = append(ignoredMatches, ignoredMatch)
+		} else {
+			filteredMatches = append(filteredMatches, match)
+		}
+	}
+
+	return filteredMatches, ignoredMatches
+}
+
+// shouldIgnoreByVEX checks if a match should be ignored based on VEX documents
+func (e *Engine) shouldIgnoreByVEX(match Match) bool {
+	for _, doc := range e.extended.vexProcessor.documents {
+		for _, statement := range doc.Statements {
+			if statement.VulnerabilityID == match.Vulnerability.ID {
+				return statement.Status == matchertypes.VEXStatusNotAffected ||
+					statement.Status == matchertypes.VEXStatusFixed
+			}
+		}
+	}
+	return false
+}
+
+// filterByConfidence filters matches based on confidence threshold
+func (e *Engine) filterByConfidence(matches []Match, threshold float64) []Match {
+	var filteredMatches []Match
+
+	for _, match := range matches {
+		confidence := e.calculateMatchConfidence(match)
+		if confidence >= threshold {
+			filteredMatches = append(filteredMatches, match)
+		}
+	}
+
+	return filteredMatches
+}
+
+// calculateMatchConfidence calculates confidence score for a match
+func (e *Engine) calculateMatchConfidence(match Match) float64 {
+	// Simplified confidence calculation
+	confidence := 1.0
+
+	// Reduce confidence for partial matches
+	if len(match.Details) > 0 {
+		totalConfidence := 0.0
+		for _, detail := range match.Details {
+			totalConfidence += detail.Confidence
+		}
+		confidence = totalConfidence / float64(len(match.Details))
+	}
+
+	return confidence
+}
+
+// extractSeverity extracts severity from vulnerability metadata
+func (e *Engine) extractSeverity(vuln Vulnerability) string {
+	if vuln.Metadata == nil {
+		return ""
+	}
+
+	// Try direct severity fields first
+	if severity := e.getSeverityFromKey(vuln.Metadata, "severity"); severity != "" {
+		return severity
+	}
+	if severity := e.getSeverityFromKey(vuln.Metadata, "baseSeverity"); severity != "" {
+		return severity
+	}
+	if severity := e.getSeverityFromKey(vuln.Metadata, "cvss_severity"); severity != "" {
+		return severity
+	}
+	if severity := e.getSeverityFromKey(vuln.Metadata, "risk_level"); severity != "" {
+		return severity
+	}
+
+	// Try to extract from CVSS data
+	return e.getSeverityFromCVSS(vuln.Metadata)
+}
+
+// getSeverityFromKey extracts severity from a specific metadata key
+func (e *Engine) getSeverityFromKey(metadata map[string]interface{}, key string) string {
+	if severity, exists := metadata[key]; exists {
+		if severityStr, ok := severity.(string); ok {
+			return strings.ToLower(severityStr)
+		}
+	}
+	return ""
+}
+
+// getSeverityFromCVSS extracts severity from CVSS metadata
+func (e *Engine) getSeverityFromCVSS(metadata map[string]interface{}) string {
+	if cvssData, exists := metadata["cvss"]; exists {
+		if cvssMap, ok := cvssData.(map[string]interface{}); ok {
+			if severity, exists := cvssMap["baseSeverity"]; exists {
+				if severityStr, ok := severity.(string); ok {
+					return strings.ToLower(severityStr)
+				}
+			}
+		}
+	}
+	return ""
+}
+
+// filterBySeverity filters matches based on minimum severity
+func (e *Engine) filterBySeverity(matches []Match, minSeverity Severity) []Match {
+	if minSeverity == "" {
+		return matches
+	}
+
+	severityOrder := map[string]int{
+		"negligible": 0,
+		"low":        1,
+		"medium":     2,
+		"high":       3,
+		"critical":   4,
+	}
+
+	minLevel, exists := severityOrder[string(minSeverity)]
+	if !exists {
+		return matches
+	}
+
+	var filteredMatches []Match
+	for _, match := range matches {
+		severity := e.extractSeverity(match.Vulnerability)
+		if level, exists := severityOrder[severity]; exists && level >= minLevel {
+			filteredMatches = append(filteredMatches, match)
+		}
+	}
+
+	return filteredMatches
+}
+
+// loadVEXDocuments loads VEX documents from specified paths
+func (e *Engine) loadVEXDocuments(paths []string) error {
+	if e.extended.vexProcessor == nil {
+		return nil
+	}
+
+	for _, path := range paths {
+		doc, err := e.parseVEXDocument(path)
+		if err != nil {
+			log.Warnf("Failed to load VEX document from path %s: %v", path, err)
+			continue
+		}
+		e.extended.vexProcessor.documents = append(e.extended.vexProcessor.documents, doc)
+	}
+
+	return nil
+}
+
+// parseVEXDocument parses a VEX document from file path (placeholder implementation)
+func (e *Engine) parseVEXDocument(path string) (matchertypes.VEXDocument, error) {
+	// Basic implementation - in real world this would parse JSON/XML/other VEX formats
+	doc := matchertypes.VEXDocument{
+		ID:         filepath.Base(path),
+		Version:    "1.0",
+		Statements: []matchertypes.VEXStatement{},
+	}
+
+	// Note: Real implementation would read and parse the file
+	// This is a placeholder that creates an empty document
+	return doc, nil
 }
