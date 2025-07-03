@@ -32,15 +32,15 @@ func IsValidSeverity(severity string) bool {
 
 // CIModeConfig holds CI-related configuration
 type CIModeConfig struct {
-	Quiet          bool
-	FailCriteria   string
+	Quiet        bool
+	FailCriteria string
 }
 
 // SetupCIMode configures CI-related settings and returns the configuration
 func SetupCIMode(ci, quiet bool, failCriteria string) CIModeConfig {
 	ciMode := CIModeConfig{
-		Quiet:          quiet,
-		FailCriteria:   failCriteria,
+		Quiet:        quiet,
+		FailCriteria: failCriteria,
 	}
 
 	if ci {

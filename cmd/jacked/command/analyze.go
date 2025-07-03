@@ -14,7 +14,6 @@ import (
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/internal/helper"
 	"github.com/carbonetes/jacked/internal/log"
-	"github.com/carbonetes/jacked/internal/metrics"
 	"github.com/carbonetes/jacked/pkg/analyzer"
 	"github.com/carbonetes/jacked/pkg/ci"
 	"github.com/carbonetes/jacked/pkg/config"
@@ -23,100 +22,7 @@ import (
 
 // analyze is the main analyzer function
 func analyze(params scan.Parameters) {
-	// Use simple analysis by default, or optimized if performance config is set
-	if config.Config.Performance.MaxConcurrentScanners > 0 {
-		runOptimizedAnalysisWithParams(params)
-	} else {
-		runSimpleAnalysis(params)
-	}
-}
-
-// runOptimizedAnalysisWithParams runs optimized analysis using existing Parameters structure
-func runOptimizedAnalysisWithParams(params scan.Parameters) {
-	// Determine optimization level from global performance config
-	performanceConfig := loadPerformanceConfigFromParams(params)
-
-	log.Debugf("Using performance configuration")
-	log.Debugf("Max concurrency: %d", performanceConfig.MaxConcurrentScanners)
-	log.Debugf("Caching enabled: %v", performanceConfig.EnableCaching)
-
-	// Run the optimized analysis
-	startTime := time.Now()
-	runOptimizedScanWithParams(params, performanceConfig)
-	totalDuration := time.Since(startTime)
-
-	// Show performance metrics if explicitly requested
-	if params.ShowMetrics {
-		displayPerformanceMetricsFromParams(totalDuration, params)
-	}
-}
-
-// loadPerformanceConfigFromParams loads performance configuration based on existing parameters
-func loadPerformanceConfigFromParams(params scan.Parameters) config.PerformanceConfig {
-	// Use existing config system if available
-	if config.Config.Performance.MaxConcurrentScanners > 0 {
-		return config.Config.Performance
-	}
-
-	// Default to balanced optimization
-	return config.GetConfigForOptimizationLevel(config.OptimizationBalanced)
-}
-
-// runOptimizedScanWithParams runs optimized scan using existing Parameters structure
-func runOptimizedScanWithParams(params scan.Parameters, perfConfig config.PerformanceConfig) {
-	start := time.Now()
-
-	// Record scan metrics if requested
-	if params.ShowMetrics {
-		defer func() {
-			duration := time.Since(start)
-			// Record scan metrics
-			metrics.GetGlobalMetrics().RecordScan(duration, 0, 0) // Component and vuln counts would be passed here
-		}()
-	}
-
-	// Check if the database is up to date
-	db.DBCheck(params.SkipDBUpdate, params.ForceDBUpdate)
-	db.Load()
-
-	// Generate BOM after workflow
-	bom := generateBOMFromParams(params)
-	if bom == nil {
-		log.Error("Failed to generate BOM")
-		return
-	}
-
-	// Run SBOM vulnerability analysis
-	analyzer.AnalyzeCDX(bom)
-
-	// Record metrics
-	vulnCount := 0
-	if bom.Vulnerabilities != nil {
-		vulnCount = len(*bom.Vulnerabilities)
-	}
-
-	componentCount := 0
-	if bom.Components != nil {
-		componentCount = len(*bom.Components)
-	}
-
-	if params.ShowMetrics {
-		scanDuration := time.Since(start)
-		metrics.GetGlobalMetrics().RecordScan(scanDuration, componentCount, vulnCount)
-	}
-
-	// Handle CI mode
-	if params.CI {
-		ci.Run(config.Config.CI, bom)
-		os.Exit(0)
-	}
-
-	elapsed := time.Since(start).Seconds()
-
-	// Display results with basic output
-	if !params.Quiet {
-		displayBasicResults(params, elapsed, bom)
-	}
+	runSimpleAnalysis(params)
 }
 
 // runSimpleAnalysis provides a simple, direct analysis path - replaces cli.Run
@@ -219,39 +125,6 @@ func generateBOMFromParams(params scan.Parameters) *cyclonedx.BOM {
 	}
 
 	return cdx.Finalize(addr)
-}
-
-// displayPerformanceMetricsFromParams displays performance metrics if quiet mode is not enabled
-func displayPerformanceMetricsFromParams(totalDuration time.Duration, params scan.Parameters) {
-	// Only show metrics if not in quiet mode and not outputting to file
-	if params.Quiet || params.Format != scan.Table {
-		return
-	}
-
-	fmt.Println("\n" + metrics.GetGlobalMetrics().GetFormattedSummary())
-
-	// Show database cache statistics
-	cacheStats := db.GetCacheStats()
-	fmt.Printf("\nDatabase Cache Statistics:\n")
-	for key, value := range cacheStats {
-		fmt.Printf("  %s: %v\n", key, value)
-	}
-
-	fmt.Printf("\nTotal execution time: %v\n", totalDuration)
-}
-
-// getOptimizationLevelName returns a human-readable name for the optimization level
-func getOptimizationLevelName(config config.PerformanceConfig) string {
-	// Try to match the config to known optimization levels
-	if config.MaxConcurrentScanners <= 2 {
-		return "basic"
-	} else if config.MaxConcurrentScanners <= 4 {
-		return "balanced"
-	} else if config.MaxConcurrentScanners <= 8 {
-		return "aggressive"
-	} else {
-		return "maximum"
-	}
 }
 
 // displayBasicResults provides enhanced console output for scan results

@@ -7,6 +7,7 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/internal/log"
+	"github.com/carbonetes/jacked/pkg/model"
 	v3 "github.com/carbonetes/jacked/pkg/model/cdx"
 	"github.com/carbonetes/jacked/pkg/scan/matcher"
 	"github.com/carbonetes/jacked/pkg/scan/matcher/dart"
@@ -20,7 +21,6 @@ import (
 	"github.com/carbonetes/jacked/pkg/scan/matcher/ruby"
 	"github.com/carbonetes/jacked/pkg/scan/matcher/stock"
 	"github.com/carbonetes/jacked/pkg/scan/matchertypes"
-	"github.com/carbonetes/jacked/pkg/model"
 )
 
 // MatcherScanner implements the core.Scanner interface using the new matcher engine

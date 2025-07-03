@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/carbonetes/jacked/internal/db"
-	"github.com/carbonetes/jacked/pkg/scan/matchertypes"
 	"github.com/carbonetes/jacked/pkg/model"
+	"github.com/carbonetes/jacked/pkg/scan/matchertypes"
 )
 
 // Type aliases for types not already defined in engine.go

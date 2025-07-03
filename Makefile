@@ -15,8 +15,6 @@ help:
 	@echo "  test-performance  - Run performance tests with real scanning"
 	@echo "  test-all          - Run comprehensive test suite"
 	@echo "  test-config       - Test configuration validation"
-	@echo "  bench             - Run benchmarks"
-	@echo "  coverage          - Generate code coverage report"
 	@echo "  lint              - Run linting tools"
 	@echo "  fmt               - Format code"
 	@echo "  vet               - Run go vet"
@@ -140,8 +138,7 @@ ci: dev-setup lint test coverage
 # Performance regression testing
 perf-regression: bench
 	@echo "Running performance regression tests..."
-	go test -bench=BenchmarkGetDefaultPerformanceConfig -count=5 ./pkg/types/ > bench-results.txt
-	go test -bench=BenchmarkGetConfigForOptimizationLevel -count=5 ./pkg/config/ >> bench-results.txt
+	go test -bench=. -count=5 ./pkg/... > bench-results.txt
 	@echo "Performance results saved to bench-results.txt"
 
 # Create release build

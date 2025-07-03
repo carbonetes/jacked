@@ -18,7 +18,7 @@ func TestRootCommandFlags(t *testing.T) {
 	}
 
 	// Add essential flags
-	cmd.Flags().String("performance", "balanced", "Set performance optimization level")
+	cmd.Flags().String("format", "table", "Set output format")
 
 	tests := []struct {
 		name     string
@@ -28,12 +28,12 @@ func TestRootCommandFlags(t *testing.T) {
 		{
 			name:     "default_flags",
 			args:     []string{},
-			expected: "balanced",
+			expected: "table",
 		},
 		{
-			name:     "performance_aggressive",
-			args:     []string{"--performance=aggressive"},
-			expected: "aggressive",
+			name:     "format_json",
+			args:     []string{"--format=json"},
+			expected: "json",
 		},
 	}
 
@@ -45,13 +45,13 @@ func TestRootCommandFlags(t *testing.T) {
 				t.Fatalf("Command execution failed: %v", err)
 			}
 
-			actualValue, err := cmd.Flags().GetString("performance")
+			actualValue, err := cmd.Flags().GetString("format")
 			if err != nil {
-				t.Fatalf("Failed to get flag performance: %v", err)
+				t.Fatalf("Failed to get flag format: %v", err)
 			}
 
 			if actualValue != tt.expected {
-				t.Errorf("Flag performance: expected %s, got %s", tt.expected, actualValue)
+				t.Errorf("Flag format: expected %s, got %s", tt.expected, actualValue)
 			}
 		})
 	}
@@ -67,7 +67,7 @@ func TestCommandHelp(t *testing.T) {
 		},
 	}
 
-	cmd.Flags().String("performance", "balanced", "Performance optimization level")
+	cmd.Flags().String("format", "table", "Output format")
 
 	var buf bytes.Buffer
 	cmd.SetOut(&buf)
@@ -80,7 +80,7 @@ func TestCommandHelp(t *testing.T) {
 
 	helpOutput := buf.String()
 
-	if !strings.Contains(helpOutput, "--performance") {
-		t.Errorf("Help output should contain flag --performance")
+	if !strings.Contains(helpOutput, "--format") {
+		t.Errorf("Help output should contain flag --format")
 	}
 }

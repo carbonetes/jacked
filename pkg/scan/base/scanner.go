@@ -7,8 +7,8 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/internal/helper"
-	v3 "github.com/carbonetes/jacked/pkg/model/cdx"
 	"github.com/carbonetes/jacked/pkg/model"
+	v3 "github.com/carbonetes/jacked/pkg/model/cdx"
 )
 
 // ComponentScanner provides a base implementation for component-specific scanners

@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/carbonetes/jacked/internal/db"
+	"github.com/carbonetes/jacked/pkg/model"
 	"github.com/carbonetes/jacked/pkg/scan/matcher/version"
 	"github.com/carbonetes/jacked/pkg/scan/matchertypes"
-	"github.com/carbonetes/jacked/pkg/model"
 )
 
 // Matcher provides common functionality for all vulnerability matchers
@@ -20,12 +20,12 @@ type Matcher struct {
 
 // Config holds configuration for base matcher
 type Config struct {
-	UseCPEs                     bool
-	MaxConcurrency              int
-	EnableCaching               bool
-	SearchMavenUpstream         bool
-	SearchMavenBySHA            bool
-	AlwaysUseCPEForStdlib       bool
+	UseCPEs                      bool
+	MaxConcurrency               int
+	EnableCaching                bool
+	SearchMavenUpstream          bool
+	SearchMavenBySHA             bool
+	AlwaysUseCPEForStdlib        bool
 	AllowMainModulePseudoVersion bool
 }
 
@@ -46,22 +46,22 @@ func (m *Matcher) Type() matchertypes.MatcherType {
 // FindMatches is the main entry point for finding vulnerability matches
 func (m *Matcher) FindMatches(ctx context.Context, packages []matchertypes.Package, opts matchertypes.MatchOptions) (*matchertypes.MatchResults, error) {
 	var allMatches []matchertypes.Match
-	
+
 	for _, pkg := range packages {
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		default:
 		}
-		
+
 		matches, err := m.matchPackage(ctx, pkg, opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to match package %s: %w", pkg.Name, err)
 		}
-		
+
 		allMatches = append(allMatches, matches...)
 	}
-	
+
 	return &matchertypes.MatchResults{
 		Matches: allMatches,
 		Summary: matchertypes.MatchSummary{
@@ -73,14 +73,14 @@ func (m *Matcher) FindMatches(ctx context.Context, packages []matchertypes.Packa
 // matchPackage finds matches for a single package
 func (m *Matcher) matchPackage(ctx context.Context, pkg matchertypes.Package, opts matchertypes.MatchOptions) ([]matchertypes.Match, error) {
 	var allMatches []matchertypes.Match
-	
+
 	// Try exact ecosystem match first
 	ecosystemMatches, err := m.findEcosystemMatches(ctx, pkg, opts)
 	if err != nil {
 		return nil, err
 	}
 	allMatches = append(allMatches, ecosystemMatches...)
-	
+
 	// Try CPE match if enabled
 	if m.config.UseCPEs && opts.CPEMatching {
 		cpeMatches, err := m.findCPEMatches(ctx, pkg, opts)
@@ -89,17 +89,17 @@ func (m *Matcher) matchPackage(ctx context.Context, pkg matchertypes.Package, op
 		}
 		allMatches = append(allMatches, cpeMatches...)
 	}
-	
+
 	return allMatches, nil
 }
 
 // findEcosystemMatches finds vulnerabilities by ecosystem/language matching
 func (m *Matcher) findEcosystemMatches(ctx context.Context, pkg matchertypes.Package, opts matchertypes.MatchOptions) ([]matchertypes.Match, error) {
 	var matches []matchertypes.Match
-	
+
 	// Query vulnerabilities using the appropriate store method based on ecosystem
 	var vulnerabilities *[]model.Vulnerability
-	
+
 	switch pkg.Ecosystem {
 	case "npm":
 		vulnerabilities = m.store.NVDMatchWithKeywords([]string{pkg.Name})
@@ -120,11 +120,11 @@ func (m *Matcher) findEcosystemMatches(ctx context.Context, pkg matchertypes.Pac
 	default:
 		vulnerabilities = m.store.NVDMatchWithKeywords([]string{pkg.Name})
 	}
-	
+
 	if vulnerabilities == nil {
 		return matches, nil
 	}
-	
+
 	for _, vuln := range *vulnerabilities {
 		if m.isVersionMatch(pkg.Version, vuln.Constraints) {
 			match := matchertypes.Match{
@@ -150,7 +150,7 @@ func (m *Matcher) findEcosystemMatches(ctx context.Context, pkg matchertypes.Pac
 			matches = append(matches, match)
 		}
 	}
-	
+
 	return matches, nil
 }
 
@@ -159,16 +159,16 @@ func (m *Matcher) findCPEMatches(ctx context.Context, pkg matchertypes.Package, 
 	if len(pkg.CPEs) == 0 {
 		return nil, nil
 	}
-	
+
 	var allMatches []matchertypes.Match
-	
+
 	for _, cpe := range pkg.CPEs {
 		// Use NVD matching with CPE keywords
 		vulnerabilities := m.store.NVDMatchWithKeywords([]string{cpe})
 		if vulnerabilities == nil {
 			continue
 		}
-		
+
 		for _, vuln := range *vulnerabilities {
 			if m.isVersionMatch(pkg.Version, vuln.Constraints) {
 				match := matchertypes.Match{
@@ -196,7 +196,7 @@ func (m *Matcher) findCPEMatches(ctx context.Context, pkg matchertypes.Package, 
 			}
 		}
 	}
-	
+
 	return allMatches, nil
 }
 
@@ -205,12 +205,12 @@ func (m *Matcher) isVersionMatch(packageVersion, constraintStr string) bool {
 	if constraintStr == "" {
 		return false
 	}
-	
+
 	constraints, err := version.Parse(constraintStr)
 	if err != nil {
 		return len(strings.TrimSpace(constraintStr)) > 0
 	}
-	
+
 	return version.Check(packageVersion, constraints)
 }
 
@@ -223,13 +223,13 @@ func (m *Matcher) convertToMatcherVuln(dbVuln model.Vulnerability, ecosystem str
 			Namespace: m.determineNamespace(ecosystem, dbVuln.Distro),
 		})
 	}
-	
+
 	return matchertypes.Vulnerability{
-		ID:                fmt.Sprintf("%d", dbVuln.ID),
-		Namespace:         m.determineNamespace(ecosystem, dbVuln.Distro),
-		PackageName:       dbVuln.Package,
-		VersionConstraint: dbVuln.Constraints,
-		CPEs:              dbVuln.CPE,
+		ID:                     fmt.Sprintf("%d", dbVuln.ID),
+		Namespace:              m.determineNamespace(ecosystem, dbVuln.Distro),
+		PackageName:            dbVuln.Package,
+		VersionConstraint:      dbVuln.Constraints,
+		CPEs:                   dbVuln.CPE,
 		RelatedVulnerabilities: relatedVulns,
 		Fix: matchertypes.Fix{
 			State:   m.determineFixState(dbVuln),
@@ -250,7 +250,7 @@ func (m *Matcher) determineNamespace(ecosystem, distro string) string {
 	if distro != "" {
 		return fmt.Sprintf("%s:distro:%s", ecosystem, distro)
 	}
-	
+
 	switch ecosystem {
 	case "npm":
 		return "npm"

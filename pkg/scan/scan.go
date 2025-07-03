@@ -38,7 +38,6 @@ type Parameters struct {
 	CI             bool
 	SkipDBUpdate   bool
 	ForceDBUpdate  bool
-	ShowMetrics    bool // Add flag to show performance metrics
 	NonInteractive bool // Add flag to control interactive mode
 
 	// Diggity tool parameters to be passed to the scan engine
@@ -186,12 +185,12 @@ func (m *Manager) GetCacheStats() map[string]interface{} {
 // CreateScanParameters creates and initializes the scan parameters
 func CreateScanParameters(c *cobra.Command, args []string, quiet, ci bool, format, file string, skip, force bool, failCriteria string) Parameters {
 	return Parameters{
-		Format:         Format(format),
-		Quiet:          quiet,
-		File:           file,
-		SkipDBUpdate:   skip,
-		ForceDBUpdate:  force,
-		CI:             ci,
+		Format:        Format(format),
+		Quiet:         quiet,
+		File:          file,
+		SkipDBUpdate:  skip,
+		ForceDBUpdate: force,
+		CI:            ci,
 		Diggity: diggity.Parameters{
 			OutputFormat: diggity.JSON,
 		},

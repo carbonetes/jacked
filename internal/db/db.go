@@ -71,30 +71,27 @@ func Load() {
 		log.Fatalf("error pinging database: %v", err)
 	}
 
-	// Enable performance optimizations
-	optimizeDatabase()
+	// Enable basic SQLite settings
+	applyBasicSQLiteSettings()
 
-	log.Debug("Database connection pool initialized with optimizations")
+	log.Debug("Database connection pool initialized")
 }
 
 func GetDB() *bun.DB {
 	return db
 }
 
-// optimizeDatabase applies SQLite performance optimizations
-func optimizeDatabase() {
-	optimizations := []string{
-		"PRAGMA journal_mode = WAL",    // Write-Ahead Logging for better concurrency
-		"PRAGMA synchronous = NORMAL",  // Balance between safety and performance
-		"PRAGMA cache_size = -64000",   // 64MB cache
-		"PRAGMA temp_store = MEMORY",   // Store temp tables in memory
-		"PRAGMA mmap_size = 268435456", // 256MB memory map
-		"PRAGMA optimize",              // Optimize query planner
+// applyBasicSQLiteSettings applies basic SQLite settings
+func applyBasicSQLiteSettings() {
+	basicSettings := []string{
+		"PRAGMA journal_mode = WAL",   // Write-Ahead Logging
+		"PRAGMA synchronous = NORMAL", // Balance safety and performance
+		"PRAGMA cache_size = -16000",  // 16MB cache
 	}
 
-	for _, pragma := range optimizations {
+	for _, pragma := range basicSettings {
 		if _, err := db.Exec(pragma); err != nil {
-			log.Debugf("Failed to apply optimization %s: %v", pragma, err)
+			log.Debugf("Failed to apply setting %s: %v", pragma, err)
 		}
 	}
 }

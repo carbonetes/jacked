@@ -68,48 +68,6 @@ type FailCriteria struct {
 	Severity string `yaml:"severity,omitempty"` // "low", "medium", "high", "critical"
 }
 
-// OptimizationLevel for backward compatibility
-type OptimizationLevel int
-
-const (
-	OptimizationBasic OptimizationLevel = iota
-	OptimizationBalanced
-	OptimizationAggressive
-	OptimizationMaximum
-)
-
-// String returns string representation of optimization level
-func (o OptimizationLevel) String() string {
-	switch o {
-	case OptimizationBasic:
-		return "basic"
-	case OptimizationBalanced:
-		return "balanced"
-	case OptimizationAggressive:
-		return "aggressive"
-	case OptimizationMaximum:
-		return "maximum"
-	default:
-		return "balanced"
-	}
-}
-
-// ParseOptimizationLevel parses optimization level from string
-func ParseOptimizationLevel(s string) (OptimizationLevel, error) {
-	switch s {
-	case "basic":
-		return OptimizationBasic, nil
-	case "balanced":
-		return OptimizationBalanced, nil
-	case "aggressive":
-		return OptimizationAggressive, nil
-	case "maximum":
-		return OptimizationMaximum, nil
-	default:
-		return OptimizationBalanced, fmt.Errorf("unknown optimization level: %s", s)
-	}
-}
-
 var Config Configuration
 
 var path string = os.Getenv("JACKED_CONFIG")
@@ -327,7 +285,7 @@ func LoadConfigFromPath(configPath string) error {
 }
 
 // InitializeConfig handles all configuration setup
-func InitializeConfig(configFile, performance string, performanceChanged bool) *Configuration {
+func InitializeConfig(configFile string) *Configuration {
 	// Handle custom config file path
 	if configFile != "" {
 		log.Debugf("Using custom config file: %s", configFile)
@@ -338,33 +296,7 @@ func InitializeConfig(configFile, performance string, performanceChanged bool) *
 		}
 	}
 
-	// Handle performance optimization level (only if explicitly set)
-	if performanceChanged {
-		ApplyPerformanceLevel(performance)
-	}
-
 	return &Config
-}
-
-// ApplyPerformanceLevel sets the performance configuration based on the specified level
-func ApplyPerformanceLevel(performance string) {
-	var level OptimizationLevel
-	switch performance {
-	case "basic":
-		level = OptimizationBasic
-	case "balanced":
-		level = OptimizationBalanced
-	case "aggressive":
-		level = OptimizationAggressive
-	case "maximum":
-		level = OptimizationMaximum
-	default:
-		log.Warnf("Invalid performance level '%s', using balanced", performance)
-		level = OptimizationBalanced
-	}
-
-	Config.Performance = GetConfigForOptimizationLevel(level)
-	log.Debugf("Performance optimization level set to: %s", performance)
 }
 
 // SetupFailCriteria configures the fail criteria for CI mode
@@ -473,11 +405,6 @@ ci:
 // GetDefaultScannerConfig returns the default configuration (alias for GetDefaultConfiguration)
 func GetDefaultScannerConfig() Configuration {
 	return GetDefaultConfiguration()
-}
-
-// GetAdvancedPerformanceConfig returns the performance section of the default configuration
-func GetAdvancedPerformanceConfig() PerformanceConfig {
-	return GetDefaultConfiguration().Performance
 }
 
 // Legacy type aliases for backward compatibility

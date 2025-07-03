@@ -28,9 +28,6 @@ func init() {
 	// Output flag to specify the output format
 	root.Flags().StringP("output", "o", string(scan.Table), "Supported output types are: "+scan.GetAllOutputFormat())
 
-	// Performance optimization level flag
-	root.Flags().String("performance", "balanced", "Set performance optimization level (basic, balanced, aggressive, maximum)")
-
 	// Configuration file flag
 	root.Flags().StringP("config", "c", "", "Path to configuration file (default: $HOME/.jacked.yaml)")
 

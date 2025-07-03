@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/carbonetes/jacked/internal/db"
+	"github.com/carbonetes/jacked/pkg/model"
 	"github.com/carbonetes/jacked/pkg/scan/matcher/version"
 	"github.com/carbonetes/jacked/pkg/scan/matchertypes"
-	"github.com/carbonetes/jacked/pkg/model"
 )
 
 // Matcher provides common functionality for all vulnerability matchers

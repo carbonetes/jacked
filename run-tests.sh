@@ -80,25 +80,6 @@ echo ""
 echo -e "${YELLOW}=== UNIT TESTS ===${NC}"
 echo ""
 
-# Test types package (performance configuration)
-run_test "Types Package - Performance Configuration" \
-    "go test -v ./pkg/types/... -run TestGetDefaultPerformanceConfig"
-
-run_test "Types Package - Advanced Configuration" \
-    "go test -v ./pkg/types/... -run TestGetAdvancedPerformanceConfig"
-
-run_test "Types Package - Configuration Validation" \
-    "go test -v ./pkg/types/... -run TestValidatePerformanceConfig"
-
-run_test "Types Package - Optimization Levels" \
-    "go test -v ./pkg/types/... -run TestGetOptimizationLevelConfig"
-
-run_test "Types Package - Level Parsing" \
-    "go test -v ./pkg/types/... -run TestParseOptimizationLevel"
-
-run_test "Types Package - String Representation" \
-    "go test -v ./pkg/types/... -run TestOptimizationLevelString"
-
 # Test config package
 run_test "Config Package - File Loading" \
     "go test -v ./pkg/config/... -run TestLoadConfigFromPath"
@@ -115,15 +96,9 @@ run_test "Config Package - Invalid YAML" \
 run_test "Config Package - Default Generation" \
     "go test -v ./pkg/config/... -run TestDefaultConfigGeneration"
 
-run_test "Config Package - Optimization Level Integration" \
-    "go test -v ./pkg/config/... -run TestGetConfigForOptimizationLevel"
-
 # Test command package (CLI)
 run_test "Command Package - Root Flags" \
     "go test -v ./cmd/jacked/command/... -run TestRootCommandFlags"
-
-run_test "Command Package - Performance Level Validation" \
-    "go test -v ./cmd/jacked/command/... -run TestPerformanceLevelValidation"
 
 run_test "Command Package - Config Path Handling" \
     "go test -v ./cmd/jacked/command/... -run TestConfigPathHandling"

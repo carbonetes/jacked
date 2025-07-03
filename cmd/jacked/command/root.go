@@ -35,7 +35,6 @@ func rootCmd(c *cobra.Command, args []string) {
 	filesystem, _ := c.Flags().GetString("dir")
 	quiet, _ := c.Flags().GetBool("quiet")
 	format, _ := c.Flags().GetString("output")
-	performance, _ := c.Flags().GetString("performance")
 	configFile, _ := c.Flags().GetString("config")
 	file, _ := c.Flags().GetString("file")
 	debug, _ := c.Flags().GetBool("debug")
@@ -45,7 +44,7 @@ func rootCmd(c *cobra.Command, args []string) {
 	failCriteria, _ := c.Flags().GetString("fail-criteria")
 
 	// Initialize and configure the application
-	config.InitializeConfig(configFile, performance, c.Flags().Changed("performance"))
+	config.InitializeConfig(configFile)
 	log.SetupLogging(debug, quiet)
 	ciMode := ci.SetupCIMode(ciFlag, quiet, failCriteria)
 
