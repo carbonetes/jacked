@@ -13,5 +13,3 @@ func WriteYAML(t interface{}, path string) error {
 	}
 	return WriteFile(b, path)
 }
-
-

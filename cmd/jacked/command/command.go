@@ -3,7 +3,8 @@ package command
 import (
 	"fmt"
 
-	"github.com/carbonetes/jacked/pkg/types"
+	"github.com/carbonetes/jacked/pkg/ci"
+	"github.com/carbonetes/jacked/pkg/scan"
 	"github.com/spf13/cobra"
 )
 
@@ -25,10 +26,10 @@ func init() {
 	root.Flags().BoolP("quiet", "q", false, "Suppress all output except for errors")
 
 	// Output flag to specify the output format
-	root.Flags().StringP("output", "o", string(types.Table), "Supported output types are: "+types.GetAllOutputFormat())
+	root.Flags().StringP("output", "o", string(scan.Table), "Supported output types are: "+scan.GetAllOutputFormat())
 
-	// Scanners flag to specify the selected scanners to run
-	// root.Flags().StringArray("scanners", scanner.All, "Allow only selected scanners to run (e.g. --scanners apk,dpkg)")
+	// Configuration file flag
+	root.Flags().StringP("config", "c", "", "Path to configuration file (default: $HOME/.jacked.yaml)")
 
 	// File flag to save the scan result to a file
 	root.Flags().StringP("file", "f", "", "Save scan result to a file")
@@ -43,7 +44,7 @@ func init() {
 	// CI mode is a mode that is used to run jacked in a CI/CD pipeline
 	root.Flags().BoolP("ci", "", false, "Enable CI mode [experimental] (e.g. --ci)")
 
-	root.Flags().StringP("fail-criteria", "", "", fmt.Sprintf("Input a severity that will be found at or above given severity then return code will be 1 (%v)", types.GetJoinedSeverities()))
+	root.Flags().StringP("fail-criteria", "", "", fmt.Sprintf("Input a severity that will be found at or above given severity then return code will be 1 (%v)", ci.GetJoinedSeverities()))
 
 	root.PersistentFlags().BoolP("help", "h", false, "")
 	root.PersistentFlags().Lookup("help").Hidden = true

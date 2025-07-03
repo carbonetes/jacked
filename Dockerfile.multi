@@ -1,0 +1,50 @@
+# Multi-stage Dockerfile for Jacked vulnerability scanner
+# This version uses distroless for a more secure but slightly larger final image
+
+# Build stage
+FROM golang:1.23-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache ca-certificates git tzdata
+
+# Set working directory
+WORKDIR /build
+
+# Copy dependency files first (better layer caching)
+COPY go.mod go.sum ./
+
+# Download dependencies (cached if go.mod/go.sum unchanged)
+RUN go mod download && go mod verify
+
+# Copy source code
+COPY . .
+
+# Build with optimizations for size and security
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags='-w -s -extldflags "-static"' \
+    -a -installsuffix cgo \
+    -o jacked \
+    ./cmd/jacked
+
+# Alternative: Distroless final image (more secure, includes shell debugging)
+FROM gcr.io/distroless/static-debian12:nonroot AS distroless
+
+COPY --from=builder /build/jacked /jacked
+WORKDIR /workspace
+USER nonroot:nonroot
+ENTRYPOINT ["/jacked"]
+
+# Alternative: Scratch final image (smallest possible)
+FROM scratch AS scratch
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /build/jacked /jacked
+
+WORKDIR /workspace
+USER 65534:65534
+ENTRYPOINT ["/jacked"]
+
+# Default to distroless (change to scratch if you need absolute minimal size)
+FROM distroless

@@ -115,3 +115,15 @@ func Warn(arg ...interface{}) {
 func Warnf(format string, args ...interface{}) {
 	log.Warnf(format, args...)
 }
+
+// SetupLogging configures the logging system
+func SetupLogging(debug, quiet bool) {
+	if debug {
+		SetLevel(logrus.DebugLevel)
+	}
+
+	if quiet {
+		// Additional quiet mode setup if needed
+		Debug("Quiet mode enabled")
+	}
+}

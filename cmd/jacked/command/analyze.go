@@ -5,90 +5,188 @@ import (
 	"os"
 	"time"
 
+	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/carbonetes/diggity/pkg/cdx"
 	"github.com/carbonetes/diggity/pkg/reader"
 	diggity "github.com/carbonetes/diggity/pkg/types"
+	"github.com/carbonetes/jacked/cmd/jacked/ui/spinner"
+	"github.com/carbonetes/jacked/cmd/jacked/ui/table"
 	"github.com/carbonetes/jacked/internal/db"
+	"github.com/carbonetes/jacked/internal/helper"
 	"github.com/carbonetes/jacked/internal/log"
-	"github.com/carbonetes/jacked/internal/presenter"
-	"github.com/carbonetes/jacked/internal/tea/spinner"
 	"github.com/carbonetes/jacked/pkg/analyzer"
 	"github.com/carbonetes/jacked/pkg/ci"
 	"github.com/carbonetes/jacked/pkg/config"
-	"github.com/carbonetes/jacked/pkg/types"
+	"github.com/carbonetes/jacked/pkg/scan"
 )
 
-// New is the main function for the analyzer
-// It checks if the database is up to date, then scans the target with diggity
-// It then gets the sbom from cdx mod and analyzes it to find vulnerabilities
-// Finally, it displays the results
-func analyze(params types.Parameters) {
+// analyze is the main analyzer function
+func analyze(params scan.Parameters) {
+	runSimpleAnalysis(params)
+}
 
+// runSimpleAnalysis provides a simple, direct analysis path - replaces cli.Run
+func runSimpleAnalysis(params scan.Parameters) {
 	// Check if the database is up to date
 	db.DBCheck(params.SkipDBUpdate, params.ForceDBUpdate)
 	db.Load()
 	start := time.Now()
 
+	// Generate BOM
+	bom := generateBOMFromParams(params)
+	if bom == nil {
+		log.Error("Failed to generate BOM")
+		return
+	}
+
+	spinner.Set("Analyzing SBOM for vulnerabilities")
+
+	// Analyze BOM for vulnerabilities
+	analyzer.AnalyzeCDX(bom)
+
+	spinner.Done()
+
+	// Handle CI mode
+	if params.CI {
+		ci.Run(config.Config.CI, bom)
+		os.Exit(0)
+	}
+
+	elapsed := time.Since(start).Seconds()
+	log.Debug("SBOM analysis complete")
+
+	// Display results with basic output
+	if !params.Quiet {
+		displayBasicResults(params, elapsed, bom)
+	}
+}
+
+// generateBOMFromParams generates BOM using existing diggity parameters
+func generateBOMFromParams(params scan.Parameters) *cyclonedx.BOM {
+	// Use the existing diggity integration to generate the BOM
+	log.Debug("Generating BOM using diggity...")
+
 	diggityParams := params.Diggity
 	// Generate unique address for the scan
 	addr, err := diggity.NewAddress()
 	if err != nil {
-		log.Debug(err)
-		return
+		log.Debugf("Error creating diggity address: %v", err)
+		return nil
 	}
 
 	cdx.New(addr)
 	switch params.Diggity.ScanType {
 	case 1: // Image
-		spinner.Set(fmt.Sprintf("Fetching %s from remote registry", params.Diggity.Input))
-		// Scan target with diggity
+
+		spinner.Set("Reading image from registry: " + diggityParams.Input)
+		defer spinner.Done()
 
 		// Pull and read image from registry
 		image, ref, err := reader.GetImage(diggityParams.Input, nil)
 		if err != nil {
-			log.Fatal(err)
+			log.Debugf("Error getting image: %v", err)
+			return nil
 		}
 
 		cdx.SetMetadataComponent(addr, cdx.SetImageMetadata(*image, *ref, diggityParams.Input))
 
 		err = reader.ReadFiles(image, addr)
 		if err != nil {
-			log.Fatal(err)
+			log.Debugf("Error reading image files: %v", err)
+			return nil
 		}
+
 	case 2: // Tarball
-		spinner.Set(fmt.Sprintf("Reading tarfile %s", params.Diggity.Input))
+		if !params.Quiet {
+			log.Infof("Reading tarfile %s", params.Diggity.Input)
+		}
 		image, err := reader.ReadTarball(params.Diggity.Input)
 		if err != nil {
-			log.Fatal(err)
+			log.Debugf("Error reading tarball: %v", err)
+			return nil
 		}
 		err = reader.ReadFiles(image, addr)
 		if err != nil {
-			log.Fatal(err)
+			log.Debugf("Error reading tarball files: %v", err)
+			return nil
 		}
 	case 3: // Filesystem
-		spinner.Set(fmt.Sprintf("Reading directory %s", params.Diggity.Input))
+		if !params.Quiet {
+			log.Infof("Reading directory %s", params.Diggity.Input)
+		}
 		err := reader.FilesystemScanHandler(diggityParams.Input, addr)
 		if err != nil {
-			log.Fatal(err)
+			log.Debugf("Error scanning filesystem: %v", err)
+			return nil
 		}
 	default:
-		log.Fatal("Invalid scan type")
+		log.Debug("Invalid scan type")
+		return nil
 	}
 
-	bom := cdx.Finalize(addr)
-	// Analyze sbom to find vulnerabilities
-	analyzer.Analyze(bom)
+	return cdx.Finalize(addr)
+}
 
-	if params.CI {
-		// Run CI
-		ci.Run(config.Config.CI, bom)
-		os.Exit(0)
+// displayBasicResults provides enhanced console output for scan results
+func displayBasicResults(params scan.Parameters, elapsed float64, bom *cyclonedx.BOM) {
+	if bom == nil {
+		fmt.Println("No results to display")
+		return
 	}
 
-	elapsed := time.Since(start).Seconds()
+	vulnCount := 0
+	if bom.Vulnerabilities != nil {
+		vulnCount = len(*bom.Vulnerabilities)
+	}
 
-	spinner.Done()
+	componentCount := 0
+	if bom.Components != nil {
+		componentCount = len(*bom.Components)
+	}
 
-	// Display the results
-	presenter.Display(params, elapsed, bom)
+	// Handle file output first
+	if len(params.File) > 0 {
+		err := saveResultsToFile(bom, params.File, params.Format)
+		if err != nil {
+			log.Debugf("Failed to save results to file: %s", err.Error())
+		}
+		fmt.Printf("Results saved to: %s\n", params.File)
+		return
+	}
+
+	// Handle different output formats
+	switch params.Format {
+	case scan.Table:
+		// Simply show the table directly
+		table.Show(table.Create(bom), elapsed)
+	case scan.JSON:
+		result, err := helper.ToJSON(*bom)
+		if err != nil {
+			log.Debug(err)
+		}
+		fmt.Print(string(result))
+	default:
+		// Default to summary display
+		displayScanSummary(componentCount, vulnCount, elapsed)
+	}
+}
+
+// displayScanSummary shows a text summary of scan results
+func displayScanSummary(componentCount, vulnCount int, elapsed float64) {
+	fmt.Printf("\nScan Results:\n")
+	fmt.Printf("  Components scanned: %d\n", componentCount)
+	fmt.Printf("  Vulnerabilities found: %d\n", vulnCount)
+	fmt.Printf("  Scan duration: %.2f seconds\n", elapsed)
+
+	if vulnCount > 0 {
+		fmt.Printf("\nFound %d vulnerabilities in the scanned components.\n", vulnCount)
+		fmt.Printf("Use table format for detailed vulnerability information.\n")
+	} else {
+		fmt.Printf("\nNo vulnerabilities found.\n")
+	}
+}
+
+// saveResultsToFile saves scan results to a file in the specified format
+func saveResultsToFile(bom *cyclonedx.BOM, filePath string, format scan.Format) error {
+	return helper.SaveToFile(bom, filePath, format.String())
 }

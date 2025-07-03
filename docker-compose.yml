@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Production build
+  jacked:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+    image: jacked:latest
+    container_name: jacked-prod
+    volumes:
+      - ./test-data:/workspace:ro
+    working_dir: /workspace
+    entrypoint: ["/jacked"]
+    command: ["--help"]
+
+  # Development build with debugging tools
+  jacked-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: jacked:dev
+    container_name: jacked-dev
+    volumes:
+      - .:/app
+      - ./test-data:/workspace
+    working_dir: /workspace
+    entrypoint: ["/app/jacked"]
+    command: ["--help"]
+    environment:
+      - GO_ENV=development
+
+  # Multi-stage distroless build
+  jacked-distroless:
+    build:
+      context: .
+      dockerfile: Dockerfile.multi
+      target: distroless
+    image: jacked:distroless
+    container_name: jacked-distroless
+    volumes:
+      - ./test-data:/workspace:ro
+    working_dir: /workspace
+    entrypoint: ["/jacked"]
+    command: ["--help"]
+
+  # Scratch build (minimal)
+  jacked-scratch:
+    build:
+      context: .
+      dockerfile: Dockerfile.multi
+      target: scratch
+    image: jacked:scratch
+    container_name: jacked-scratch
+    volumes:
+      - ./test-data:/workspace:ro
+    working_dir: /workspace
+    entrypoint: ["/jacked"]
+    command: ["--help"]
+
+# Optional: Add a test network
+networks:
+  jacked-network:
+    driver: bridge
+
+# Optional: Add volumes for persistent data
+volumes:
+  jacked-cache:
+    driver: local

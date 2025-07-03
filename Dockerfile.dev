@@ -1,0 +1,30 @@
+# Development Dockerfile - single stage with debugging tools
+FROM golang:1.23-alpine
+
+# Install development tools
+RUN apk add --no-cache bash ca-certificates curl git vim
+
+# Set working directory
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN go build -o jacked ./cmd/jacked
+
+# Add metadata
+LABEL maintainer="Carbonetes Engineering <eng@carbonetes.com>"
+LABEL description="Jacked - Development image with debugging tools"
+
+# Expose any ports if needed
+# EXPOSE 8080
+
+# Set entrypoint
+ENTRYPOINT ["./jacked"]

@@ -40,7 +40,7 @@ func parseMavenVersion(version string) (raw mavenVersionRaw, err error) {
 	// Regex for: 1.2.3-QUALIFIER, 1.2.3, 1.2, 1.2.3-YYYYMMDD.HHMMSS-N, etc.
 	re := regexp.MustCompile(`^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([A-Za-z0-9\.]+))?(?:-([0-9]{8}\.[0-9]{6})-(\d+))?$`)
 	matches := re.FindStringSubmatch(version)
-	if matches == nil || len(matches) < 4 {
+	if len(matches) < 4 {
 		return mavenVersionRaw{}, fmt.Errorf("invalid maven version: %s", version)
 	}
 

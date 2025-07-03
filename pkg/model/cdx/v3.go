@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
-	"github.com/carbonetes/jacked/pkg/types"
+	"github.com/carbonetes/jacked/pkg/model"
 )
 
-func ToVex(vulnerability *types.Vulnerability, component *cyclonedx.Component, constraint string) *cyclonedx.Vulnerability {
+func ToVex(vulnerability *model.Vulnerability, component *cyclonedx.Component, constraint string) *cyclonedx.Vulnerability {
 	if vulnerability == nil {
 		return nil
 	}

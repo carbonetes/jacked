@@ -11,13 +11,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/carbonetes/jacked/cmd/jacked/ui/progress"
 	"github.com/carbonetes/jacked/internal/log"
-	"github.com/carbonetes/jacked/internal/tea/progress"
 	"github.com/google/uuid"
 )
 
 // Download using the provided url from the root metadata latest version and returns file path to be used on generating checksums.
-func download(url string, status string) string {
+func download(url string, statusMsg string) string {
 	var fileExt string = ".tar.gz"
 	var tempFile string = path.Join(os.TempDir(), "jacked-tmp-"+uuid.New().String()+fileExt)
 
@@ -34,7 +34,7 @@ func download(url string, status string) string {
 
 	defer resp.Body.Close()
 
-	progress.Download(resp, out, status)
+	progress.Download(resp, out, statusMsg)
 
 	if resp.StatusCode != http.StatusOK {
 		log.Debugf("Error downloading database: %v", resp.Status)
@@ -99,6 +99,7 @@ func extractTarGz(target, extractionPath string) error {
 			if err != nil {
 				return err
 			}
+
 			if _, err := io.Copy(io.MultiWriter(out), tarReader); err != nil {
 				return err
 			}

@@ -4,42 +4,38 @@ import "runtime"
 
 // Build contains information about the build of the application.
 type Build struct {
-	Application string `json:"Application"`
-	Version     string `json:"Version"`
-	BuildDate   string `json:"BuildDate"`
-	GitCommit   string `json:"GitCommit"`
-	GitDesc     string `json:"GitDesc"`
-	GoVersion   string `json:"GoVersion"`
-	Compiler    string `json:"Compiler"`
-	Platform    string `json:"Platform"`
+	Application string `json:"application"`
+	Version     string `json:"version"`
+	BuildDate   string `json:"buildDate"`
+	GitCommit   string `json:"gitCommit"`
+	GitDesc     string `json:"gitDesc"`
+	GoVersion   string `json:"goVersion"`
+	Compiler    string `json:"compiler"`
+	Platform    string `json:"platform"`
 }
 
-// Placeholder is used for default values when build information is not available.
-const placeholder string = "not available"
+// Default values when build information is not available.
+const notAvailable = "not available"
 
-// Variable has been set as "not available" as Default Value. Values provided as Built-Time Arguments.
+// Build-time variables (set during build)
 var (
-	application string = "jacked"
-	version     string = placeholder
-	buildDate   string = placeholder
-	gitCommit   string = placeholder
-	gitDesc     string = placeholder
-	goVersion   string = runtime.Version()
-	compiler    string = runtime.Compiler
-	platform    string = runtime.GOOS + "/" + runtime.GOARCH
+	application = "jacked"
+	version     = notAvailable
+	buildDate   = notAvailable
+	gitCommit   = notAvailable
+	gitDesc     = notAvailable
 )
 
 // GetBuild returns the build information of the application.
 func GetBuild() Build {
 	return Build{
-		Application: application, // Application Name
-		Version:     version,     // Jacked Version
-		BuildDate:   buildDate,   // Date of the build
-		GitCommit:   gitCommit,   // git SHA at build-time
-		GitDesc:     gitDesc,     // output of 'git describe --dirty --always --tags'
-		GoVersion:   goVersion,   // go runtime version at build-time
-		Compiler:    compiler,    // compiler used at build-time
-		Platform:    platform,    // GOOS and GOARCH at build-time
+		Application: application,
+		Version:     version,
+		BuildDate:   buildDate,
+		GitCommit:   gitCommit,
+		GitDesc:     gitDesc,
+		GoVersion:   runtime.Version(),
+		Compiler:    runtime.Compiler,
+		Platform:    runtime.GOOS + "/" + runtime.GOARCH,
 	}
-
 }

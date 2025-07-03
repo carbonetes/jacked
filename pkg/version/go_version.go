@@ -1,8 +1,9 @@
 package version
 
 import (
-	hVersion "github.com/hashicorp/go-version"
 	"strings"
+
+	hVersion "github.com/hashicorp/go-version"
 )
 
 type GoVersion struct {
@@ -49,6 +50,5 @@ func normalizeGoVersion(version string) string {
 	if idx := strings.Index(version, "(devel)"); idx != -1 {
 		version = version[:idx]
 	}
-
 	return version
 }

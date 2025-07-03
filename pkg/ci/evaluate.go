@@ -5,7 +5,6 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/carbonetes/jacked/internal/log"
-	"github.com/carbonetes/jacked/pkg/types"
 	"golang.org/x/exp/slices"
 )
 
@@ -34,13 +33,13 @@ func Evaluate(criteria string, cdx *cyclonedx.BOM) Assessment {
 	assessment := Assessment{}
 	var index int
 	criteria = strings.ToUpper(criteria)
-	for i, severity := range types.Severities {
+	for i, severity := range Severities {
 		if strings.EqualFold(severity, criteria) {
 			index = i
 		}
 	}
 
-	severities := types.Severities[index:]
+	severities := Severities[index:]
 	log.Printf("Evaluating vulnerabilities with criteria: %v", severities)
 	var tally Tally
 	for index, v := range *cdx.Vulnerabilities {

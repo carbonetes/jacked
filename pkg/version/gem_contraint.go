@@ -7,7 +7,7 @@ import (
 
 func (gv *GemVersion) Check(constraintStr string) (bool, error) {
 	if constraintStr == "" {
-		return false, NoConstraintError
+		return false, ErrNoConstraint
 	}
 
 	constraintSlice := helper.SplitConstraints(constraintStr)
