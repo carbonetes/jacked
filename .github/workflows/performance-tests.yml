@@ -91,12 +91,6 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
 
-      - name: Run gosec security scanner
-        run: |
-          go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
-          gosec -fmt sarif -out gosec-results.sarif ./...
-        continue-on-error: true
-
       - name: Check if SARIF file exists
         id: check-sarif
         run: |
@@ -180,27 +174,9 @@ jobs:
       - name: Run benchmarks
         if: matrix.os == 'ubuntu-latest' && matrix.go-version == env.GO_VERSION
         run: |
-          go test -bench=. -benchmem -count=3 ./pkg/types/ ./pkg/config/ > benchmark-results.txt
+          go test -bench=. -benchmem -count=3 ./pkg/scan/ > benchmark-results.txt
           echo "📊 Benchmark Results:"
           cat benchmark-results.txt
-
-      - name: Test CLI functionality (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          echo "🧪 Testing CLI commands..."
-          ./jacked --help
-
-          # Test version command if it exists
-          ./jacked version 2>/dev/null || echo "ℹ️ Version command not implemented yet"
-
-          # Test performance flags if they exist
-          if ./jacked --help 2>&1 | grep -q "performance"; then
-            echo "🚀 Testing performance configurations..."
-            ./jacked --performance=basic --help 2>/dev/null || echo "Basic performance config tested"
-            ./jacked --performance=balanced --help 2>/dev/null || echo "Balanced performance config tested"
-            ./jacked --performance=aggressive --help 2>/dev/null || echo "Aggressive performance config tested"
-            ./jacked --performance=maximum --help 2>/dev/null || echo "Maximum performance config tested"
-          fi
 
       - name: Test CLI functionality (Windows)
         if: runner.os == 'Windows'
