@@ -27,14 +27,13 @@ import (
 type MatcherScanner struct {
 	engine          *matcher.Engine
 	config          matchertypes.MatcherConfig
-	store           db.Store            // Add store for vulnerability enrichment
+	store           db.Store            // Store for vulnerability enrichment
 	extendedMatcher *MatcherIntegration // Optional extended matcher
 	useExtendedMode bool                // Flag to enable extended matching
 }
 
 // StoreVulnerabilityProvider adapts the db.Store to the VulnerabilityProvider interface
 type StoreVulnerabilityProvider struct {
-	store db.Store
 }
 
 // FindVulnerabilities searches for vulnerabilities based on search criteria
