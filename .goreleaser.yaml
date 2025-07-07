@@ -34,19 +34,6 @@ release:
     
     ## 📦 Installation Options
     
-    ### 🐳 Docker (Recommended)
-    ```bash
-    # Latest release
-    docker pull ghcr.io/carbonetes/jacked:{{ .Tag }}
-    
-    # Always latest
-    docker pull ghcr.io/carbonetes/jacked:latest
-    
-    # Run a scan
-    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-      ghcr.io/carbonetes/jacked:{{ .Tag }} scan <image>
-    ```
-    
     ### 🍺 Homebrew (macOS/Linux)
     ```bash
     # Add tap
@@ -250,72 +237,6 @@ universal_binaries:
     name_template: 'jacked'
     replace: true
 
-# Docker multi-arch configuration
-dockers:
-  - id: jacked-amd64
-    ids:
-      - jacked
-    image_templates:
-      - "ghcr.io/carbonetes/{{ .ProjectName }}:{{ .Version }}-amd64"
-      - "ghcr.io/carbonetes/{{ .ProjectName }}:latest-amd64"
-    dockerfile: Dockerfile
-    use: buildx
-    goos: linux
-    goarch: amd64
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/amd64"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--label=org.opencontainers.image.description=Comprehensive vulnerability scanner for container images and filesystems"
-      - "--label=org.opencontainers.image.url=https://github.com/carbonetes/jacked"
-      - "--label=org.opencontainers.image.documentation=https://github.com/carbonetes/jacked/blob/main/README.md"
-      - "--label=org.opencontainers.image.vendor=Carbonetes"
-      - "--label=org.opencontainers.image.licenses=Apache-2.0"
-      - "--label=org.opencontainers.image.authors=Carbonetes Engineering <eng@carbonetes.com>"
-      - "--label=org.opencontainers.image.base.name=gcr.io/distroless/static-debian12:nonroot"
-
-  - id: jacked-arm64
-    ids:
-      - jacked
-    image_templates:
-      - "ghcr.io/carbonetes/{{ .ProjectName }}:{{ .Version }}-arm64"
-      - "ghcr.io/carbonetes/{{ .ProjectName }}:latest-arm64"
-    dockerfile: Dockerfile
-    use: buildx
-    goos: linux
-    goarch: arm64
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/arm64"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--label=org.opencontainers.image.description=Comprehensive vulnerability scanner for container images and filesystems"
-      - "--label=org.opencontainers.image.url=https://github.com/carbonetes/jacked"
-      - "--label=org.opencontainers.image.documentation=https://github.com/carbonetes/jacked/blob/main/README.md"
-      - "--label=org.opencontainers.image.vendor=Carbonetes"
-      - "--label=org.opencontainers.image.licenses=Apache-2.0"
-      - "--label=org.opencontainers.image.authors=Carbonetes Engineering <eng@carbonetes.com>"
-      - "--label=org.opencontainers.image.base.name=gcr.io/distroless/static-debian12:nonroot"
-
-# Docker manifests for multi-arch images
-docker_manifests:
-  - name_template: "ghcr.io/carbonetes/{{ .ProjectName }}:{{ .Version }}"
-    image_templates:
-      - "ghcr.io/carbonetes/{{ .ProjectName }}:{{ .Version }}-amd64"
-      - "ghcr.io/carbonetes/{{ .ProjectName }}:{{ .Version }}-arm64"
-
-  - name_template: "ghcr.io/carbonetes/{{ .ProjectName }}:latest"
-    image_templates:
-      - "ghcr.io/carbonetes/{{ .ProjectName }}:latest-amd64"
-      - "ghcr.io/carbonetes/{{ .ProjectName }}:latest-arm64"
-
 # Package managers configuration
 nfpms:
   - id: default
@@ -377,8 +298,8 @@ nfpms:
         echo "🎉 Jacked has been successfully installed!"
         echo ""
         echo "💡 Quick Start:"
-        echo "   jacked scan <image-name>      # Scan a container image"
-        echo "   jacked scan <directory>       # Scan a filesystem directory"
+        echo "   jacked <image-name>      # Scan a container image"
+        echo "   jacked -d <directory>       # Scan a filesystem directory"
         echo "   jacked --help                 # Show all available commands"
         echo ""
         echo "📚 Documentation: https://github.com/carbonetes/jacked/blob/main/README.md"
@@ -505,7 +426,6 @@ snapcrafts:
           - network
           - network-bind
           - removable-media
-          - docker
         environment:
           HOME: $SNAP_USER_DATA
 
@@ -629,7 +549,6 @@ milestones:
 #       
 #       📦 Download: {{ .ReleaseURL }}
 #       📝 Changelog: {{ .ReleaseURL }}
-#       🐳 Docker: `docker pull ghcr.io/carbonetes/jacked:{{ .Tag }}`
 #   
 #   discord:
 #     enabled: true
@@ -637,7 +556,6 @@ milestones:
 #       🎉 **Jacked {{ .Tag }}** has been released!
 #       
 #       📦 [Download]({{ .ReleaseURL }})
-#       🐳 Docker: `ghcr.io/carbonetes/jacked:{{ .Tag }}`
 #
 #   twitter:
 #     enabled: true
@@ -646,8 +564,7 @@ milestones:
 #       
 #       New vulnerability scanner release with enhanced features.
 #       
-#       🐳 docker pull ghcr.io/carbonetes/jacked:{{ .Tag }}
-#       📦 {{ .ReleaseURL }}
+#        {{ .ReleaseURL }}
 #       
 #       #cybersecurity #golang #containerscanning #devops
 
