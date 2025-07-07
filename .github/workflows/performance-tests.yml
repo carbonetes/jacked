@@ -1,0 +1,403 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ["v*"]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".gitignore"
+      - "LICENSE"
+  pull_request:
+    branches: [main, develop]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".gitignore"
+      - "LICENSE"
+  schedule:
+    # Run daily at 2 AM UTC for dependency checks
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: "Skip test execution"
+        required: false
+        default: false
+        type: boolean
+      performance_only:
+        description: "Run only performance tests"
+        required: false
+        default: false
+        type: boolean
+
+env:
+  GO_VERSION: "1.23"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  CGO_ENABLED: 1
+
+# Cancel in-progress workflows on new push
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Job 1: Lint and Code Quality
+  lint:
+    name: Lint & Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Verify dependencies
+        run: go mod verify
+
+      - name: Check formatting
+        run: |
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "❌ Code is not properly formatted"
+            echo "Files that need formatting:"
+            gofmt -s -l .
+            echo "Run 'make fmt' or 'gofmt -s -w .' to fix"
+            exit 1
+          fi
+          echo "✅ Code is properly formatted"
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Install and run staticcheck
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          staticcheck ./...
+
+      - name: Install and run govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+      - name: Check if SARIF file exists
+        id: check-sarif
+        run: |
+          if [ -f "gosec-results.sarif" ]; then
+            echo "sarif-exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "sarif-exists=false" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - name: Upload security scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: steps.check-sarif.outputs.sarif-exists == 'true'
+        with:
+          sarif_file: gosec-results.sarif
+
+  # Job 2: Test Matrix
+  test:
+    name: Test (${{ matrix.os }}, Go ${{ matrix.go-version }})
+    runs-on: ${{ matrix.os }}
+    needs: lint
+    if: ${{ !inputs.performance_only }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        go-version: ["1.22", "1.23"]
+        exclude:
+          # Reduce matrix size for efficiency while keeping good coverage
+          - os: windows-latest
+            go-version: "1.22"
+          - os: macos-latest
+            go-version: "1.22"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Ensure consistent line endings across platforms
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+          cache-dependency-path: |
+            go.sum
+            go.mod
+
+      - name: Download dependencies
+        shell: bash
+        run: go mod download
+
+      - name: Configure Git line endings
+        shell: bash
+        run: |
+          # Configure Git to handle line endings consistently
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
+      - name: Verify go.mod and go.sum
+        shell: bash
+        run: |
+          go mod tidy
+          # Check if go.mod or go.sum have been modified
+          if ! git diff --quiet go.mod go.sum; then
+            echo "❌ go.mod or go.sum is not up to date"
+            echo "Please run 'go mod tidy' and commit the changes"
+            git diff go.mod go.sum
+            exit 1
+          fi
+          echo "✅ go.mod and go.sum are up to date"
+
+      - name: Build application
+        shell: bash
+        run: |
+          # Build with optimizations and static linking
+          export CGO_ENABLED=0
+          export GOOS=${{ runner.os == 'Windows' && 'windows' || runner.os == 'macOS' && 'darwin' || 'linux' }}
+          export GOARCH=amd64
+
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            go build -v -ldflags="-w -s -extldflags '-static'" -o jacked.exe ./cmd/jacked
+          else
+            go build -v -ldflags="-w -s -extldflags '-static'" -o jacked ./cmd/jacked
+          fi
+
+      - name: Run unit tests
+        if: ${{ !inputs.skip_tests }}
+        shell: bash
+        run: go test -v -race -timeout=10m -coverprofile=coverage.out ./...
+
+      - name: Run benchmarks
+        if: matrix.os == 'ubuntu-latest' && matrix.go-version == env.GO_VERSION
+        shell: bash
+        run: |
+          go test -bench=. -benchmem -count=3 ./pkg/scan/ > benchmark-results.txt
+          echo "📊 Benchmark Results:"
+          cat benchmark-results.txt
+
+      - name: Test CLI functionality (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          echo "🧪 Testing CLI commands on Windows..."
+          ./jacked.exe --help
+          ./jacked.exe version 2>/dev/null || echo "ℹ️ Version command not implemented yet"
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.go-version == env.GO_VERSION
+        uses: codecov/codecov-action@v4
+        continue-on-error: true
+        with:
+          file: ./coverage.out
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Store artifacts
+        if: matrix.os == 'ubuntu-latest' && matrix.go-version == env.GO_VERSION
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            coverage.out
+            benchmark-results.txt
+          retention-days: 30
+
+  performance:
+    name: Performance Monitoring
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' || inputs.performance_only
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build optimized binary for benchmarking
+        run: |
+          export CGO_ENABLED=0
+          go build -ldflags="-w -s" -o jacked-bench ./cmd/jacked
+
+      - name: Run comprehensive benchmarks
+        run: |
+          echo "📈 Running comprehensive performance benchmarks..."
+          mkdir -p benchmark-results
+
+          # Run benchmarks with different configurations
+          echo "🔍 Standard benchmarks..."
+          go test -bench=. -benchmem -count=5 -timeout=30m ./... | tee benchmark-results/standard.txt
+
+          echo "🚀 CPU profiling benchmarks..."
+          go test -bench=. -benchmem -cpuprofile=benchmark-results/cpu.prof -count=3 ./pkg/... | tee benchmark-results/cpu.txt
+
+          echo "💾 Memory profiling benchmarks..."
+          go test -bench=. -benchmem -memprofile=benchmark-results/mem.prof -count=3 ./pkg/... | tee benchmark-results/memory.txt
+
+      - name: Install performance analysis tools
+        run: |
+          go install golang.org/x/perf/cmd/benchstat@latest
+          go install golang.org/x/tools/cmd/pprof@latest
+
+      - name: Analyze performance trends
+        run: |
+          echo "📊 Performance Analysis Results:" | tee benchmark-results/analysis.txt
+          echo "================================" | tee -a benchmark-results/analysis.txt
+
+          # Show key metrics
+          echo "🎯 Key Performance Metrics:" | tee -a benchmark-results/analysis.txt
+          grep -E "(Benchmark.*ops|Benchmark.*MB/s)" benchmark-results/standard.txt | head -20 | tee -a benchmark-results/analysis.txt || echo "No specific metrics found"
+
+          echo "" | tee -a benchmark-results/analysis.txt
+          echo "💾 Memory Usage:" | tee -a benchmark-results/analysis.txt
+          grep -E "allocs/op" benchmark-results/standard.txt | head -20 | tee -a benchmark-results/analysis.txt || echo "No memory metrics found"
+
+          echo "" | tee -a benchmark-results/analysis.txt
+          echo "⚡ Speed Analysis:" | tee -a benchmark-results/analysis.txt
+          grep -E "ns/op" benchmark-results/standard.txt | head -20 | tee -a benchmark-results/analysis.txt || echo "No timing metrics found"
+
+      - name: Performance regression check
+        run: |
+          echo "🔍 Checking for performance regressions..."
+
+          # Create baseline if it doesn't exist
+          if [ ! -f "benchmark-baseline.txt" ]; then
+            echo "📊 Creating new performance baseline"
+            cp benchmark-results/standard.txt benchmark-baseline.txt
+          else
+            echo "📈 Comparing against baseline..."
+            benchstat benchmark-baseline.txt benchmark-results/standard.txt | tee benchmark-results/comparison.txt || echo "No significant changes detected"
+          fi
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results-${{ github.sha }}
+          path: |
+            benchmark-results/
+          retention-days: 90
+
+  # Job 6: Dependency Updates (scheduled runs only)
+  dependency-update:
+    name: Dependency Update Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Check for dependency updates
+        run: |
+          echo "🔍 Checking for Go module updates..."
+          go list -u -m all | grep '\[' || echo "✅ All dependencies are up to date"
+
+          echo ""
+          echo "🔒 Checking for security vulnerabilities..."
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+      - name: Update go.sum and verify
+        run: |
+          echo "📦 Updating go.sum..."
+          go mod tidy
+          go mod verify
+
+      - name: Create dependency update PR
+        if: success()
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update Go dependencies"
+          title: "🔄 Automated dependency updates"
+          body: |
+            This is an automated pull request to update Go dependencies.
+
+            ## What changed
+            - Updated `go.sum` with latest dependency hashes
+            - Verified all dependencies
+
+            ## Security
+            - ✅ All dependencies scanned for vulnerabilities
+            - ✅ No high/critical vulnerabilities found
+
+            Please review and merge if all checks pass.
+          branch: dependency-updates
+          delete-branch: true
+
+  # Job 7: Status Summary
+  summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [lint, test, performance]
+    if: always()
+
+    steps:
+      - name: Generate comprehensive summary
+        run: |
+          echo "# 🎯 CI/CD Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch/Tag:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Go Version:** ${{ env.GO_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 📊 Job Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status | Duration |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|----------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint & Code Quality | ${{ needs.lint.result == 'success' && '✅ Passed' || needs.lint.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ needs.test.result == 'success' && '✅ Passed' || needs.test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance | ${{ needs.performance.result == 'success' && '✅ Passed' || needs.performance.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Overall status
+          if [[ "${{ needs.lint.result }}" == "success" && 
+                ("${{ needs.test.result }}" == "success" || "${{ needs.test.result }}" == "skipped") ]]; then
+            echo "## 🎉 Pipeline Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "All critical checks passed! 🚀" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ⚠️ Pipeline Status: FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Some checks failed. Please review the logs above." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📋 Artifacts Generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 Test coverage reports" >> $GITHUB_STEP_SUMMARY
+          echo "- 📈 Performance profiles (if applicable)" >> $GITHUB_STEP_SUMMARY

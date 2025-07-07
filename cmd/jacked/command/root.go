@@ -2,17 +2,14 @@ package command
 
 import (
 	"os"
-	"strings"
 
-	diggity "github.com/carbonetes/diggity/pkg/types"
 	"github.com/carbonetes/jacked/cmd/jacked/build"
-	"github.com/carbonetes/jacked/internal/helper"
+	"github.com/carbonetes/jacked/cmd/jacked/ui/progress"
+	"github.com/carbonetes/jacked/cmd/jacked/ui/spinner"
 	"github.com/carbonetes/jacked/internal/log"
-	"github.com/carbonetes/jacked/internal/tea/progress"
-	"github.com/carbonetes/jacked/internal/tea/spinner"
+	"github.com/carbonetes/jacked/pkg/ci"
 	"github.com/carbonetes/jacked/pkg/config"
-	"github.com/carbonetes/jacked/pkg/types"
-	"github.com/sirupsen/logrus"
+	"github.com/carbonetes/jacked/pkg/scan"
 	"github.com/spf13/cobra"
 )
 
@@ -38,102 +35,55 @@ func rootCmd(c *cobra.Command, args []string) {
 	filesystem, _ := c.Flags().GetString("dir")
 	quiet, _ := c.Flags().GetBool("quiet")
 	format, _ := c.Flags().GetString("output")
-	// scanners, _ := c.Flags().GetStringArray("scanners")
+	configFile, _ := c.Flags().GetString("config")
 	file, _ := c.Flags().GetString("file")
 	debug, _ := c.Flags().GetBool("debug")
 	skip, _ := c.Flags().GetBool("skip-db-update")
 	force, _ := c.Flags().GetBool("force-db-update")
-	ci, _ := c.Flags().GetBool("ci")
+	ciFlag, _ := c.Flags().GetBool("ci")
 	failCriteria, _ := c.Flags().GetString("fail-criteria")
 
-	// If CI mode is enabled, suppress all output except for errors
-	if ci {
-		quiet = true
-		if len(failCriteria) == 0 || !types.IsValidSeverity(failCriteria) {
-			log.Warn("CI mode is enabled, but no valid fail criteria is provided")
-			log.Warn("Default fail criteria will be used: 'critical' severity vulnerabilities will fail the build")
-			failCriteria = "critical"
-		}
-	} else {
-		if len(failCriteria) > 0 {
-			log.Warn("CI mode is not enabled, fail criteria will not be used")
-		}
-	}
+	// Initialize and configure the application
+	config.InitializeConfig(configFile)
+	log.SetupLogging(debug, quiet)
+	ciMode := ci.SetupCIMode(ciFlag, quiet, failCriteria)
 
-	if debug {
-		log.SetLevel(logrus.DebugLevel)
-	}
+	// Apply configuration overrides
+	quiet = ciMode.Quiet
+	failCriteria = ciMode.FailCriteria
 
 	if quiet {
 		// If quiet mode is enabled, force the output format to JSON to avoid any issues
-		format = string(types.JSON)
+		format = string(scan.JSON)
 	} else {
 		// If quiet mode is not enabled, enable the spinner and progress bar
 		spinner.Skip = false
 		progress.Skip = false
 	}
 
-	params := types.Parameters{
-		Format:        types.Format(format),
-		Quiet:         quiet,
-		File:          file,
-		SkipDBUpdate:  skip,
-		ForceDBUpdate: force,
-		CI:            ci,
-		Diggity: diggity.Parameters{
-			OutputFormat: diggity.JSON,
-		},
+	// Create and validate parameters
+	options := scan.ScanOptions{
+		Quiet:        quiet,
+		CI:           ciFlag,
+		Format:       format,
+		File:         file,
+		Skip:         skip,
+		Force:        force,
+		FailCriteria: failCriteria,
+	}
+	params := scan.CreateScanParameters(c, args, options)
+	if !scan.ValidateInputAndSetup(&params, tarball, filesystem, args) {
+		_ = c.Help()
+		os.Exit(0)
 	}
 
-	if filesystem != "" {
-		if found, _ := helper.IsDirExists(filesystem); !found {
-			log.Fatal("directory not found: " + filesystem)
-			return
-		}
-		params.Diggity.ScanType = 3
-		params.Diggity.Input = filesystem
-	}
-
-	if tarball != "" {
-		if found, _ := helper.IsFileExists(tarball); !found {
-			log.Fatal("tarball not found: " + tarball)
-			return
-		}
-		params.Diggity.Input = tarball
-		params.Diggity.ScanType = 2
-	}
-
-	if filesystem == "" && tarball == "" {
-		if len(args) > 0 {
-			params.Diggity.Input = helper.FormatImage(args[0])
-			params.Diggity.ScanType = 1
-		} else {
-			_ = c.Help()
-			os.Exit(0)
-		}
-	}
-
-	if len(failCriteria) > 0 {
-		failCriteria = strings.ToLower(failCriteria)
-		config.Config.CI.FailCriteria.Severity = failCriteria
-	}
+	config.SetupFailCriteria(failCriteria)
 
 	// Validate the output format type
-	valid := validatFormat(params.Format)
-	if !valid {
+	if !scan.ValidateFormat(params.Format) {
 		log.Fatalf("Output type [%v] is not supported", params.Format)
 	}
 
 	// Run the analyzer with the parameters provided
 	analyze(params)
-}
-
-// validatFormat validates the output format type provided by the user and returns true if it is valid else false
-func validatFormat(format types.Format) bool {
-	switch types.Format(format) {
-	case types.JSON, types.Table, types.SPDXJSON, types.SPDXXML, types.SPDXTag, types.SnapshotJSON:
-		return true
-	default:
-		return false
-	}
 }

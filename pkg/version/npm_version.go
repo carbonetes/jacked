@@ -3,7 +3,7 @@ package version
 import npm "github.com/aquasecurity/go-npm-version/pkg"
 
 type NpmVersion struct {
-	raw string
+	raw    string
 	npmVer npm.Version
 }
 
@@ -13,7 +13,7 @@ func NewNpmVersion(raw string) (*NpmVersion, error) {
 		return nil, err
 	}
 	return &NpmVersion{
-		raw:   raw,
+		raw:    raw,
 		npmVer: npmVer,
 	}, nil
 }

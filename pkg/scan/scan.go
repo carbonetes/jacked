@@ -1,84 +1,249 @@
 package scan
 
 import (
-	"sync"
+	"context"
+	"strings"
+	"time"
 
 	"github.com/CycloneDX/cyclonedx-go"
+	diggity "github.com/carbonetes/diggity/pkg/types"
+	"github.com/carbonetes/jacked/internal/db"
+	"github.com/carbonetes/jacked/internal/helper"
 	"github.com/carbonetes/jacked/internal/log"
+	"github.com/carbonetes/jacked/pkg/scan/core"
+	"github.com/carbonetes/jacked/pkg/scan/matchertypes"
+	"github.com/spf13/cobra"
 )
 
-// Scanner defines an interface for scanning a CDX BOM for vulnerabilities.
+// ScanType represents the type of scan being performed
+type ScanType int
+
+// Format represents the output format for scan results
+type Format string
+
+const (
+	JSON         Format = "json"
+	Table        Format = "table"
+	SPDXJSON     Format = "spdx-json"
+	SPDXXML      Format = "spdx-xml"
+	SPDXTag      Format = "spdx-tag"
+	SnapshotJSON Format = "snapshot-json"
+)
+
+// Parameters holds all scan parameters
+type Parameters struct {
+	Quiet          bool
+	Format         Format
+	File           string
+	CI             bool
+	SkipDBUpdate   bool
+	ForceDBUpdate  bool
+	NonInteractive bool // Add flag to control interactive mode
+
+	// Diggity tool parameters to be passed to the scan engine
+	Diggity diggity.Parameters
+}
+
+func (o Format) String() string {
+	return string(o)
+}
+
+func GetAllOutputFormat() string {
+	return strings.Join([]string{JSON.String(), Table.String(), SPDXJSON.String(), SPDXXML.String(), SPDXTag.String(), SnapshotJSON.String()}, ", ")
+}
+
+// Manager provides backward compatibility with the new scanning architecture
+type Manager struct {
+	engine *core.ScanEngine
+}
+
+// Scanner defines an interface for scanning a CDX BOM for vulnerabilities (for backward compatibility)
 type Scanner interface {
 	Scan(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error)
 }
 
-// Manager manages multiple Scanner implementations.
-type Manager struct {
-	scanners []Scanner // List of scanners to run.
-}
-
-// NewManager creates a new Manager with the provided scanners.
-func NewManager(scanners ...Scanner) *Manager {
-	return &Manager{
-		scanners: scanners,
-	}
-}
-
-// Run executes all scanners concurrently on the given BOM.
-// It collects all vulnerabilities found and returns them.
-// If any scanner returns an error, the function returns immediately with that error.
-func (m *Manager) Run(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error) {
-	var (
-		vulnerabilities []cyclonedx.Vulnerability                               // Aggregated vulnerabilities from all scanners.
-		mu              sync.Mutex                                              // Protects access to vulnerabilities slice.
-		wg              sync.WaitGroup                                          // Waits for all scanners to finish.
-		errCh           = make(chan error, len(m.scanners))                     // Collects errors from scanners.
-		vulnCh          = make(chan []cyclonedx.Vulnerability, len(m.scanners)) // Collects vulnerabilities from scanners.
-	)
-
-	// Launch each scanner in its own goroutine.
-	for _, scanner := range m.scanners {
-		wg.Add(1)
-		go func(s Scanner) {
-			defer wg.Done()
-			vulns, err := s.Scan(bom)
-			if err != nil {
-				errCh <- err // Send error if scan fails.
-				return
-			}
-			vulnCh <- vulns // Send found vulnerabilities.
-		}(scanner)
+// NewManager creates a new Manager with the provided store and default optimizations
+func NewManager(store db.Store) *Manager {
+	config := core.ScanConfig{
+		MaxConcurrency: 4,
+		Timeout:        5 * time.Minute,
+		EnableCaching:  true,
+		EnableMetrics:  false,
+		CacheTTL:       15 * time.Minute,
 	}
 
-	wg.Wait()     // Wait for all scanners to finish.
-	close(errCh)  // No more errors will be sent.
-	close(vulnCh) // No more vulnerabilities will be sent.
+	engine := core.NewScanEngine(config)
 
-	// Check for errors from any scanner.
-	for err := range errCh {
-		if err != nil {
-			log.Debugf("error during scan: %v", err)
-			return nil, err // Return immediately on first error. (Subject to change based on error handling policy)
+	// Register the matcher scanner which handles all ecosystems
+	matcherScanner := NewMatcherScanner(store, nil)
+	engine.RegisterScanner(matcherScanner)
+
+	return &Manager{engine: engine}
+}
+
+// NewManagerWithOptions creates a new Manager with custom matching options
+func NewManagerWithOptions(store db.Store, config *matchertypes.MatcherConfig) *Manager {
+	// Use configuration from matcher config if provided, otherwise use defaults
+	maxConcurrency := 4
+	timeout := 5 * time.Minute
+	enableCaching := true
+	enableMetrics := false
+
+	if config != nil {
+		maxConcurrency = config.MaxConcurrency
+		if timeoutDuration, err := time.ParseDuration(config.Timeout); err == nil {
+			timeout = timeoutDuration
 		}
+		enableCaching = config.EnableCaching
+		enableMetrics = config.EnableMetrics
 	}
 
-	// Collect vulnerabilities from all scanners.
-	allVulns := []cyclonedx.Vulnerability{}
-	for vulns := range vulnCh {
-		mu.Lock()
-		allVulns = append(allVulns, vulns...)
-		mu.Unlock()
+	coreConfig := core.ScanConfig{
+		MaxConcurrency: maxConcurrency,
+		Timeout:        timeout,
+		EnableCaching:  enableCaching,
+		EnableMetrics:  enableMetrics,
+		CacheTTL:       15 * time.Minute,
 	}
 
-	// Deduplicate vulnerabilities globally.
-	vulnMap := make(map[string]cyclonedx.Vulnerability)
-	for _, v := range allVulns {
-		vulnMap[v.BOMRef+v.ID] = v
-	}
-	vulnerabilities = make([]cyclonedx.Vulnerability, 0, len(vulnMap))
-	for _, v := range vulnMap {
-		vulnerabilities = append(vulnerabilities, v)
+	engine := core.NewScanEngine(coreConfig)
+
+	// Register the matcher scanner with custom configuration
+	var matcherScanner *MatcherScanner
+	if config != nil {
+		matcherScanner = NewMatcherScannerWithConfig(store, config)
+	} else {
+		matcherScanner = NewMatcherScanner(store, nil)
 	}
 
-	return vulnerabilities, nil // Return all collected vulnerabilities.
+	engine.RegisterScanner(matcherScanner)
+
+	return &Manager{engine: engine}
+}
+
+// SetCaching enables or disables result caching
+func (m *Manager) SetCaching(enabled bool) *Manager {
+	if enabled {
+		cache := core.NewMemoryCache(15 * time.Minute)
+		m.engine.SetCacheProvider(cache)
+	} else {
+		m.engine.SetCacheProvider(nil)
+	}
+	return m
+}
+
+// SetConcurrency sets maximum concurrent scanners
+func (m *Manager) SetConcurrency(concurrency int) *Manager {
+	if concurrency > 1 {
+		strategy := core.NewConcurrentStrategy(concurrency, 5*time.Minute)
+		m.engine.SetExecutionStrategy(strategy)
+	} else {
+		strategy := core.NewSequentialStrategy(5 * time.Minute)
+		m.engine.SetExecutionStrategy(strategy)
+	}
+	return m
+}
+
+// SetTimeout sets the maximum timeout for scanning operations
+func (m *Manager) SetTimeout(timeout time.Duration) *Manager {
+	// Set execution strategy with the timeout
+	maxConcurrency := 4
+
+	if maxConcurrency > 1 {
+		strategy := core.NewConcurrentStrategy(maxConcurrency, timeout)
+		m.engine.SetExecutionStrategy(strategy)
+	} else {
+		strategy := core.NewSequentialStrategy(timeout)
+		m.engine.SetExecutionStrategy(strategy)
+	}
+
+	return m
+}
+
+// Run executes all scanners with optimizations (backward compatibility method)
+func (m *Manager) Run(bom *cyclonedx.BOM) ([]cyclonedx.Vulnerability, error) {
+	ctx := context.Background()
+	return m.engine.Scan(ctx, bom)
+}
+
+// GetMetrics returns collected metrics
+func (m *Manager) GetMetrics() map[string]interface{} {
+	return m.engine.GetMetrics()
+}
+
+// GetCacheStats returns cache statistics
+func (m *Manager) GetCacheStats() map[string]interface{} {
+	return m.engine.GetCacheStats()
+}
+
+// ScanOptions holds configuration options for creating scan parameters
+type ScanOptions struct {
+	Quiet        bool
+	CI           bool
+	Format       string
+	File         string
+	Skip         bool
+	Force        bool
+	FailCriteria string
+}
+
+// CreateScanParameters creates and initializes the scan parameters
+func CreateScanParameters(c *cobra.Command, args []string, options ScanOptions) Parameters {
+	return Parameters{
+		Format:        Format(options.Format),
+		Quiet:         options.Quiet,
+		File:          options.File,
+		SkipDBUpdate:  options.Skip,
+		ForceDBUpdate: options.Force,
+		CI:            options.CI,
+		Diggity: diggity.Parameters{
+			OutputFormat: diggity.JSON,
+		},
+	}
+}
+
+// ValidateInputAndSetup validates input parameters and sets up scan targets
+func ValidateInputAndSetup(params *Parameters, tarball, filesystem string, args []string) bool {
+	if filesystem != "" {
+		if found, _ := helper.IsDirExists(filesystem); !found {
+			log.Fatal("directory not found: " + filesystem)
+			return false
+		}
+		params.Diggity.ScanType = 3
+		params.Diggity.Input = filesystem
+		return true
+	}
+
+	if tarball != "" {
+		if found, _ := helper.IsFileExists(tarball); !found {
+			log.Fatal("tarball not found: " + tarball)
+			return false
+		}
+		params.Diggity.Input = tarball
+		params.Diggity.ScanType = 2
+		return true
+	}
+
+	// No filesystem or tarball specified, check for image argument
+	return SetupImageTarget(params, args)
+}
+
+// SetupImageTarget sets up the image target if no filesystem or tarball is specified
+func SetupImageTarget(params *Parameters, args []string) bool {
+	if len(args) > 0 {
+		params.Diggity.Input = helper.FormatImage(args[0])
+		params.Diggity.ScanType = 1
+		return true
+	}
+	return false
+}
+
+// ValidateFormat validates the output format type provided by the user and returns true if it is valid else false
+func ValidateFormat(format Format) bool {
+	switch Format(format) {
+	case JSON, Table, SPDXJSON, SPDXXML, SPDXTag, SnapshotJSON:
+		return true
+	default:
+		return false
+	}
 }

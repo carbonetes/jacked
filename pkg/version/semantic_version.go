@@ -9,7 +9,7 @@ import (
 
 func NewSemanticVersion(version string) (*hashicorp.Version, error) {
 	if len(version) == 0 {
-		return nil, NoVersionError
+		return nil, ErrNoVersion
 	}
 	if !isValidSemver(version) {
 		return nil, errors.New("invalid semantic version format")
