@@ -1,20 +1,13 @@
-# GoReleaser configuration for Jacked
-# https://goreleaser.com
 version: 2
-
 project_name: jacked
 
-# Global environment variables
 env:
-  - GO111MODULE=on
   - CGO_ENABLED=0
 
-# Git configuration for better version handling
 git:
   ignore_tags:
     - "nightly"
 
-# Release configuration
 release:
   github:
     owner: carbonetes
@@ -22,150 +15,51 @@ release:
   name_template: 'Jacked {{ .Tag }}'
   draft: false
   prerelease: auto
-  mode: replace
-  header: |
-    ## 🎉 Jacked {{ .Tag }} Release
-    
-    Welcome to this new release of Jacked - your comprehensive vulnerability scanner for container images and filesystems!
-    
-    ### 🚀 What's New
-  footer: |
-    ---
-    
-    ## 📦 Installation Options
-    
-    ### 🍺 Homebrew (macOS/Linux)
-    ```bash
-    # Add tap
-    brew tap carbonetes/jacked
-    
-    # Install
-    brew install jacked
-    
-    # Upgrade
-    brew upgrade jacked
-    ```
-    
-    ### 🪣 Scoop (Windows)
-    ```bash
-    # Add bucket
-    scoop bucket add jacked https://github.com/carbonetes/jacked-bucket
-    
-    # Install
-    scoop install jacked
-    
-    # Upgrade  
-    scoop update jacked
-    ```
-    
-    ### 📋 Package Managers
-    ```bash
-    # Debian/Ubuntu
-    wget https://github.com/carbonetes/jacked/releases/download/{{ .Tag }}/jacked_{{ .Version }}_linux_amd64.deb
-    sudo dpkg -i jacked_{{ .Version }}_linux_amd64.deb
-    
-    # RHEL/CentOS/Fedora
-    wget https://github.com/carbonetes/jacked/releases/download/{{ .Tag }}/jacked_{{ .Version }}_linux_amd64.rpm
-    sudo rpm -i jacked_{{ .Version }}_linux_amd64.rpm
-    
-    # Alpine
-    wget https://github.com/carbonetes/jacked/releases/download/{{ .Tag }}/jacked_{{ .Version }}_linux_amd64.apk
-    sudo apk add --allow-untrusted jacked_{{ .Version }}_linux_amd64.apk
-    
-    # Arch Linux
-    wget https://github.com/carbonetes/jacked/releases/download/{{ .Tag }}/jacked_{{ .Version }}_linux_amd64.pkg.tar.xz
-    sudo pacman -U jacked_{{ .Version }}_linux_amd64.pkg.tar.xz
-    ```
-    
-    ### 💻 Manual Download
-    Download the appropriate binary for your platform from the assets below, extract it, and add it to your PATH.
-    
-    ---
-    
-    **Full Changelog**: https://github.com/carbonetes/jacked/compare/{{ .PreviousTag }}...{{ .Tag }}
-    
-    **Documentation**: https://github.com/carbonetes/jacked/blob/main/README.md
-    
-    **Issues & Support**: https://github.com/carbonetes/jacked/issues
 
-# Pre-release hooks for validation and preparation
 before:
   hooks:
     - go mod tidy
-    - go generate ./...
     - go test -timeout=5m ./...
-    - go vet ./...
 
-# Unified build configuration for all platforms
 builds:
   - id: jacked
     binary: jacked
     main: ./cmd/jacked/main.go
-    
-    # Target platforms and architectures (simplified for reliability)
     goos:
       - linux
       - darwin
       - windows
-    
     goarch:
       - amd64
       - arm64
-    
-    # AMD64 variants for performance optimization
-    goamd64:
-      - v1  # baseline compatibility
-    
-    # Build constraints - minimal set for reliability
-    # Note: CGO is disabled for better cross-compilation and static binaries
-    # Using modernc.org/sqlite (pure Go) instead of mattn/go-sqlite3 (CGO)
-    
-    # Environment variables for reproducible builds
+    ignore:
+      - goos: darwin
+        goarch: "386"  # macOS doesn't support 32-bit
+      - goos: linux  
+        goarch: "386"  # Skip 32-bit Linux to keep builds focused
+      - goos: windows
+        goarch: "386"  # Skip 32-bit Windows due to SQLite compatibility issues
     env:
       - CGO_ENABLED=0
-    
-    # Build time for reproducible builds
-    mod_timestamp: '{{ .CommitTimestamp }}'
-    
-    # Build flags for optimization and security
     flags:
       - -trimpath
-      - -buildvcs=false
-    
-    # Linker flags for binary optimization and build info injection
     ldflags:
-      - -s -w  # Strip debug info and symbol table
-      - -buildid=  # Remove build ID for reproducible builds
-      - -X github.com/carbonetes/jacked/cmd/jacked/build.application={{.ProjectName}}
+      - -s -w
       - -X github.com/carbonetes/jacked/cmd/jacked/build.version={{.Version}}
       - -X github.com/carbonetes/jacked/cmd/jacked/build.buildDate={{.Date}}
       - -X github.com/carbonetes/jacked/cmd/jacked/build.gitCommit={{.FullCommit}}
-      - -X github.com/carbonetes/jacked/cmd/jacked/build.gitDesc={{.Summary}}
-      - -X github.com/carbonetes/jacked/cmd/jacked/build.goVersion={{.Runtime.Goos}}/{{.Runtime.Goarch}}
-      - -X github.com/carbonetes/jacked/cmd/jacked/build.compiler=gc
-      - -X github.com/carbonetes/jacked/cmd/jacked/build.platform={{.Os}}/{{.Arch}}{{if .Arm}}v{{.Arm}}{{end}}{{if .Amd64}}{{.Amd64}}{{end}}
 
-# Archive configuration
 archives:
   - id: default
     name_template: >-
       {{ .ProjectName }}_{{ .Version }}_
       {{- .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
-      {{- with .Arm }}v{{ . }}{{ end }}
-      {{- with .Mips }}_{{ . }}{{ end }}
-      {{- if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}
     files:
       - README.md
       - LICENSE
-      - CODE_OF_CONDUCT.md
-      - CONTRIBUTING.md
-      - NOTICE
-      - assets/jacked-logo.svg
 
-# Universal binaries for macOS (combines Intel and Apple Silicon)
 universal_binaries:
   - id: jacked-universal
     ids:
@@ -173,100 +67,29 @@ universal_binaries:
     name_template: 'jacked'
     replace: true
 
-# Package managers configuration
 nfpms:
   - id: default
     file_name_template: >-
       {{ .ProjectName }}_{{ .Version }}_
       {{- .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
-      {{- with .Arm }}v{{ . }}{{ end }}
-      {{- with .Mips }}_{{ . }}{{ end }}
-      {{- if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}
     package_name: jacked
     vendor: Carbonetes
     homepage: https://github.com/carbonetes/jacked
     maintainer: Carbonetes Engineering <eng@carbonetes.com>
-    description: |
-      Jacked is a comprehensive vulnerability scanner for container images and filesystems.
-      It provides organizations with detailed security analysis to implement effective 
-      risk mitigation measures and enhance their overall security posture.
+    description: Comprehensive vulnerability scanner for container images and filesystems
     license: Apache-2.0
-    section: utils
-    priority: optional
     formats:
       - rpm
       - deb
       - apk
-      - archlinux
-    bindir: /usr/bin
-    epoch: "1"
-    release: "1"
-    version_metadata: git
     contents:
       - src: ./LICENSE
         dst: /usr/share/doc/jacked/LICENSE
-        file_info:
-          mode: 0644
       - src: ./README.md
         dst: /usr/share/doc/jacked/README.md
-        file_info:
-          mode: 0644
-      - src: ./assets/jacked-logo.svg
-        dst: /usr/share/pixmaps/jacked.svg
-        file_info:
-          mode: 0644
-      - dst: /usr/share/man/man1
-        type: dir
-        file_info:
-          mode: 0755
-    scripts:
-      postinstall: |
-        #!/bin/bash
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "🎉 Jacked has been successfully installed!"
-        echo ""
-        echo "💡 Quick Start:"
-        echo "   jacked <image-name>      # Scan a container image"
-        echo "   jacked -d <directory>       # Scan a filesystem directory"
-        echo "   jacked --help                 # Show all available commands"
-        echo ""
-        echo "📚 Documentation: https://github.com/carbonetes/jacked/blob/main/README.md"
-        echo "🐛 Issues: https://github.com/carbonetes/jacked/issues"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-      preremove: |
-        #!/bin/bash
-        echo "Removing Jacked vulnerability scanner..."
-      postremove: |
-        #!/bin/bash
-        echo "Jacked has been removed from your system."
-        echo "Thank you for using Jacked!"
-    rpm:
-      summary: Comprehensive vulnerability scanner for container images and filesystems
-      group: Applications/System
-      compression: lzma
-      # signature:
-      #   key_file: '{{ .Env.GPG_KEY_FILE }}'
-    deb:
-      lintian_overrides:
-        - statically-linked-binary
-        - changelog-file-missing-in-native-package
-        - binary-without-manpage
-      compression: xz
-      # signature:
-      #   key_file: '{{ .Env.GPG_KEY_FILE }}'
-      #   type: origin
-    # apk:
-      # signature:
-      #   key_file: '{{ .Env.GPG_KEY_FILE }}'
-      #   key_name: '{{ .Env.GPG_KEY_NAME }}'
-    archlinux:
-      pkgbase: jacked
-      packager: Carbonetes Engineering <eng@carbonetes.com>
 
-# Homebrew configuration for macOS/Linux
 brews:
   - repository:
       owner: carbonetes
@@ -279,33 +102,10 @@ brews:
     commit_author:
       name: Carbonetes Bot
       email: eng@carbonetes.com
-    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
     homepage: https://www.carbonetes.com/
-    description: "Jacked is a comprehensive vulnerability scanner for container images and filesystems, helping organizations identify and mitigate security risks."
+    description: "Comprehensive vulnerability scanner for container images and filesystems"
     license: "Apache-2.0"
-    skip_upload: false
-    dependencies:
-      - name: ca-certificates
-        type: runtime
-    install: |
-      bin.install "jacked"
-      
-      # Generate bash completion
-      output = Utils.safe_popen_read("#{bin}/jacked", "completion", "bash")
-      (bash_completion/"jacked").write output
-      
-      # Generate zsh completion  
-      output = Utils.safe_popen_read("#{bin}/jacked", "completion", "zsh")
-      (zsh_completion/"_jacked").write output
-      
-      # Generate fish completion
-      output = Utils.safe_popen_read("#{bin}/jacked", "completion", "fish")
-      (fish_completion/"jacked.fish").write output
-    test: |
-      system "#{bin}/jacked", "--version"
-      system "#{bin}/jacked", "--help"
 
-# Scoop configuration for Windows package management
 scoops:
   - repository:
       owner: carbonetes
@@ -315,217 +115,20 @@ scoops:
     commit_author:
       name: Carbonetes Bot
       email: eng@carbonetes.com
-    commit_msg_template: "Scoop update for {{ .ProjectName }} version {{ .Tag }}"
     homepage: https://www.carbonetes.com/
-    description: "Jacked is a comprehensive vulnerability scanner for container images and filesystems, helping organizations identify and mitigate security risks."
+    description: "Comprehensive vulnerability scanner for container images and filesystems"
     license: "Apache-2.0"
-    skip_upload: false
-    depends: []
-    persist: []
-    pre_install: []
-    post_install: [
-      "Write-Host 'Jacked has been successfully installed!' -ForegroundColor Green",
-      "Write-Host 'Run ''jacked --help'' to get started.' -ForegroundColor Yellow",
-      "Write-Host 'Documentation: https://github.com/carbonetes/jacked/blob/main/README.md' -ForegroundColor Cyan"
-    ]
 
-# Snapcraft configuration for Ubuntu/Linux Snap packages
-snapcrafts:
-  - id: jacked
-    name: jacked
-    summary: Comprehensive vulnerability scanner for container images and filesystems
-    description: |
-      Jacked is a comprehensive vulnerability scanner that provides organizations with 
-      detailed security analysis of their container images and filesystems. It helps 
-      implement effective risk mitigation measures and enhances overall security posture.
-      
-      Key features:
-      * Container image vulnerability scanning
-      * Filesystem vulnerability analysis  
-      * Multiple output formats (JSON, XML, SARIF, Table)
-      * Integration with CI/CD pipelines
-      * Comprehensive vulnerability database coverage
-    grade: stable
-    confinement: strict
-    license: Apache-2.0
-    base: core22
-    apps:
-      jacked:
-        command: jacked
-        plugs:
-          - home
-          - network
-          - network-bind
-          - removable-media
-        environment:
-          HOME: $SNAP_USER_DATA
-
-# Checksum configuration for release integrity
 checksum:
-  name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
-  algorithm: sha256
-  ids:
-    - default
-  extra_files:
-    - glob: './assets/jacked-logo.svg'
+  name_template: 'checksums.txt'
 
-# Signature configuration for release verification (commented out - no GPG setup)
-# signs:
-#   - cmd: gpg
-#     args:
-#       - --batch
-#       - --local-user
-#       - "{{ .Env.GPG_FINGERPRINT }}"
-#       - --output
-#       - "${signature}"
-#       - --detach-sign
-#       - "${artifact}"
-#     signature: "${artifact}.sig"
-#     ids:
-#       - default
-#     artifacts: checksum
-
-# SBOM (Software Bill of Materials) generation
-sboms:
-  - id: archive
-    artifacts: archive
-    cmd: syft
-    args:
-      - "$artifact"
-      - --output
-      - "spdx-json=$document"
-    documents:
-      - "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}.sbom.spdx.json"
-
-# Changelog configuration with conventional commits support
 changelog:
-  use: github
   sort: asc
-  abbrev: -1
-  groups:
-    - title: 'Features'
-      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
-      order: 0
-    - title: 'Bug Fixes'
-      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
-      order: 1
-    - title: 'Documentation'
-      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
-      order: 2
-    - title: 'Style'
-      regexp: '^.*?(style|fmt)(\([[:word:]]+\))??!?:.+$'
-      order: 3
-    - title: 'Refactoring'
-      regexp: '^.*?refactor(\([[:word:]]+\))??!?:.+$'
-      order: 4
-    - title: 'Performance'
-      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
-      order: 5
-    - title: 'Tests'
-      regexp: '^.*?test(\([[:word:]]+\))??!?:.+$'
-      order: 6
-    - title: 'Chores'
-      regexp: '^.*?chore(\([[:word:]]+\))??!?:.+$'
-      order: 7
-    - title: 'Breaking Changes'
-      regexp: '^.*?!:.+$'
-      order: 8
-    - title: 'Security'
-      regexp: '^.*?sec(\([[:word:]]+\))??!?:.+$'
-      order: 9
-    - title: 'Dependencies'
-      regexp: '^.*?(deps|dep)(\([[:word:]]+\))??!?:.+$'
-      order: 10
-    - title: 'Others'
-      order: 999
   filters:
     exclude:
-      - '^docs(\([[:word:]]+\))??!?:'
-      - '^test(\([[:word:]]+\))??!?:'
-      - '^chore(\([[:word:]]+\))??!?: (update|bump)'
+      - '^docs:'
+      - '^test:'
       - 'merge conflict'
       - Merge pull request
       - Merge remote-tracking branch
       - Merge branch
-      - go mod tidy
-    include:
-      - '^feat(\([[:word:]]+\))??!?:'
-      - '^fix(\([[:word:]]+\))??!?:'
-      - '^sec(\([[:word:]]+\))??!?:'
-      - '^perf(\([[:word:]]+\))??!?:'
-
-# Metadata for enhanced release information
-metadata:
-  mod_timestamp: '{{ .CommitTimestamp }}'
-
-# Milestone configuration for automated milestone management
-milestones:
-  - repo:
-      owner: carbonetes
-      name: jacked
-    close: true
-    fail_on_error: false
-    name_template: "{{ .Tag }}"
-
-# Announcement configuration for automated release notifications
-# Note: These require additional environment variables and integrations
-# announcements:
-#   slack:
-#     enabled: true
-#     channel: '#releases'
-#     username: 'GoReleaser'
-#     message_template: |
-#       🎉 Jacked {{ .Tag }} has been released!
-#       
-#       📦 Download: {{ .ReleaseURL }}
-#       📝 Changelog: {{ .ReleaseURL }}
-#   
-#   discord:
-#     enabled: true
-#     message_template: |
-#       🎉 **Jacked {{ .Tag }}** has been released!
-#       
-#       📦 [Download]({{ .ReleaseURL }})
-#
-#   twitter:
-#     enabled: true
-#     message_template: |
-#       🎉 Jacked {{ .Tag }} is now available! 
-#       
-#       New vulnerability scanner release with enhanced features.
-#       
-#        {{ .ReleaseURL }}
-#       
-#       #cybersecurity #golang #containerscanning #devops
-
-# Report configuration for build analytics
-# report_sizes: true
-
-# Publisher configuration for additional integrations
-# publishers:
-#   - name: "fury.io"
-#     cmd: curl -F package=@{{ .ArtifactPath }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/carbonetes/
-
-# Performance and resource configuration
-# partial:
-#   by: target
-
-# Parallelism configuration for faster builds
-# Use with caution - higher values may cause resource exhaustion
-# builds:
-#   - env:
-#       - GOMAXPROCS={{ .Env.GOMAXPROCS | default "4" }}
-
-# Source archive for complete source distribution
-source:
-  enabled: true
-  name_template: '{{ .ProjectName }}_{{ .Version }}_source'
-  format: 'tar.gz'
-  prefix_template: '{{ .ProjectName }}-{{ .Version }}/'
-
-# Artifact upload configuration
-# upload:
-#   - name: s3
-#     target: s3://releases.carbonetes.com/jacked/{{ .Version }}/
-#     username: '{{ .Env.AWS_ACCESS_KEY_ID }}'
-#     password: '{{ .Env.AWS_SECRET_ACCESS_KEY }}'
