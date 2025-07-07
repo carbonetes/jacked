@@ -7,7 +7,7 @@ project_name: jacked
 # Global environment variables
 env:
   - GO111MODULE=on
-  - CGO_ENABLED=1
+  - CGO_ENABLED=0
 
 # Git configuration for better version handling
 git:
@@ -117,13 +117,12 @@ builds:
       - v1  # baseline compatibility
     
     # Build constraints - minimal set for reliability
-    # Note: With CGO enabled, cross-compilation is simplified
-    # All combinations of linux/darwin/windows + amd64/arm64 are supported
+    # Note: CGO is disabled for better cross-compilation and static binaries
+    # Using modernc.org/sqlite (pure Go) instead of mattn/go-sqlite3 (CGO)
     
     # Environment variables for reproducible builds
     env:
-      - CGO_ENABLED=1
-      - CC=gcc
+      - CGO_ENABLED=0
     
     # Build time for reproducible builds
     mod_timestamp: '{{ .CommitTimestamp }}'
