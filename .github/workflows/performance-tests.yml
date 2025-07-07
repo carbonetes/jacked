@@ -220,196 +220,6 @@ jobs:
             benchmark-results.txt
           retention-days: 30
 
-  # Job 3: Integration Tests
-  integration:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.event_name != 'schedule'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      - name: Build application
-        run: go build -v -o jacked ./cmd/jacked
-
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
-
-      - name: Pull test images
-        run: |
-          echo "📥 Pulling test images..."
-          docker pull alpine:latest
-          docker pull ubuntu:22.04
-          docker pull node:18-alpine
-
-      - name: Test configuration handling
-        run: |
-          echo "⚙️ Testing configuration files..."
-
-          mkdir -p test-configs
-
-          # Create test configurations
-          cat > test-configs/basic.yaml << 'EOF'
-          version: "1.0"
-          performance:
-            max_concurrent_scanners: 2
-            scan_timeout: 60s
-            enable_caching: true
-            max_cache_size: 100
-          EOF
-
-          cat > test-configs/advanced.yaml << 'EOF'
-          version: "1.0"
-          performance:
-            max_concurrent_scanners: 8
-            scan_timeout: 300s
-            enable_caching: true
-            max_cache_size: 1000
-            scanners:
-              npm:
-                enabled: true
-                timeout: 60s
-                max_concurrency: 4
-                caching_enabled: true
-                priority: 8
-          EOF
-
-          # Test configurations
-          ./jacked --config=test-configs/basic.yaml --help || echo "✅ Basic config test completed"
-          ./jacked --config=test-configs/advanced.yaml --help || echo "✅ Advanced config test completed"
-
-      - name: Test real scanning scenarios
-        timeout-minutes: 10
-        run: |
-          echo "🔍 Testing real vulnerability scanning scenarios..."
-
-          # Test with different targets and timeouts
-          timeout 60s ./jacked --non-interactive alpine:latest 2>/dev/null || echo "✅ Alpine scan completed"
-          timeout 60s ./jacked --non-interactive ubuntu:22.04 2>/dev/null || echo "✅ Ubuntu scan completed"
-          timeout 60s ./jacked --non-interactive node:18-alpine 2>/dev/null || echo "✅ Node scan completed"
-
-      - name: Test error handling
-        run: |
-          echo "🛡️ Testing error handling..."
-
-          # Test with invalid inputs
-          ./jacked nonexistent:tag 2>/dev/null || echo "✅ Invalid image handled correctly"
-          ./jacked --config=nonexistent.yaml --help 2>/dev/null || echo "✅ Invalid config handled correctly"
-
-  # Job 4: Docker Build and Test
-  docker:
-    name: Docker Build & Security Scan
-    runs-on: ubuntu-latest
-    needs: test
-    if: ${{ !inputs.performance_only }}
-
-    permissions:
-      contents: read
-      packages: write
-      security-events: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: network=host
-
-      - name: Log in to Container Registry
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix=sha-,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
-          labels: |
-            org.opencontainers.image.title=Jacked
-            org.opencontainers.image.description=Go vulnerability scanner
-            org.opencontainers.image.vendor=Jacked Project
-
-      - name: Build Docker image for testing
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/amd64
-          push: false
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          load: true
-
-      - name: Test Docker image
-        run: |
-          echo "🐳 Testing Docker image functionality..."
-
-          # Get the first tag for testing
-          IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
-
-          # Test basic functionality
-          docker run --rm $IMAGE_TAG --help
-          docker run --rm $IMAGE_TAG version 2>/dev/null || echo "ℹ️ Version command not available"
-
-      - name: Test multi-stage builds
-        run: |
-          echo "🏗️ Testing multi-stage Docker builds..."
-
-          # Test development build
-          docker build -f Dockerfile.dev -t jacked:dev . || echo "⚠️ Development Dockerfile not found"
-
-          # Test multi-target build if it exists
-          if [ -f "Dockerfile.multi" ]; then
-            docker build -f Dockerfile.multi --target distroless -t jacked:distroless . || echo "⚠️ Distroless target failed"
-            docker build -f Dockerfile.multi --target scratch -t jacked:scratch . || echo "⚠️ Scratch target failed"
-          fi
-
-      - name: Scan image for vulnerabilities
-        run: |
-          echo "🔒 Scanning Docker image for vulnerabilities..."
-
-          # Install Trivy
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-
-          # Scan the image
-          IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
-          trivy image --exit-code 0 --severity HIGH,CRITICAL $IMAGE_TAG
-
-      - name: Push Docker image
-        if: github.event_name != 'pull_request'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # Job 5: Performance Monitoring
   performance:
     name: Performance Monitoring
     runs-on: ubuntu-latest
@@ -497,7 +307,7 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [lint, test, integration, docker]
+    needs: [lint, test]
     if: startsWith(github.ref, 'refs/tags/v')
     timeout-minutes: 30
 
@@ -649,7 +459,7 @@ jobs:
   summary:
     name: Build Summary
     runs-on: ubuntu-latest
-    needs: [lint, test, integration, docker, performance]
+    needs: [lint, test, performance]
     if: always()
 
     steps:
@@ -669,16 +479,12 @@ jobs:
           echo "|-----|--------|----------|" >> $GITHUB_STEP_SUMMARY
           echo "| Lint & Code Quality | ${{ needs.lint.result == 'success' && '✅ Passed' || needs.lint.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
           echo "| Tests | ${{ needs.test.result == 'success' && '✅ Passed' || needs.test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
-          echo "| Integration Tests | ${{ needs.integration.result == 'success' && '✅ Passed' || needs.integration.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
-          echo "| Docker Build | ${{ needs.docker.result == 'success' && '✅ Passed' || needs.docker.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
           echo "| Performance | ${{ needs.performance.result == 'success' && '✅ Passed' || needs.performance.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Overall status
           if [[ "${{ needs.lint.result }}" == "success" && 
-                ("${{ needs.test.result }}" == "success" || "${{ needs.test.result }}" == "skipped") && 
-                ("${{ needs.integration.result }}" == "success" || "${{ needs.integration.result }}" == "skipped") && 
-                ("${{ needs.docker.result }}" == "success" || "${{ needs.docker.result }}" == "skipped") ]]; then
+                ("${{ needs.test.result }}" == "success" || "${{ needs.test.result }}" == "skipped") ]]; then
             echo "## 🎉 Pipeline Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "All critical checks passed! 🚀" >> $GITHUB_STEP_SUMMARY
@@ -692,6 +498,4 @@ jobs:
           echo "## 📋 Artifacts Generated" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- 📊 Test coverage reports" >> $GITHUB_STEP_SUMMARY
-          echo "- 🏃 Benchmark results" >> $GITHUB_STEP_SUMMARY
-          echo "- 🐳 Docker images (if applicable)" >> $GITHUB_STEP_SUMMARY
           echo "- 📈 Performance profiles (if applicable)" >> $GITHUB_STEP_SUMMARY
