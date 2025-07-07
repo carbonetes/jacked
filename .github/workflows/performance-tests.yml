@@ -339,7 +339,7 @@ jobs:
         if: success()
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.TOKEN }}
           commit-message: "chore: update Go dependencies"
           title: "🔄 Automated dependency updates"
           body: |
