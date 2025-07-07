@@ -143,6 +143,7 @@ jobs:
             go.mod
 
       - name: Download dependencies
+        shell: bash
         run: go mod download
 
       - name: Configure Git line endings
@@ -181,10 +182,12 @@ jobs:
 
       - name: Run unit tests
         if: ${{ !inputs.skip_tests }}
+        shell: bash
         run: go test -v -race -timeout=10m -coverprofile=coverage.out ./...
 
       - name: Run benchmarks
         if: matrix.os == 'ubuntu-latest' && matrix.go-version == env.GO_VERSION
+        shell: bash
         run: |
           go test -bench=. -benchmem -count=3 ./pkg/scan/ > benchmark-results.txt
           echo "📊 Benchmark Results:"
