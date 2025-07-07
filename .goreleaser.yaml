@@ -102,89 +102,27 @@ builds:
     binary: jacked
     main: ./cmd/jacked/main.go
     
-    # Target platforms and architectures
+    # Target platforms and architectures (simplified for reliability)
     goos:
       - linux
       - darwin
       - windows
-      - freebsd
-      - openbsd
-      - netbsd
     
     goarch:
       - amd64
       - arm64
-      - arm
-      - "386"
-      - ppc64le
-      - s390x
-      - riscv64
-      - mips64le
     
     # AMD64 variants for performance optimization
     goamd64:
-      - v1  # baseline
-      - v2  # SSE3+
-      - v3  # AVX/AVX2+
+      - v1  # baseline compatibility
     
-    # ARM variants
-    goarm:
-      - "6"
-      - "7"
-    
-    # Build constraints to skip unsupported combinations
-    ignore:
-      # Windows doesn't support these architectures
-      - goos: windows
-        goarch: arm
-      - goos: windows
-        goarch: ppc64le
-      - goos: windows
-        goarch: s390x
-      - goos: windows
-        goarch: riscv64
-      - goos: windows
-        goarch: mips64le
-      # BSD variants have limited arch support
-      - goos: freebsd
-        goarch: arm
-      - goos: freebsd
-        goarch: ppc64le
-      - goos: freebsd
-        goarch: s390x
-      - goos: freebsd
-        goarch: riscv64
-      - goos: freebsd
-        goarch: mips64le
-      - goos: openbsd
-        goarch: arm
-      - goos: openbsd
-        goarch: arm64
-      - goos: openbsd
-        goarch: ppc64le
-      - goos: openbsd
-        goarch: s390x
-      - goos: openbsd
-        goarch: riscv64
-      - goos: openbsd
-        goarch: mips64le
-      - goos: netbsd
-        goarch: arm
-      - goos: netbsd
-        goarch: arm64
-      - goos: netbsd
-        goarch: ppc64le
-      - goos: netbsd
-        goarch: s390x
-      - goos: netbsd
-        goarch: riscv64
-      - goos: netbsd
-        goarch: mips64le
+    # Build constraints - minimal set for reliability
+    # Note: CGO is disabled for better cross-compilation and static binaries
+    # Using modernc.org/sqlite (pure Go) instead of mattn/go-sqlite3 (CGO)
     
     # Environment variables for reproducible builds
     env:
       - CGO_ENABLED=0
-      - GOFLAGS=-trimpath
     
     # Build time for reproducible builds
     mod_timestamp: '{{ .CommitTimestamp }}'
