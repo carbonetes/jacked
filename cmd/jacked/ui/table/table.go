@@ -26,16 +26,24 @@ type model struct {
 func (m model) Init() tea.Cmd { return nil }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return m, tea.Quit
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "q", "ctrl+c", "esc", "enter", " ":
+			return m, tea.Quit
+		}
+	}
+	return m, nil
 }
 
 func (m model) View() string {
 	if len(m.table.Rows()) == 0 {
 		return baseStyle.Render("No vulnerabilities found") +
-			fmt.Sprintf("\nScan duration: %.3f seconds", m.duration)
+			fmt.Sprintf("\nScan duration: %.3f seconds", m.duration) +
+			"\n\nPress any key to continue..."
 	}
 
-	footer := fmt.Sprintf("Vulnerability Report (%v found) \nScan duration: %.3f seconds", len(m.table.Rows()), m.duration)
+	footer := fmt.Sprintf("Vulnerability Report (%v found) \nScan duration: %.3f seconds\n\nPress 'q' or any key to exit", len(m.table.Rows()), m.duration)
 	return lipgloss.JoinVertical(lipgloss.Left,
 		baseStyle.Render(m.table.View()),
 		helpStyle.Render(footer),
@@ -213,8 +221,19 @@ func createStyledTable(columns []table.Column, rows []table.Row) table.Model {
 
 func Show(t table.Model, duration float64) {
 	m := model{table: t, duration: duration}
-	if _, err := tea.NewProgram(m).Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(0)
+
+	// Create program without alt screen to prevent clearing
+	p := tea.NewProgram(m)
+
+	defer func() {
+		if r := recover(); r != nil {
+			// Ensure terminal is restored on panic
+			fmt.Fprintf(os.Stderr, "UI error: %v\n", r)
+		}
+	}()
+
+	if _, err := p.Run(); err != nil {
+		// Don't exit on error, just log it and continue
+		fmt.Fprintf(os.Stderr, "Error displaying table: %v\n", err)
 	}
 }

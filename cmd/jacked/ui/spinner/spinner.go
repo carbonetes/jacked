@@ -1,8 +1,10 @@
 package spinner
 
 import (
+	"context"
 	"fmt"
-	"os"
+	"sync"
+	"time"
 
 	"github.com/carbonetes/jacked/internal/log"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -11,8 +13,11 @@ import (
 )
 
 var (
-	p    *tea.Program
-	Skip = true
+	p        *tea.Program
+	Skip     = true
+	mu       sync.Mutex
+	done     = make(chan bool, 1)
+	finished bool
 )
 
 type errMsg error
@@ -76,28 +81,89 @@ func (m model) View() string {
 }
 
 func Set(status string) {
-	if Skip {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if Skip || finished {
 		return
 	}
-	p = tea.NewProgram(new(status))
+
+	// Clean up any existing program
+	cleanup()
+
+	p = tea.NewProgram(new(status), tea.WithAltScreen())
+
 	go func() {
-		if _, err := p.Run(); err != nil {
-			log.Fatalf("Error running spinner: %v", err)
-			os.Exit(1)
+		defer func() {
+			if r := recover(); r != nil {
+				log.Debugf("Spinner panic recovered: %v", r)
+			}
+		}()
+
+		// Use context with timeout to prevent hanging
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		errChan := make(chan error, 1)
+		go func() {
+			_, err := p.Run()
+			errChan <- err
+		}()
+
+		select {
+		case err := <-errChan:
+			if err != nil {
+				log.Debugf("Spinner error: %v", err)
+			}
+		case <-ctx.Done():
+			log.Debug("Spinner timed out")
+			if p != nil {
+				p.Kill()
+			}
+		case <-done:
+			// Normal completion
 		}
 	}()
 }
 
 func Done() {
-	if Skip {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if Skip || finished {
 		return
 	}
-	p.Send(true)
+
+	finished = true
+
+	// Signal completion
+	select {
+	case done <- true:
+	default:
+	}
+
+	if p != nil {
+		p.Send(true)
+		// Give it a moment to clean up
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	cleanup()
 }
 
 func Status(val string) {
-	if Skip {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if Skip || finished || p == nil {
 		return
 	}
 	p.Send(val)
+}
+
+func cleanup() {
+	if p != nil {
+		p.Kill()
+		p = nil
+	}
 }

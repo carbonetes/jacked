@@ -3,7 +3,6 @@ package matcher
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/carbonetes/jacked/internal/db"
 	"github.com/carbonetes/jacked/pkg/model"
@@ -163,7 +162,7 @@ func (m *BaseMatcher) matchByEcosystem(ctx context.Context, pkg Package, opts Ma
 }
 
 // matchByCPE matches vulnerabilities using CPE identifiers
-func (m *BaseMatcher) matchByCPE(ctx context.Context, pkg Package, opts MatchOptions) ([]Match, error) {
+func (m *BaseMatcher) matchByCPE(ctx context.Context, pkg Package, _ MatchOptions) ([]Match, error) {
 	if len(pkg.CPEs) == 0 {
 		return nil, nil
 	}
@@ -210,7 +209,7 @@ func (m *BaseMatcher) matchByCPE(ctx context.Context, pkg Package, opts MatchOpt
 }
 
 // searchVulnerabilities searches for vulnerabilities using the given criteria
-func (m *BaseMatcher) searchVulnerabilities(ctx context.Context, criteria SearchCriteriaInterface) ([]Vulnerability, error) {
+func (m *BaseMatcher) searchVulnerabilities(_ context.Context, criteria SearchCriteriaInterface) ([]Vulnerability, error) {
 	// Convert from internal types to search criteria
 	// This is a simplified implementation - in practice, this would interface with the database
 
@@ -225,7 +224,7 @@ func (m *BaseMatcher) searchVulnerabilities(ctx context.Context, criteria Search
 }
 
 // searchByEcosystem searches vulnerabilities by ecosystem
-func (m *BaseMatcher) searchByEcosystem(ecosystem, packageName, distroType, distroVersion string) ([]Vulnerability, error) {
+func (m *BaseMatcher) searchByEcosystem(ecosystem, packageName, distroType, _ string) ([]Vulnerability, error) {
 	// This would interface with the actual vulnerability database
 	// For now, we'll create a simplified implementation
 
@@ -284,7 +283,7 @@ func (m *BaseMatcher) searchByEcosystem(ecosystem, packageName, distroType, dist
 }
 
 // searchByCPE searches vulnerabilities by CPE
-func (m *BaseMatcher) searchByCPE(cpe string) ([]Vulnerability, error) {
+func (m *BaseMatcher) searchByCPE(_ string) ([]Vulnerability, error) {
 	// This would search the database using CPE identifiers
 	// For now, we'll return empty results as CPE matching is more complex
 	return []Vulnerability{}, nil
@@ -292,16 +291,15 @@ func (m *BaseMatcher) searchByCPE(cpe string) ([]Vulnerability, error) {
 
 // isVersionVulnerable checks if a package version is vulnerable based on constraints
 func (m *BaseMatcher) isVersionVulnerable(version, constraint string) bool {
-	if constraint == "" {
+	// Basic implementation - assumes any non-empty constraint indicates vulnerability
+	// In practice, this should parse version constraints and check compatibility
+	if constraint == "" || version == "" {
 		return false
 	}
 
-	// This is a simplified version check
-	// In practice, this would use proper version parsing and constraint checking
-	// based on the package ecosystem's versioning scheme
-
-	// For now, just check if the constraint is not empty
-	return len(strings.TrimSpace(constraint)) > 0
+	// This is a simplified check - real implementation would use proper version parsing
+	// For now, assume vulnerability if both version and constraint are present
+	return true
 }
 
 // Helper functions

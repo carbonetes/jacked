@@ -26,7 +26,6 @@ require (
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.1
 	github.com/uptrace/bun/driver/sqliteshim v1.2.1
 	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8
-	golang.org/x/term v0.28.0
 	gopkg.in/yaml.v2 v2.4.0
 	modernc.org/sqlite v1.30.1
 )

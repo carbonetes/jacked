@@ -76,9 +76,6 @@ func NewMatcherScannerWithConfig(store db.Store, config *matchertypes.MatcherCon
 		}
 	}
 
-	// Create a vulnerability provider that can interface with the store
-	provider := &StoreVulnerabilityProvider{store: store}
-	_ = provider // Will be used when provider support is fully implemented
 	engine := matcher.NewEngine(*config)
 
 	// Register all available matchers
@@ -352,7 +349,7 @@ func (s *MatcherScanner) extractCPEs(component cyclonedx.Component) []string {
 }
 
 // convertMatchesToVulnerabilities converts matcher results to CycloneDX vulnerabilities
-func (s *MatcherScanner) convertMatchesToVulnerabilities(matches []matcher.Match, bom *cyclonedx.BOM) []cyclonedx.Vulnerability {
+func (s *MatcherScanner) convertMatchesToVulnerabilities(matches []matcher.Match, _ *cyclonedx.BOM) []cyclonedx.Vulnerability {
 	var vulnerabilities []cyclonedx.Vulnerability
 
 	for _, match := range matches {
@@ -395,7 +392,7 @@ func (s *MatcherScanner) matchToVulnerability(match matcher.Match, component cyc
 }
 
 // convertMatcherVulnToDBVuln converts a matcher vulnerability to internal vulnerability type
-func (s *MatcherScanner) convertMatcherVulnToDBVuln(matcherVuln matchertypes.Vulnerability, component cyclonedx.Component) model.Vulnerability {
+func (s *MatcherScanner) convertMatcherVulnToDBVuln(matcherVuln matchertypes.Vulnerability, _ cyclonedx.Component) model.Vulnerability {
 	dbVuln := model.Vulnerability{
 		Package:     matcherVuln.PackageName,
 		Constraints: matcherVuln.VersionConstraint,

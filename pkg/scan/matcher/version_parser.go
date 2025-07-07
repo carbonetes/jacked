@@ -118,9 +118,7 @@ func (vp *VersionParser) parseDartVersion(versionStr string) (*ParsedVersion, er
 	cleaned := strings.TrimSpace(versionStr)
 
 	// Remove 'v' prefix if present
-	if strings.HasPrefix(cleaned, "v") {
-		cleaned = cleaned[1:]
-	}
+	cleaned = strings.TrimPrefix(cleaned, "v")
 
 	// Dart version patterns
 	dartPatterns := []*regexp.Regexp{
@@ -240,7 +238,7 @@ func (vp *VersionParser) buildPythonVersion(matches []string, original string) (
 		}
 	}
 
-	normalized := fmt.Sprintf("%d.%d.%d", major, minor, patch)
+	normalized := fmt.Sprintf(versionFormat, major, minor, patch)
 	if prerelease != "" {
 		normalized += "-" + prerelease
 	}
@@ -261,9 +259,7 @@ func (vp *VersionParser) parseSemanticVersion(versionStr string) (*ParsedVersion
 	cleaned := strings.TrimSpace(versionStr)
 
 	// Remove 'v' prefix if present
-	if strings.HasPrefix(cleaned, "v") {
-		cleaned = cleaned[1:]
-	}
+	cleaned = strings.TrimPrefix(cleaned, "v")
 
 	// Try strict semver parsing first
 	if sv, err := semver.NewVersion(cleaned); err == nil {
@@ -312,7 +308,7 @@ func (vp *VersionParser) parseFuzzyVersion(versionStr string) (*ParsedVersion, e
 		patch, _ = strconv.Atoi(matches[3])
 	}
 
-	normalized := fmt.Sprintf("%d.%d.%d", major, minor, patch)
+	normalized := fmt.Sprintf(versionFormat, major, minor, patch)
 
 	return &ParsedVersion{
 		Original:   versionStr,

@@ -62,7 +62,16 @@ func rootCmd(c *cobra.Command, args []string) {
 	}
 
 	// Create and validate parameters
-	params := scan.CreateScanParameters(c, args, quiet, ciFlag, format, file, skip, force, failCriteria)
+	options := scan.ScanOptions{
+		Quiet:        quiet,
+		CI:           ciFlag,
+		Format:       format,
+		File:         file,
+		Skip:         skip,
+		Force:        force,
+		FailCriteria: failCriteria,
+	}
+	params := scan.CreateScanParameters(c, args, options)
 	if !scan.ValidateInputAndSetup(&params, tarball, filesystem, args) {
 		_ = c.Help()
 		os.Exit(0)

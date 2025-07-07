@@ -53,7 +53,7 @@ func (c *atomicCounter) SetError(err error) {
 }
 
 // newProgressMonitor creates a new progress monitor
-func newProgressMonitor(packageCount int, enabled bool) *progressMonitor {
+func newProgressMonitor(_ int, enabled bool) *progressMonitor {
 	monitor := &progressMonitor{
 		PackagesProcessed: newAtomicCounter(),
 		MatchesDiscovered: newAtomicCounter(),

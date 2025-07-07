@@ -94,7 +94,7 @@ func (m *Matcher) matchPackage(ctx context.Context, pkg matchertypes.Package, op
 }
 
 // findEcosystemMatches finds vulnerabilities by ecosystem/language matching
-func (m *Matcher) findEcosystemMatches(ctx context.Context, pkg matchertypes.Package, opts matchertypes.MatchOptions) ([]matchertypes.Match, error) {
+func (m *Matcher) findEcosystemMatches(_ context.Context, pkg matchertypes.Package, _ matchertypes.MatchOptions) ([]matchertypes.Match, error) {
 	var matches []matchertypes.Match
 
 	// Query vulnerabilities using the appropriate store method based on ecosystem
@@ -155,7 +155,7 @@ func (m *Matcher) findEcosystemMatches(ctx context.Context, pkg matchertypes.Pac
 }
 
 // findCPEMatches finds vulnerabilities by CPE matching
-func (m *Matcher) findCPEMatches(ctx context.Context, pkg matchertypes.Package, opts matchertypes.MatchOptions) ([]matchertypes.Match, error) {
+func (m *Matcher) findCPEMatches(_ context.Context, pkg matchertypes.Package, _ matchertypes.MatchOptions) ([]matchertypes.Match, error) {
 	if len(pkg.CPEs) == 0 {
 		return nil, nil
 	}

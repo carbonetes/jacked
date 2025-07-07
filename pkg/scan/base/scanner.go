@@ -162,8 +162,3 @@ func NewCustomComponentScanner(scannerType, componentType string, store db.Store
 		provider:         provider,
 	}
 }
-
-// getVulnerabilities uses the custom provider
-func (s *CustomComponentScanner) getVulnerabilities(component cyclonedx.Component) *[]model.Vulnerability {
-	return s.provider.GetVulnerabilities(component)
-}

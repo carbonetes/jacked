@@ -146,17 +146,11 @@ func (m *Manager) SetConcurrency(concurrency int) *Manager {
 
 // SetTimeout sets the maximum timeout for scanning operations
 func (m *Manager) SetTimeout(timeout time.Duration) *Manager {
-	// Create new strategy with updated timeout
-	config := core.ScanConfig{
-		MaxConcurrency: 4,
-		Timeout:        timeout,
-		EnableCaching:  true,
-		EnableMetrics:  false,
-		CacheTTL:       15 * time.Minute,
-	}
+	// Set execution strategy with the timeout
+	maxConcurrency := 4
 
-	if config.MaxConcurrency > 1 {
-		strategy := core.NewConcurrentStrategy(config.MaxConcurrency, timeout)
+	if maxConcurrency > 1 {
+		strategy := core.NewConcurrentStrategy(maxConcurrency, timeout)
 		m.engine.SetExecutionStrategy(strategy)
 	} else {
 		strategy := core.NewSequentialStrategy(timeout)
@@ -182,15 +176,26 @@ func (m *Manager) GetCacheStats() map[string]interface{} {
 	return m.engine.GetCacheStats()
 }
 
+// ScanOptions holds configuration options for creating scan parameters
+type ScanOptions struct {
+	Quiet        bool
+	CI           bool
+	Format       string
+	File         string
+	Skip         bool
+	Force        bool
+	FailCriteria string
+}
+
 // CreateScanParameters creates and initializes the scan parameters
-func CreateScanParameters(c *cobra.Command, args []string, quiet, ci bool, format, file string, skip, force bool, failCriteria string) Parameters {
+func CreateScanParameters(c *cobra.Command, args []string, options ScanOptions) Parameters {
 	return Parameters{
-		Format:        Format(format),
-		Quiet:         quiet,
-		File:          file,
-		SkipDBUpdate:  skip,
-		ForceDBUpdate: force,
-		CI:            ci,
+		Format:        Format(options.Format),
+		Quiet:         options.Quiet,
+		File:          options.File,
+		SkipDBUpdate:  options.Skip,
+		ForceDBUpdate: options.Force,
+		CI:            options.CI,
 		Diggity: diggity.Parameters{
 			OutputFormat: diggity.JSON,
 		},

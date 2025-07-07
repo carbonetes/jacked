@@ -191,7 +191,7 @@ func (e *Engine) processMatches(allMatches []Match, opts MatchOptions) ([]Match,
 }
 
 // finalizeResults populates the final results structure
-func (e *Engine) finalizeResults(results *MatchResults, matches []Match, ignoredMatches []IgnoredMatch, startTime time.Time, packages []Package) {
+func (e *Engine) finalizeResults(results *MatchResults, matches []Match, ignoredMatches []IgnoredMatch, startTime time.Time, _ []Package) {
 	results.Matches = matches
 	results.IgnoredMatches = ignoredMatches
 	results.Summary.TotalMatches = len(matches)
@@ -994,36 +994,4 @@ func (e *Engine) filterBySeverity(matches []Match, minSeverity Severity) []Match
 	}
 
 	return filteredMatches
-}
-
-// loadVEXDocuments loads VEX documents from specified paths
-func (e *Engine) loadVEXDocuments(paths []string) error {
-	if e.extended.vexProcessor == nil {
-		return nil
-	}
-
-	for _, path := range paths {
-		doc, err := e.parseVEXDocument(path)
-		if err != nil {
-			log.Warnf("Failed to load VEX document from path %s: %v", path, err)
-			continue
-		}
-		e.extended.vexProcessor.documents = append(e.extended.vexProcessor.documents, doc)
-	}
-
-	return nil
-}
-
-// parseVEXDocument parses a VEX document from file path (placeholder implementation)
-func (e *Engine) parseVEXDocument(path string) (matchertypes.VEXDocument, error) {
-	// Basic implementation - in real world this would parse JSON/XML/other VEX formats
-	doc := matchertypes.VEXDocument{
-		ID:         filepath.Base(path),
-		Version:    "1.0",
-		Statements: []matchertypes.VEXStatement{},
-	}
-
-	// Note: Real implementation would read and parse the file
-	// This is a placeholder that creates an empty document
-	return doc, nil
 }
