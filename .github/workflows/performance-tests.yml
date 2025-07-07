@@ -129,6 +129,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # Ensure consistent line endings across platforms
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -142,12 +145,21 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Configure Git line endings
+        shell: bash
+        run: |
+          # Configure Git to handle line endings consistently
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
       - name: Verify go.mod and go.sum
         shell: bash
         run: |
           go mod tidy
-          if [ -n "$(git status --porcelain go.mod go.sum)" ]; then
+          # Check if go.mod or go.sum have been modified
+          if ! git diff --quiet go.mod go.sum; then
             echo "❌ go.mod or go.sum is not up to date"
+            echo "Please run 'go mod tidy' and commit the changes"
             git diff go.mod go.sum
             exit 1
           fi

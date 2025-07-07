@@ -1,0 +1,44 @@
+# Set the default behavior for line endings
+* text=auto
+
+# Ensure Go files use LF line endings
+*.go text eol=lf
+*.mod text eol=lf
+*.sum text eol=lf
+
+# Ensure shell scripts use LF line endings
+*.sh text eol=lf
+
+# Ensure YAML files use LF line endings
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Ensure JSON files use LF line endings
+*.json text eol=lf
+
+# Ensure Dockerfile uses LF line endings
+Dockerfile* text eol=lf
+
+# Ensure Makefile uses LF line endings
+Makefile text eol=lf
+
+# Binary files should not be normalized
+*.exe binary
+*.so binary
+*.dylib binary
+*.dll binary
+*.a binary
+
+# Image files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg binary
+*.ico binary
+
+# Archive files
+*.zip binary
+*.tar binary
+*.tar.gz binary
+*.tgz binary
