@@ -403,40 +403,40 @@ changelog:
   sort: asc
   abbrev: -1
   groups:
-    - title: '🚀 Features'
+    - title: 'Features'
       regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
       order: 0
-    - title: '🐛 Bug Fixes'
+    - title: 'Bug Fixes'
       regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
       order: 1
-    - title: '📚 Documentation'
+    - title: 'Documentation'
       regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
       order: 2
-    - title: '🎨 Style'
+    - title: 'Style'
       regexp: '^.*?(style|fmt)(\([[:word:]]+\))??!?:.+$'
       order: 3
-    - title: '♻️ Refactoring'
+    - title: 'Refactoring'
       regexp: '^.*?refactor(\([[:word:]]+\))??!?:.+$'
       order: 4
-    - title: '⚡ Performance'
+    - title: 'Performance'
       regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
       order: 5
-    - title: '✅ Tests'
+    - title: 'Tests'
       regexp: '^.*?test(\([[:word:]]+\))??!?:.+$'
       order: 6
-    - title: '🔧 Chores'
+    - title: 'Chores'
       regexp: '^.*?chore(\([[:word:]]+\))??!?:.+$'
       order: 7
-    - title: '⚠️  Breaking Changes'
+    - title: 'Breaking Changes'
       regexp: '^.*?!:.+$'
       order: 8
-    - title: '🔒 Security'
+    - title: 'Security'
       regexp: '^.*?sec(\([[:word:]]+\))??!?:.+$'
       order: 9
-    - title: '📦 Dependencies'
+    - title: 'Dependencies'
       regexp: '^.*?(deps|dep)(\([[:word:]]+\))??!?:.+$'
       order: 10
-    - title: '🔖 Others'
+    - title: 'Others'
       order: 999
   filters:
     exclude:
