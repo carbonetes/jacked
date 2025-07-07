@@ -350,11 +350,11 @@ jobs:
             org.opencontainers.image.description=Go vulnerability scanner
             org.opencontainers.image.vendor=Jacked Project
 
-      - name: Build Docker image
+      - name: Build Docker image for testing
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
