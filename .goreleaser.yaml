@@ -247,21 +247,21 @@ nfpms:
       summary: Comprehensive vulnerability scanner for container images and filesystems
       group: Applications/System
       compression: lzma
-      signature:
-        key_file: '{{ .Env.GPG_KEY_FILE }}'
+      # signature:
+      #   key_file: '{{ .Env.GPG_KEY_FILE }}'
     deb:
       lintian_overrides:
         - statically-linked-binary
         - changelog-file-missing-in-native-package
         - binary-without-manpage
       compression: xz
-      signature:
-        key_file: '{{ .Env.GPG_KEY_FILE }}'
-        type: origin
-    apk:
-      signature:
-        key_file: '{{ .Env.GPG_KEY_FILE }}'
-        key_name: '{{ .Env.GPG_KEY_NAME }}'
+      # signature:
+      #   key_file: '{{ .Env.GPG_KEY_FILE }}'
+      #   type: origin
+    # apk:
+      # signature:
+      #   key_file: '{{ .Env.GPG_KEY_FILE }}'
+      #   key_name: '{{ .Env.GPG_KEY_NAME }}'
     archlinux:
       pkgbase: jacked
       packager: Carbonetes Engineering <eng@carbonetes.com>
@@ -369,21 +369,21 @@ checksum:
   extra_files:
     - glob: './assets/jacked-logo.svg'
 
-# Signature configuration for release verification  
-signs:
-  - cmd: gpg
-    args:
-      - --batch
-      - --local-user
-      - "{{ .Env.GPG_FINGERPRINT }}"
-      - --output
-      - "${signature}"
-      - --detach-sign
-      - "${artifact}"
-    signature: "${artifact}.sig"
-    ids:
-      - default
-    artifacts: checksum
+# Signature configuration for release verification (commented out - no GPG setup)
+# signs:
+#   - cmd: gpg
+#     args:
+#       - --batch
+#       - --local-user
+#       - "{{ .Env.GPG_FINGERPRINT }}"
+#       - --output
+#       - "${signature}"
+#       - --detach-sign
+#       - "${artifact}"
+#     signature: "${artifact}.sig"
+#     ids:
+#       - default
+#     artifacts: checksum
 
 # SBOM (Software Bill of Materials) generation
 sboms:
